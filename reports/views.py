@@ -121,7 +121,7 @@ def generate_quarterly(request):
                 try:
                     import google.generativeai as genai
                     genai.configure(api_key=os.environ.get('GEMINI_API_KEY', ''))
-                    model = genai.GenerativeModel('gemini-2.0-flash')
+                    model = genai.GenerativeModel('gemini-2.5-flash')
                     prompt = f"""Analyze the following university social media quarterly data and generate a professional summary.
 
 Quarter: Q{quarter} {year}

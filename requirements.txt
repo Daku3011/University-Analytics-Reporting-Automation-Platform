@@ -19,3 +19,5 @@ python-dotenv==1.2.2
 # Pillow is required by Django's ImageField (college logos,
 # newspaper clippings, top-post screenshots)
 Pillow==12.2.0
+
+dotenv
