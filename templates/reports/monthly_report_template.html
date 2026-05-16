@@ -1,154 +1,350 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <style>
-        @page { size: A4; margin: 20mm 15mm; }
-        body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color: #333; }
-        .cover-page { text-align: center; padding-top: 200px; page-break-after: always; }
-        .cover-page h1 { font-size: 48px; letter-spacing: 8px; color: #1a1f36; }
-        .cover-page h2 { font-size: 36px; color: #4f46e5; margin-top: 20px; }
-        .cover-page .presented { margin-top: 60px; font-size: 16px; color: #666; }
-        .section-title { font-size: 24px; color: #1a1f36; border-bottom: 3px solid #4f46e5; padding-bottom: 8px; margin: 30px 0 20px; }
-        .metric-grid { display: flex; flex-wrap: wrap; gap: 15px; margin: 20px 0; }
-        .metric-card { flex: 1; min-width: 180px; background: #f8f9fc; border-radius: 10px; padding: 20px; text-align: center; border: 1px solid #e2e8f0; }
-        .metric-card .value { font-size: 32px; font-weight: 700; color: #4f46e5; }
-        .metric-card .label { font-size: 13px; color: #718096; margin-top: 5px; }
-        .event-card { border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin: 10px 0; page-break-inside: avoid; }
-        .event-card h4 { margin: 0 0 5px; font-size: 16px; color: #1a1f36; }
-        .event-card .date { color: #718096; font-size: 13px; }
-        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
-        th { background: #f8f9fc; font-weight: 600; color: #1a1f36; }
-        .top-post { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #eee; }
-        .top-post .views { font-weight: 700; color: #4f46e5; }
-        .page-break { page-break-before: always; }
-        .footer { text-align: center; color: #a0aec0; font-size: 12px; margin-top: 50px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
-    </style>
+<meta charset="UTF-8">
+<style>
+@page { size: A4; margin: 0; }
+@page :first { margin: 0; }
+
+body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; color: #2d3748; margin: 0; padding: 0; }
+
+/* ===== COVER PAGE ===== */
+.cover { width: 210mm; height: 297mm; background: linear-gradient(135deg, #1a1f36 0%, #2d3748 50%, #1a1f36 100%); position: relative; page-break-after: always; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.cover::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(circle at 20% 30%, rgba(79,70,229,0.15) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(6,182,212,0.1) 0%, transparent 50%); }
+.cover .top-line { position: absolute; top: 0; width: 100%; height: 6px; background: linear-gradient(90deg, #4f46e5, #06b6d4, #4f46e5); }
+.cover .brand { position: absolute; top: 40px; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,0.3); font-size: 14px; letter-spacing: 4px; text-transform: uppercase; }
+.cover .report-label { font-size: 14px; letter-spacing: 12px; color: rgba(255,255,255,0.5); margin-bottom: 30px; text-transform: uppercase; }
+.cover h1 { font-size: 56px; color: #fff; margin: 0; letter-spacing: 6px; font-weight: 300; }
+.cover h1 strong { font-weight: 700; color: #4f46e5; }
+.cover .month-year { font-size: 42px; color: #06b6d4; margin: 15px 0 30px; font-weight: 700; letter-spacing: 4px; }
+.cover .divider-line { width: 80px; height: 3px; background: #4f46e5; margin: 20px auto; }
+.cover .presented-by { font-size: 14px; color: rgba(255,255,255,0.6); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+.cover .college-name { font-size: 24px; color: #fff; letter-spacing: 1px; }
+.cover .footer-note { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); font-size: 11px; color: rgba(255,255,255,0.2); letter-spacing: 3px; }
+
+/* ===== CONTENT PAGES ===== */
+.content { padding: 50px 55px 40px; page-break-after: always; }
+.content:last-child { page-break-after: avoid; }
+
+.section-header { display: flex; align-items: center; margin-bottom: 25px; }
+.section-header .num { width: 36px; height: 36px; background: #4f46e5; color: #fff; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; margin-right: 12px; flex-shrink: 0; }
+.section-header h2 { font-size: 22px; font-weight: 700; color: #1a1f36; margin: 0; text-transform: uppercase; letter-spacing: 1px; }
+.section-header .line { flex: 1; height: 2px; background: linear-gradient(90deg, #4f46e5, transparent); margin-left: 15px; }
+
+/* ===== METRICS ===== */
+.metrics-row { display: flex; gap: 18px; margin-bottom: 25px; }
+.metric-box { flex: 1; background: #f8fafc; border-radius: 12px; padding: 20px 18px; text-align: center; border: 1px solid #e2e8f0; }
+.metric-box .val { font-size: 28px; font-weight: 800; color: #1a1f36; line-height: 1.2; }
+.metric-box .val.ig { color: #e1306c; }
+.metric-box .val.fb { color: #1877f2; }
+.metric-box .val.yt { color: #ff0000; }
+.metric-box .val.total { color: #4f46e5; }
+.metric-box .lbl { font-size: 11px; color: #718096; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+.metric-box .sub { font-size: 10px; color: #a0aec0; margin-top: 2px; }
+
+/* ===== PLATFORM BAR ===== */
+.platform-bar-wrap { margin: 8px 0; }
+.platform-bar-wrap .label-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
+.platform-bar-wrap .label-row .name { font-weight: 600; color: #2d3748; }
+.platform-bar-wrap .label-row .pct { color: #718096; }
+.platform-bar { height: 18px; background: #edf2f7; border-radius: 10px; overflow: hidden; }
+.platform-bar .fill { height: 100%; border-radius: 10px; transition: width 0.3s; }
+
+/* ===== EVENTS ===== */
+.event-card { border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px 18px; margin-bottom: 10px; page-break-inside: avoid; }
+.event-card .event-header { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.event-card .event-cat { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; padding: 2px 8px; border-radius: 4px; font-weight: 600; }
+.event-card .event-cat.workshop { background: #ebf4ff; color: #3182ce; }
+.event-card .event-cat.festival { background: #fef3c7; color: #d97706; }
+.event-card .event-cat.achievement { background: #d1fae5; color: #059669; }
+.event-card .event-cat.conference { background: #ede9fe; color: #7c3aed; }
+.event-card .event-cat.academic { background: #fce7f3; color: #db2777; }
+.event-card .event-cat.guest_lecture { background: #f0fdf4; color: #16a34a; }
+.event-card .event-cat.cultural { background: #fff1f2; color: #e11d48; }
+.event-card .event-cat.placement { background: #e0f2fe; color: #0284c7; }
+.event-card .event-cat.other { background: #f8fafc; color: #64748b; }
+.event-card .event-title { font-size: 14px; font-weight: 600; color: #1a1f36; margin: 0; }
+.event-card .event-date { font-size: 12px; color: #a0aec0; margin-left: auto; white-space: nowrap; }
+
+/* ===== TOP POSTS ===== */
+.rank-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+.rank-table th { padding: 10px 14px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #718096; text-align: left; border-bottom: 2px solid #e2e8f0; }
+.rank-table td { padding: 12px 14px; border-bottom: 1px solid #edf2f7; font-size: 13px; }
+.rank-table tr:last-child td { border-bottom: none; }
+.rank-table .rank { font-weight: 800; color: #4f46e5; font-size: 16px; width: 30px; }
+.rank-table .rank.gold { color: #d97706; }
+.rank-table .rank.silver { color: #718096; }
+.rank-table .rank.bronze { color: #cd7f32; }
+.rank-table .metric-val { font-weight: 700; color: #1a1f36; text-align: center; }
+.rank-table .platform-badge { display: inline-block; padding: 2px 10px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+.rank-table .platform-badge.ig { background: #fce4ec; color: #e1306c; }
+.rank-table .platform-badge.fb { background: #e3f2fd; color: #1877f2; }
+
+/* ===== STAT ROW ===== */
+.stat-row { display: flex; gap: 15px; margin: 20px 0; }
+.stat-item { flex: 1; background: #f8fafc; border-radius: 10px; padding: 18px; border: 1px solid #e2e8f0; }
+.stat-item .stat-val { font-size: 22px; font-weight: 700; color: #1a1f36; }
+.stat-item .stat-lbl { font-size: 11px; color: #718096; text-transform: uppercase; letter-spacing: 1px; margin-top: 3px; }
+
+/* ===== NEWSPAPER TABLE ===== */
+.news-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+.news-table th { background: #1a1f36; color: #fff; padding: 10px 14px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; text-align: left; }
+.news-table td { padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-size: 12px; }
+.news-table tr:nth-child(even) td { background: #f8fafc; }
+
+/* ===== SVG CHART CONTAINER ===== */
+.chart-wrap { margin: 20px 0; text-align: center; }
+
+/* ===== COVERAGE CARD ===== */
+.coverage-grid { display: flex; flex-wrap: wrap; gap: 8px; margin: 15px 0; }
+.coverage-chip { padding: 6px 14px; background: #f0f4ff; border: 1px solid #e0e7ff; border-radius: 20px; font-size: 11px; color: #4338ca; }
+
+/* ===== PRESS RELEASE ===== */
+.press-card { border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px; margin-bottom: 12px; page-break-inside: avoid; }
+.press-card h4 { margin: 0 0 6px; font-size: 15px; color: #1a1f36; }
+.press-card .press-meta { font-size: 11px; color: #718096; margin-bottom: 8px; }
+.press-card .press-meta span { margin-right: 15px; }
+.press-card p { font-size: 12px; line-height: 1.6; color: #4a5568; margin: 0; }
+
+/* ===== FOOTER ===== */
+.page-footer { text-align: center; padding: 25px 0 0; border-top: 1px solid #e2e8f0; margin-top: 30px; }
+.page-footer p { margin: 3px 0; font-size: 10px; color: #a0aec0; letter-spacing: 1px; }
+
+/* ===== PLATFORM INSIGHTS ===== */
+.insight-grid { display: flex; gap: 18px; margin: 20px 0; }
+.insight-card { flex: 1; border-radius: 12px; padding: 22px; color: #fff; }
+.insight-card.ig-card { background: linear-gradient(135deg, #e1306c, #c13584); }
+.insight-card.fb-card { background: linear-gradient(135deg, #1877f2, #0d65d9); }
+.insight-card .insight-val { font-size: 32px; font-weight: 800; }
+.insight-card .insight-lbl { font-size: 12px; opacity: 0.8; margin-top: 2px; text-transform: uppercase; letter-spacing: 1px; }
+</style>
 </head>
 <body>
 
-<div class="cover-page">
-    <h1>MONTHLY REPORT</h1>
-    <h2>{{ month_name|upper }} {{ year }}</h2>
-    <p class="presented">PRESENTED BY : {{ college.name|upper }}</p>
+<!-- ========== COVER PAGE ========== -->
+<div class="cover">
+    <div class="top-line"></div>
+    <div class="brand">Sarvajanik University</div>
+    <div class="report-label">Monthly Report</div>
+    <h1>MONTHLY <strong>REPORT</strong></h1>
+    <div class="month-year">{{ month_name|upper }} {{ year }}</div>
+    <div class="divider-line"></div>
+    <div class="presented-by">Presented By</div>
+    <div class="college-name">{{ college.name }}</div>
+    <div class="footer-note">MEDIA MANAGEMENT BY PRIMEX MEDIA SERVICES</div>
 </div>
 
-{% if analytics %}
-<div>
-    <div class="section-title">Overview</div>
-    <div class="metric-grid">
-        <div class="metric-card">
-            <div class="value">{{ analytics.instagram_views|default:"0" }}</div>
-            <div class="label">Instagram Views</div>
+<!-- ========== PAGE 1: OVERVIEW ========== -->
+<div class="content">
+    <div class="section-header">
+        <div class="num">1</div>
+        <h2>Overview</h2>
+        <div class="line"></div>
+    </div>
+
+    <div class="metrics-row">
+        <div class="metric-box">
+            <div class="val total">{{ analytics.total_views|default:"0"|floatformat:"0" }}</div>
+            <div class="lbl">Total Views</div>
         </div>
-        <div class="metric-card">
-            <div class="value">{{ analytics.facebook_views|default:"0" }}</div>
-            <div class="label">Facebook Views</div>
+        <div class="metric-box">
+            <div class="val total">{{ analytics.total_reach|default:"0"|floatformat:"0" }}</div>
+            <div class="lbl">Total Reach</div>
         </div>
-        <div class="metric-card">
-            <div class="value">{{ analytics.total_views|default:"0" }}</div>
-            <div class="label">Total Views</div>
+        <div class="metric-box">
+            <div class="val total">{{ analytics.followers_gained|default:"0"|floatformat:"0" }}</div>
+            <div class="lbl">Followers Gained</div>
         </div>
-        <div class="metric-card">
-            <div class="value">{{ analytics.total_reach|default:"0" }}</div>
-            <div class="label">Total Reach</div>
+        <div class="metric-box">
+            <div class="val total">{{ analytics.reels_count|default:"0"|floatformat:"0" }}</div>
+            <div class="lbl">Reels Created</div>
+        </div>
+        <div class="metric-box">
+            <div class="val total">{{ analytics.graphics_count|default:"0"|floatformat:"0" }}</div>
+            <div class="lbl">Graphics Created</div>
         </div>
     </div>
-    <div class="metric-grid">
-        <div class="metric-card">
-            <div class="value">{{ analytics.followers_gained|default:"0" }}</div>
-            <div class="label">Followers Gained</div>
+
+    <div class="section-header" style="margin-top:30px;">
+        <div class="num" style="background:#06b6d4;">2</div>
+        <h2>Platform Performance</h2>
+        <div class="line"></div>
+    </div>
+
+    <div class="insight-grid">
+        <div class="insight-card ig-card">
+            <div class="insight-val">{{ analytics.instagram_views|default:"0"|floatformat:"0" }}</div>
+            <div class="insight-lbl">Instagram Views</div>
+            <div style="margin-top:12px; font-size:14px; opacity:0.9;">{{ analytics.instagram_reach|default:"0"|floatformat:"0" }} Reach</div>
+            <div style="font-size:14px; opacity:0.9;">{{ analytics.instagram_followers|default:"0"|floatformat:"0" }} Followers</div>
         </div>
-        <div class="metric-card">
-            <div class="value">{{ analytics.reels_count|default:"0" }}</div>
-            <div class="label">Reels Created</div>
+        <div class="insight-card fb-card">
+            <div class="insight-val">{{ analytics.facebook_views|default:"0"|floatformat:"0" }}</div>
+            <div class="insight-lbl">Facebook Views</div>
+            <div style="margin-top:12px; font-size:14px; opacity:0.9;">{{ analytics.facebook_reach|default:"0"|floatformat:"0" }} Reach</div>
+            <div style="font-size:14px; opacity:0.9;">{{ analytics.facebook_followers|default:"0"|floatformat:"0" }} Followers</div>
         </div>
-        <div class="metric-card">
-            <div class="value">{{ analytics.graphics_count|default:"0" }}</div>
-            <div class="label">Graphics Created</div>
+    </div>
+
+    <div style="margin:20px 0;">
+        <h4 style="font-size:14px; color:#718096; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px;">Views Distribution</h4>
+        {% with total=analytics.total_views|default:1 ig=analytics.instagram_views|default:0 fb=analytics.facebook_views|default:0 %}
+        {% if total > 0 %}
+        <div class="platform-bar-wrap">
+            <div class="label-row">
+                <span class="name">Instagram</span>
+                <span class="pct">{{ ig|floatformat:"0" }} views</span>
+            </div>
+            <div class="platform-bar">
+                <div class="fill" style="width: {% widthratio ig total 100 %}%; background: linear-gradient(90deg, #e1306c, #c13584);"></div>
+            </div>
         </div>
+        <div class="platform-bar-wrap">
+            <div class="label-row">
+                <span class="name">Facebook</span>
+                <span class="pct">{{ fb|floatformat:"0" }} views</span>
+            </div>
+            <div class="platform-bar">
+                <div class="fill" style="width: {% widthratio fb total 100 %}%; background: linear-gradient(90deg, #1877f2, #0d65d9);"></div>
+            </div>
+        </div>
+        {% endif %}
+        {% endwith %}
     </div>
 </div>
-{% endif %}
 
-<div class="page-break">
-    <div class="section-title">Events & Activities</div>
+<!-- ========== PAGE 2: EVENTS ========== -->
+<div class="content">
+    <div class="section-header">
+        <div class="num" style="background:#059669;">3</div>
+        <h2>Events &amp; Activities</h2>
+        <div class="line"></div>
+    </div>
+
+    <div class="stat-row">
+        <div class="stat-item"><div class="stat-val">{{ events_count }}</div><div class="stat-lbl">Total Events</div></div>
+        <div class="stat-item"><div class="stat-val">{{ events|length }}</div><div class="stat-lbl">This Month</div></div>
+    </div>
+
     {% for event in events %}
     <div class="event-card">
-        <h4>{{ event.title }}</h4>
-        <div class="date">{{ event.date }} | {{ event.get_category_display }}</div>
-        {% if event.description %}
-        <p style="margin-top: 8px; font-size: 14px;">{{ event.description|truncatechars:200 }}</p>
-        {% endif %}
+        <div class="event-header">
+            <span class="event-cat {{ event.category }}">{{ event.get_category_display }}</span>
+            <div class="event-date">{{ event.date|date:"d M" }}</div>
+        </div>
+        <div class="event-title">{{ event.title }}</div>
     </div>
     {% empty %}
-    <p class="text-muted">No events recorded for this month.</p>
+    <div style="text-align:center; padding:40px; color:#a0aec0;">
+        <p style="font-size:16px;">No events recorded for {{ month_name }}.</p>
+    </div>
     {% endfor %}
 </div>
 
-<div class="page-break">
-    <div class="section-title">Top Performing Posts - Instagram</div>
-    {% for post in top_ig %}
-    <div class="top-post">
-        <span>#{{ forloop.counter }} {{ post.caption|truncatechars:60 }}</span>
-        <span class="views">{{ post.views }} views | {{ post.likes }} likes | {{ post.shares }} shares</span>
+<!-- ========== PAGE 3: TOP PERFORMING POSTS ========== -->
+<div class="content">
+    <div class="section-header">
+        <div class="num" style="background:#d97706;">4</div>
+        <h2>Top Performing Posts</h2>
+        <div class="line"></div>
     </div>
-    {% empty %}
-    <p class="text-muted">No top posts data.</p>
-    {% endfor %}
-</div>
 
-<div>
-    <div class="section-title">Top Performing Posts - Facebook</div>
-    {% for post in top_fb %}
-    <div class="top-post">
-        <span>#{{ forloop.counter }} {{ post.caption|truncatechars:60 }}</span>
-        <span class="views">{{ post.views }} views | {{ post.likes }} likes</span>
-    </div>
-    {% empty %}
-    <p class="text-muted">No top posts data.</p>
-    {% endfor %}
-</div>
-
-{% if newspapers %}
-<div class="page-break">
-    <div class="section-title">Media Coverage - Newspaper</div>
-    <table>
+    <h4 style="font-size:14px; color:#e1306c; margin:15px 0 10px; display:flex; align-items:center; gap:8px;">
+        <span>📸</span> Instagram
+    </h4>
+    <table class="rank-table">
         <thead>
-            <tr><th>Publication</th><th>Date</th><th>Page</th><th>Headline</th></tr>
+            <tr><th>Rank</th><th>Views</th><th>Likes</th><th>Shares</th><th>Caption</th></tr>
         </thead>
         <tbody>
-            {% for n in newspapers %}
+            {% for post in top_ig %}
             <tr>
-                <td>{{ n.publication }}</td>
-                <td>{{ n.date }}</td>
-                <td>{{ n.page }}</td>
-                <td>{{ n.headline|truncatechars:50 }}</td>
+                <td class="rank {% if forloop.counter == 1 %}gold{% elif forloop.counter == 2 %}silver{% elif forloop.counter == 3 %}bronze{% endif %}">#{{ forloop.counter }}</td>
+                <td class="metric-val">{{ post.views|floatformat:"0" }}</td>
+                <td class="metric-val">{{ post.likes|floatformat:"0" }}</td>
+                <td class="metric-val">{{ post.shares|floatformat:"0" }}</td>
+                <td style="font-size:12px; color:#718096;">{{ post.caption|default:"—"|truncatechars:40 }}</td>
             </tr>
+            {% empty %}
+            <tr><td colspan="5" style="text-align:center; color:#a0aec0; padding:20px;">No top Instagram posts data.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h4 style="font-size:14px; color:#1877f2; margin:25px 0 10px; display:flex; align-items:center; gap:8px;">
+        <span>📘</span> Facebook
+    </h4>
+    <table class="rank-table">
+        <thead>
+            <tr><th>Rank</th><th>Views</th><th>Likes</th><th>Caption</th></tr>
+        </thead>
+        <tbody>
+            {% for post in top_fb %}
+            <tr>
+                <td class="rank {% if forloop.counter == 1 %}gold{% elif forloop.counter == 2 %}silver{% elif forloop.counter == 3 %}bronze{% endif %}">#{{ forloop.counter }}</td>
+                <td class="metric-val">{{ post.views|floatformat:"0" }}</td>
+                <td class="metric-val">{{ post.likes|floatformat:"0" }}</td>
+                <td style="font-size:12px; color:#718096;">{{ post.caption|default:"—"|truncatechars:40 }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" style="text-align:center; color:#a0aec0; padding:20px;">No top Facebook posts data.</td></tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
-{% endif %}
 
-{% if press_releases %}
-<div class="page-break">
-    <div class="section-title">Press Releases</div>
+<!-- ========== PAGE 4: MEDIA COVERAGE ========== -->
+{% if newspapers or press_releases %}
+<div class="content">
+    <div class="section-header">
+        <div class="num" style="background:#0891b2;">5</div>
+        <h2>Media Coverage</h2>
+        <div class="line"></div>
+    </div>
+
+    {% if newspapers %}
+    <h4 style="font-size:14px; color:#1a1f36; margin:0 0 12px;">📰 Newspaper Coverage</h4>
+    <table class="news-table">
+        <thead>
+            <tr><th>Publication</th><th>Date</th><th>Edition</th><th>Page</th><th>Headline</th></tr>
+        </thead>
+        <tbody>
+            {% for n in newspapers %}
+            <tr>
+                <td><strong>{{ n.publication }}</strong></td>
+                <td>{{ n.date|date:"d M Y" }}</td>
+                <td>{{ n.edition|default:"—" }}</td>
+                <td>{{ n.page|default:"—" }}</td>
+                <td>{{ n.headline|truncatechars:45|default:"—" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    {% if press_releases %}
+    <h4 style="font-size:14px; color:#1a1f36; margin:25px 0 12px;">📄 Press Releases</h4>
     {% for pr in press_releases %}
-    <div class="event-card">
+    <div class="press-card">
         <h4>{{ pr.title }}</h4>
-        <div class="date">{{ pr.date_submitted }} | {{ pr.placements }} placements | Reach: {{ pr.potential_reach }}</div>
-        <p style="margin-top: 8px; font-size: 13px;">{{ pr.content|truncatechars:300 }}</p>
+        <div class="press-meta">
+            <span>📅 {{ pr.date_submitted|date:"d M Y" }}</span>
+            <span>📊 {{ pr.placements }} Placements</span>
+            <span>👥 Reach: {{ pr.potential_reach|default:"—" }}</span>
+        </div>
+        {% if pr.content %}
+        <p>{{ pr.content|truncatechars:350 }}</p>
+        {% endif %}
     </div>
     {% endfor %}
+    {% endif %}
+
+    <div class="page-footer">
+        <p>MEDIA MANAGEMENT BY PRIMEX MEDIA SERVICES</p>
+        <p>Generated by SU Analytics Platform | {{ month_name }} {{ year }}</p>
+    </div>
 </div>
 {% endif %}
-
-<div class="footer">
-    <p>MEDIA MANAGEMENT BY PRIMEX MEDIA SERVICES</p>
-    <p>Generated by SU Analytics Platform | {{ month_name }} {{ year }}</p>
-</div>
 
 </body>
 </html>
