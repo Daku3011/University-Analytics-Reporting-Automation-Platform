@@ -1,4 +1,4 @@
-import os, json
+import os, json, markdown
 from datetime import date
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -41,12 +41,20 @@ def generate_monthly(request):
         press_releases = PressRelease.objects.filter(college=college, month=month, year=year)
 
         month_name = date(year, month, 1).strftime('%B')
+
+        max_views = 1
+        for a_val in [analytics]:
+            if a_val:
+                max_views = max(max_views, a_val.instagram_views, a_val.facebook_views, a_val.total_views)
+
         context = {
             'college': college,
             'month_name': month_name,
             'year': year,
             'analytics': analytics,
+            'max_views': max_views or 1,
             'events': events,
+            'events_count': events.count(),
             'top_ig': top_ig,
             'top_fb': top_fb,
             'newspapers': newspapers,
@@ -146,12 +154,20 @@ Write a professional quarterly summary with:
                     cache.set(cooldown_key, True, settings.GEMINI_CONFIG['COOLDOWN_SECONDS'])
                     cache.set(limit_key, daily_count + 1, 86400) # 24 hours
                     
+                    # Convert markdown to HTML
+                    ai_summary = markdown.markdown(ai_summary)
+                    
                 except Exception as e:
                     ai_summary = f"AI summary unavailable. Error: {str(e)}"
 
         totals = {}
+        max_monthly_val = 1
         for key in ['total_views', 'total_reach', 'followers_gained', 'instagram_views', 'facebook_views']:
             totals[key] = sum(d.get(key, 0) for d in analytics_by_month.values())
+            for m_name in month_names:
+                val = analytics_by_month.get(m_name, {}).get(key, 0)
+                if val > max_monthly_val:
+                    max_monthly_val = val
 
         context = {
             'quarter': quarter,
@@ -159,6 +175,7 @@ Write a professional quarterly summary with:
             'month_names': month_names,
             'analytics_by_month': analytics_by_month,
             'totals': totals,
+            'max_monthly_val': max_monthly_val or 1,
             'all_top_ig': all_top_ig,
             'all_top_fb': all_top_fb,
             'ai_summary': ai_summary,

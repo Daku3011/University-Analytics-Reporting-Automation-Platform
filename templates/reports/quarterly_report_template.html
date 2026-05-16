@@ -2,148 +2,267 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <style>
-        @page { size: A4; margin: 20mm 15mm; }
-        body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color: #333; }
-        .cover-page { text-align: center; padding-top: 200px; page-break-after: always; }
-        .cover-page h1 { font-size: 42px; letter-spacing: 6px; color: #1a1f36; }
-        .cover-page h2 { font-size: 32px; color: #4f46e5; margin-top: 20px; }
-        .cover-page .period { margin-top: 40px; font-size: 18px; color: #666; }
-        .section-title { font-size: 22px; color: #1a1f36; border-bottom: 3px solid #4f46e5; padding-bottom: 8px; margin: 30px 0 20px; }
-        .metric-grid { display: flex; flex-wrap: wrap; gap: 15px; margin: 20px 0; }
-        .metric-card { flex: 1; min-width: 160px; background: #f8f9fc; border-radius: 10px; padding: 20px; text-align: center; border: 1px solid #e2e8f0; }
-        .metric-card .value { font-size: 28px; font-weight: 700; color: #4f46e5; }
-        .metric-card .label { font-size: 13px; color: #718096; margin-top: 5px; }
-        .top-post { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #eee; }
-        .top-post .views { font-weight: 700; color: #4f46e5; }
-        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
-        th { background: #f8f9fc; font-weight: 600; color: #1a1f36; }
-        .ai-summary { background: #f0f4ff; border-left: 4px solid #4f46e5; padding: 20px; margin: 20px 0; border-radius: 8px; }
-        .ai-summary p { line-height: 1.7; }
-        .page-break { page-break-before: always; }
-        .footer { text-align: center; color: #a0aec0; font-size: 12px; margin-top: 50px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
-    </style>
+<meta charset="UTF-8">
+<style>
+@page { size: A4; margin: 0; }
+body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; color: #2d3748; margin: 0; padding: 0; }
+
+.cover { width: 210mm; height: 297mm; background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); position: relative; page-break-after: always; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.cover::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(circle at 30% 20%, rgba(79,70,229,0.2) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgba(6,182,212,0.15) 0%, transparent 50%); }
+.cover .top-glow { position: absolute; top: 0; width: 100%; height: 6px; background: linear-gradient(90deg, #4f46e5, #06b6d4, #8b5cf6, #4f46e5); }
+.cover .brand { position: absolute; top: 40px; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,0.3); font-size: 14px; letter-spacing: 4px; text-transform: uppercase; }
+.cover .report-label { font-size: 13px; letter-spacing: 14px; color: rgba(255,255,255,0.4); margin-bottom: 25px; text-transform: uppercase; }
+.cover h1 { font-size: 52px; color: #fff; margin: 0; font-weight: 300; letter-spacing: 4px; }
+.cover h1 strong { font-weight: 700; color: #4f46e5; }
+.cover .q-label { font-size: 48px; color: #06b6d4; margin: 15px 0 5px; font-weight: 800; letter-spacing: 6px; }
+.cover .months-label { font-size: 20px; color: rgba(255,255,255,0.7); letter-spacing: 2px; }
+.cover .divider-line { width: 100px; height: 3px; background: linear-gradient(90deg, #4f46e5, #06b6d4); margin: 25px auto; }
+.cover .presented-by { font-size: 13px; color: rgba(255,255,255,0.5); letter-spacing: 2px; text-transform: uppercase; }
+.cover .footer-note { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); font-size: 11px; color: rgba(255,255,255,0.2); letter-spacing: 3px; }
+
+.content { padding: 45px 55px 35px; page-break-after: always; }
+.content:last-child { page-break-after: avoid; }
+
+.section-header { display: flex; align-items: center; margin-bottom: 22px; }
+.section-header .num { width: 32px; height: 32px; background: #4f46e5; color: #fff; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; margin-right: 12px; flex-shrink: 0; }
+.section-header h2 { font-size: 20px; font-weight: 700; color: #0f172a; margin: 0; text-transform: uppercase; letter-spacing: 1px; }
+.section-header .line { flex: 1; height: 2px; background: linear-gradient(90deg, #4f46e5, transparent); margin-left: 15px; }
+
+.metrics-row { display: flex; gap: 16px; margin-bottom: 20px; }
+.metric-box { flex: 1; background: #f8fafc; border-radius: 12px; padding: 18px 15px; text-align: center; border: 1px solid #e2e8f0; }
+.metric-box .val { font-size: 26px; font-weight: 800; color: #0f172a; line-height: 1.2; }
+.metric-box .lbl { font-size: 10px; color: #718096; text-transform: uppercase; letter-spacing: 1px; margin-top: 3px; }
+
+table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+th, td { padding: 10px 14px; text-align: left; }
+thead th { background: #0f172a; color: #fff; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+tbody td { border-bottom: 1px solid #e2e8f0; font-size: 13px; }
+tbody tr:nth-child(even) td { background: #f8fafc; }
+tbody tr td:first-child { font-weight: 600; }
+
+.ai-summary { background: linear-gradient(135deg, #f0f4ff, #eef2ff); border: 1px solid #e0e7ff; border-radius: 12px; padding: 24px; margin: 15px 0; }
+.ai-summary p { line-height: 1.8; font-size: 13px; color: #334155; margin: 0 0 10px; }
+.ai-summary p:last-child { margin-bottom: 0; }
+
+.platform-bar-wrap { margin: 8px 0; }
+.platform-bar-wrap .label-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 3px; }
+.platform-bar-wrap .label-row .name { font-weight: 600; color: #2d3748; }
+.platform-bar-wrap .label-row .pct { color: #718096; }
+.platform-bar { height: 16px; background: #edf2f7; border-radius: 8px; overflow: hidden; }
+.platform-bar .fill { height: 100%; border-radius: 8px; }
+
+.rank-table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+.rank-table th { padding: 8px 14px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #718096; text-align: left; border-bottom: 2px solid #e2e8f0; }
+.rank-table td { padding: 10px 14px; border-bottom: 1px solid #edf2f7; font-size: 12px; }
+.rank-table .rank { font-weight: 800; color: #4f46e5; font-size: 14px; width: 30px; }
+.rank-table .rank.gold { color: #d97706; }
+.rank-table .rank.silver { color: #718096; }
+.rank-table .rank.bronze { color: #cd7f32; }
+.rank-table .metric-val { font-weight: 700; text-align: center; }
+
+.stat-row { display: flex; gap: 12px; margin: 15px 0; }
+.stat-item { flex: 1; background: #f8fafc; border-radius: 10px; padding: 15px; text-align: center; border: 1px solid #e2e8f0; }
+.stat-item .stat-val { font-size: 20px; font-weight: 700; color: #0f172a; }
+.stat-item .stat-lbl { font-size: 10px; color: #718096; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+
+.insight-bar { display: flex; gap: 15px; margin: 15px 0; }
+.insight-bar .bar-item { flex: 1; border-radius: 10px; padding: 16px; color: #fff; }
+.insight-bar .bar-item.ig { background: linear-gradient(135deg, #e1306c, #c13584); }
+.insight-bar .bar-item.fb { background: linear-gradient(135deg, #1877f2, #0d65d9); }
+.insight-bar .bar-item .big-num { font-size: 28px; font-weight: 800; }
+.insight-bar .bar-item .label { font-size: 11px; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+
+.month-section { margin: 20px 0; page-break-inside: avoid; }
+.month-section h3 { font-size: 16px; color: #4f46e5; margin: 0 0 8px; padding-bottom: 5px; border-bottom: 2px solid #e0e7ff; }
+
+.page-footer { text-align: center; padding: 20px 0 0; border-top: 1px solid #e2e8f0; margin-top: 25px; }
+.page-footer p { margin: 2px 0; font-size: 10px; color: #a0aec0; letter-spacing: 1px; }
+</style>
 </head>
 <body>
 
-<div class="cover-page">
-    <h1>QUARTERLY REPORT</h1>
-    <h2>Q{{ quarter }} {{ year }}</h2>
-    <p class="period">{{ month_names|join:" - " }}</p>
+<!-- ========== COVER PAGE ========== -->
+<div class="cover">
+    <div class="top-glow"></div>
+    <div class="brand">Sarvajanik University</div>
+    <div class="report-label">Quarterly Report</div>
+    <h1>QUARTERLY <strong>REPORT</strong></h1>
+    <div class="q-label">Q{{ quarter }} {{ year }}</div>
+    <div class="months-label">{{ month_names|join:" — " }}</div>
+    <div class="divider-line"></div>
+    <div class="presented-by">Presented By Analytics Team</div>
+    <div class="footer-note">MEDIA MANAGEMENT BY PRIMEX MEDIA SERVICES</div>
 </div>
 
-<div>
-    <div class="section-title">Executive Summary</div>
+<!-- ========== PAGE 1: EXECUTIVE SUMMARY ========== -->
+<div class="content">
+    <div class="section-header">
+        <div class="num">1</div>
+        <h2>Executive Summary</h2>
+        <div class="line"></div>
+    </div>
+
     <div class="ai-summary">
         {% if ai_summary %}
-        <p>{{ ai_summary|linebreaksbr }}</p>
+        {{ ai_summary|safe }}
         {% else %}
-        <p>AI summary was not generated. Please ensure GEMINI_API_KEY is configured.</p>
+        <p style="text-align:center; color:#a0aec0;">AI summary not available. Set <strong>GEMINI_API_KEY</strong> environment variable to enable AI-powered summaries.</p>
         {% endif %}
+    </div>
+
+    <div class="stat-row">
+        <div class="stat-item"><div class="stat-val">{{ totals.total_views|floatformat:"0" }}</div><div class="stat-lbl">Total Views</div></div>
+        <div class="stat-item"><div class="stat-val">{{ totals.total_reach|floatformat:"0" }}</div><div class="stat-lbl">Total Reach</div></div>
+        <div class="stat-item"><div class="stat-val">{{ totals.followers_gained|floatformat:"0" }}</div><div class="stat-lbl">Followers Gained</div></div>
+        <div class="stat-item"><div class="stat-val">{{ all_events_count }}</div><div class="stat-lbl">Total Events</div></div>
     </div>
 </div>
 
-<div class="page-break">
-    <div class="section-title">Quarterly Metrics Overview</div>
-    <div class="metric-grid">
-        <div class="metric-card">
-            <div class="value">{{ totals.total_views }}</div>
-            <div class="label">Total Views</div>
+<!-- ========== PAGE 2: MONTH-OVER-MONTH ========== -->
+<div class="content">
+    <div class="section-header">
+        <div class="num" style="background:#0891b2;">2</div>
+        <h2>Month-over-Month Comparison</h2>
+        <div class="line"></div>
+    </div>
+
+    {% with m1=month_names.0 m2=month_names.1 m3=month_names.2 %}
+    {% with d1=analytics_by_month|get_item:m1 d2=analytics_by_month|get_item:m2 d3=analytics_by_month|get_item:m3 %}
+    <table>
+        <thead>
+            <tr><th>Metric</th><th>{{ m1 }}</th><th>{{ m2 }}</th><th>{{ m3 }}</th><th>Total</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Total Views</td><td>{{ d1|get_item:"total_views"|floatformat:"0" }}</td><td>{{ d2|get_item:"total_views"|floatformat:"0" }}</td><td>{{ d3|get_item:"total_views"|floatformat:"0" }}</td><td style="font-weight:800;color:#4f46e5;">{{ totals.total_views|floatformat:"0" }}</td></tr>
+            <tr><td>Total Reach</td><td>{{ d1|get_item:"total_reach"|floatformat:"0" }}</td><td>{{ d2|get_item:"total_reach"|floatformat:"0" }}</td><td>{{ d3|get_item:"total_reach"|floatformat:"0" }}</td><td style="font-weight:800;color:#4f46e5;">{{ totals.total_reach|floatformat:"0" }}</td></tr>
+            <tr><td>Followers Gained</td><td>{{ d1|get_item:"followers_gained"|floatformat:"0" }}</td><td>{{ d2|get_item:"followers_gained"|floatformat:"0" }}</td><td>{{ d3|get_item:"followers_gained"|floatformat:"0" }}</td><td style="font-weight:800;color:#4f46e5;">{{ totals.followers_gained|floatformat:"0" }}</td></tr>
+            <tr><td>Instagram Views</td><td>{{ d1|get_item:"instagram_views"|floatformat:"0" }}</td><td>{{ d2|get_item:"instagram_views"|floatformat:"0" }}</td><td>{{ d3|get_item:"instagram_views"|floatformat:"0" }}</td><td style="font-weight:800;color:#4f46e5;">{{ totals.instagram_views|floatformat:"0" }}</td></tr>
+            <tr><td>Facebook Views</td><td>{{ d1|get_item:"facebook_views"|floatformat:"0" }}</td><td>{{ d2|get_item:"facebook_views"|floatformat:"0" }}</td><td>{{ d3|get_item:"facebook_views"|floatformat:"0" }}</td><td style="font-weight:800;color:#4f46e5;">{{ totals.facebook_views|floatformat:"0" }}</td></tr>
+        </tbody>
+    </table>
+    {% endwith %}
+    {% endwith %}
+
+    <div style="margin-top:25px;">
+        <h4 style="font-size:13px; color:#718096; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px;">Views Distribution Across Months</h4>
+        {% for m in month_names %}
+        {% with val=analytics_by_month|get_item:m|get_item:"total_views" %}
+        <div class="platform-bar-wrap">
+            <div class="label-row">
+                <span class="name">{{ m }}</span>
+                <span class="pct">{{ val|floatformat:"0" }} views</span>
+            </div>
+            <div class="platform-bar">
+                <div class="fill" style="width:{% widthratio val max_monthly_val 100 %}%; background:linear-gradient(90deg,#4f46e5,#06b6d4);"></div>
+            </div>
         </div>
-        <div class="metric-card">
-            <div class="value">{{ totals.total_reach }}</div>
-            <div class="label">Total Reach</div>
+        {% endwith %}
+        {% endfor %}
+    </div>
+</div>
+
+<!-- ========== PAGE 3: PLATFORM PERFORMANCE ========== -->
+<div class="content">
+    <div class="section-header">
+        <div class="num" style="background:#d97706;">3</div>
+        <h2>Platform Performance</h2>
+        <div class="line"></div>
+    </div>
+
+    <div class="insight-bar">
+        <div class="bar-item ig">
+            <div class="big-num">{{ totals.instagram_views|floatformat:"0" }}</div>
+            <div class="label">Total Instagram Views</div>
         </div>
-        <div class="metric-card">
-            <div class="value">{{ totals.followers_gained }}</div>
-            <div class="label">Followers Gained</div>
-        </div>
-        <div class="metric-card">
-            <div class="value">{{ all_events_count }}</div>
-            <div class="label">Total Events</div>
+        <div class="bar-item fb">
+            <div class="big-num">{{ totals.facebook_views|floatformat:"0" }}</div>
+            <div class="label">Total Facebook Views</div>
         </div>
     </div>
 
-    <h4 style="margin-top: 25px;">Month-over-Month Comparison</h4>
+    <h4 style="font-size:13px; color:#718096; text-transform:uppercase; letter-spacing:1px; margin:20px 0 10px;">Monthly Platform Breakdown</h4>
     <table>
         <thead>
-            <tr>
-                <th>Metric</th>
-                {% for m in month_names %}
-                <th>{{ m }}</th>
-                {% endfor %}
-            </tr>
+            <tr><th>Month</th><th>Instagram Views</th><th>Facebook Views</th><th>Total</th><th style="text-align:center;">IG Share</th></tr>
         </thead>
         <tbody>
+            {% for m in month_names %}
+            {% with ig=analytics_by_month|get_item:m|get_item:"instagram_views" fb=analytics_by_month|get_item:m|get_item:"facebook_views" %}
+            {% with total_m=ig|add:fb %}
             <tr>
-                <td><strong>Total Views</strong></td>
-                {% for m in month_names %}
-                <td>{{ analytics_by_month|get_item:m|get_item:"total_views" }}</td>
-                {% endfor %}
+                <td><strong>{{ m }}</strong></td>
+                <td>{{ ig|floatformat:"0" }}</td>
+                <td>{{ fb|floatformat:"0" }}</td>
+                <td style="font-weight:700;">{{ total_m|floatformat:"0" }}</td>
+                <td style="text-align:center;">
+                    {% if total_m > 0 %}
+                    <span style="display:inline-block; padding:2px 10px; border-radius:4px; font-size:11px; font-weight:600; color:#e1306c; background:#fce4ec;">
+                        {% widthratio ig total_m 100 %}%
+                    </span>
+                    {% else %}—{% endif %}
+                </td>
             </tr>
-            <tr>
-                <td><strong>Total Reach</strong></td>
-                {% for m in month_names %}
-                <td>{{ analytics_by_month|get_item:m|get_item:"total_reach" }}</td>
-                {% endfor %}
-            </tr>
-            <tr>
-                <td><strong>Followers Gained</strong></td>
-                {% for m in month_names %}
-                <td>{{ analytics_by_month|get_item:m|get_item:"followers_gained" }}</td>
-                {% endfor %}
-            </tr>
-            <tr>
-                <td><strong>Instagram Views</strong></td>
-                {% for m in month_names %}
-                <td>{{ analytics_by_month|get_item:m|get_item:"instagram_views" }}</td>
-                {% endfor %}
-            </tr>
-            <tr>
-                <td><strong>Facebook Views</strong></td>
-                {% for m in month_names %}
-                <td>{{ analytics_by_month|get_item:m|get_item:"facebook_views" }}</td>
-                {% endfor %}
-            </tr>
+            {% endwith %}
+            {% endwith %}
+            {% endfor %}
         </tbody>
     </table>
 </div>
 
-<div class="page-break">
-    <div class="section-title">Top Performing Content</div>
-    <h4 style="margin-top: 15px;">Instagram</h4>
-    {% for post in all_top_ig %}
-    <div class="top-post">
-        <span>#{{ forloop.counter }} ({{ post.views }} views)</span>
-        <span>{{ post.likes }} likes | {{ post.shares }} shares</span>
+<!-- ========== PAGE 4: TOP PERFORMING CONTENT ========== -->
+<div class="content">
+    <div class="section-header">
+        <div class="num" style="background:#059669;">4</div>
+        <h2>Top Performing Content</h2>
+        <div class="line"></div>
     </div>
-    {% empty %}
-    <p class="text-muted">No Instagram top posts data.</p>
-    {% endfor %}
 
-    <h4 style="margin-top: 25px;">Facebook</h4>
-    {% for post in all_top_fb %}
-    <div class="top-post">
-        <span>#{{ forloop.counter }} ({{ post.views }} views)</span>
-        <span>{{ post.likes }} likes</span>
+    <h4 style="font-size:14px; color:#e1306c; margin:0 0 10px;">📸 Top Instagram Posts (Quarter)</h4>
+    <table class="rank-table">
+        <thead>
+            <tr><th>Rank</th><th>Views</th><th>Likes</th><th>Shares</th></tr>
+        </thead>
+        <tbody>
+            {% for post in all_top_ig %}
+            <tr>
+                <td class="rank {% if forloop.counter == 1 %}gold{% elif forloop.counter == 2 %}silver{% elif forloop.counter == 3 %}bronze{% endif %}">#{{ forloop.counter }}</td>
+                <td class="metric-val">{{ post.views|floatformat:"0" }}</td>
+                <td class="metric-val">{{ post.likes|floatformat:"0" }}</td>
+                <td class="metric-val">{{ post.shares|floatformat:"0" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" style="text-align:center; color:#a0aec0; padding:15px;">No data available.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h4 style="font-size:14px; color:#1877f2; margin:20px 0 10px;">📘 Top Facebook Posts (Quarter)</h4>
+    <table class="rank-table">
+        <thead>
+            <tr><th>Rank</th><th>Views</th><th>Likes</th></tr>
+        </thead>
+        <tbody>
+            {% for post in all_top_fb %}
+            <tr>
+                <td class="rank {% if forloop.counter == 1 %}gold{% elif forloop.counter == 2 %}silver{% elif forloop.counter == 3 %}bronze{% endif %}">#{{ forloop.counter }}</td>
+                <td class="metric-val">{{ post.views|floatformat:"0" }}</td>
+                <td class="metric-val">{{ post.likes|floatformat:"0" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3" style="text-align:center; color:#a0aec0; padding:15px;">No data available.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="stat-row" style="margin-top:20px;">
+        <div class="stat-item"><div class="stat-val">{{ all_events_count }}</div><div class="stat-lbl">Events</div></div>
+        <div class="stat-item"><div class="stat-val">{{ newspapers_count }}</div><div class="stat-lbl">News Coverage</div></div>
     </div>
-    {% empty %}
-    <p class="text-muted">No Facebook top posts data.</p>
-    {% endfor %}
-</div>
 
-{% if newspapers_count %}
-<div>
-    <div class="section-title">Media Coverage Summary</div>
-    <p>Total newspaper placements across the quarter: <strong>{{ newspapers_count }}</strong></p>
-</div>
-{% endif %}
-
-<div class="footer">
-    <p>MEDIA MANAGEMENT BY PRIMEX MEDIA SERVICES</p>
-    <p>Generated by SU Analytics Platform | Q{{ quarter }} {{ year }}</p>
+    <div class="page-footer">
+        <p>MEDIA MANAGEMENT BY PRIMEX MEDIA SERVICES</p>
+        <p>Generated by SU Analytics Platform | Q{{ quarter }} {{ year }}</p>
+    </div>
 </div>
 
 </body>
