@@ -1,0 +1,20 @@
+# ============================================================
+# SU Analytics - University Analytics Reporting Platform
+# Python Dependencies
+# ============================================================
+
+# ── Web Framework ────────────────────────────────────────────
+Django==5.2.14
+
+# ── PDF Generation ───────────────────────────────────────────
+# WeasyPrint renders HTML/CSS templates into PDF reports
+weasyprint==68.1
+
+# ── AI / Generative AI ───────────────────────────────────────
+# Google Gemini API used for AI-powered quarterly report summaries
+google-generativeai==0.8.6
+
+# ── Image Processing ─────────────────────────────────────────
+# Pillow is required by Django's ImageField (college logos,
+# newspaper clippings, top-post screenshots)
+Pillow==12.2.0
