@@ -98,13 +98,31 @@ def generate_quarterly(request):
                 'facebook_views': sum(a.facebook_views for a in qs),
             }
 
-        # AI summary via Gemini
+        # AI summary via Gemini with Rate Limiting
         ai_summary = ""
-        try:
-            import google.generativeai as genai
-            genai.configure(api_key=os.environ.get('GEMINI_API_KEY', ''))
-            model = genai.GenerativeModel('gemini-2.0-flash')
-            prompt = f"""Analyze the following university social media quarterly data and generate a professional summary.
+        from django.core.cache import cache
+        from django.contrib import messages
+        import time
+
+        # Keys for tracking
+        cooldown_key = f"gemini_cooldown_{request.user.id}"
+        limit_key = f"gemini_limit_{request.user.id}_{date.today()}"
+        
+        # 1. Check Cooldown
+        last_call = cache.get(cooldown_key)
+        if last_call:
+            ai_summary = "AI summary skipped due to cooldown. Please wait 60 seconds."
+        else:
+            # 2. Check Daily Limit
+            daily_count = cache.get(limit_key, 0)
+            if daily_count >= settings.GEMINI_CONFIG['DAILY_LIMIT']:
+                ai_summary = f"AI summary skipped. Daily limit of {settings.GEMINI_CONFIG['DAILY_LIMIT']} reached."
+            else:
+                try:
+                    import google.generativeai as genai
+                    genai.configure(api_key=os.environ.get('GEMINI_API_KEY', ''))
+                    model = genai.GenerativeModel('gemini-2.0-flash')
+                    prompt = f"""Analyze the following university social media quarterly data and generate a professional summary.
 
 Quarter: Q{quarter} {year}
 Months: {', '.join(month_names)}
@@ -121,10 +139,15 @@ Write a professional quarterly summary with:
 3. Event impact highlights
 4. Engagement trends
 5. Recommendations for next quarter"""
-            response = model.generate_content(prompt)
-            ai_summary = response.text
-        except Exception as e:
-            ai_summary = f"AI summary unavailable. Error: {str(e)}"
+                    response = model.generate_content(prompt)
+                    ai_summary = response.text
+                    
+                    # 3. Update tracking on success
+                    cache.set(cooldown_key, True, settings.GEMINI_CONFIG['COOLDOWN_SECONDS'])
+                    cache.set(limit_key, daily_count + 1, 86400) # 24 hours
+                    
+                except Exception as e:
+                    ai_summary = f"AI summary unavailable. Error: {str(e)}"
 
         totals = {}
         for key in ['total_views', 'total_reach', 'followers_gained', 'instagram_views', 'facebook_views']:
