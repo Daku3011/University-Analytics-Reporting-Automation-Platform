@@ -196,7 +196,7 @@ body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; color: #2d3
                 <span class="pct">{{ ig|floatformat:"0" }} views</span>
             </div>
             <div class="platform-bar">
-                <div class="fill" style="width: {% widthratio ig total 100 %}%; background: linear-gradient(90deg, #e1306c, #c13584);"></div>
+                <div class="fill" style="width: {{ ig|pct:total }}%; background: linear-gradient(90deg, #e1306c, #c13584);"></div>
             </div>
         </div>
         <div class="platform-bar-wrap">
@@ -205,7 +205,7 @@ body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; color: #2d3
                 <span class="pct">{{ fb|floatformat:"0" }} views</span>
             </div>
             <div class="platform-bar">
-                <div class="fill" style="width: {% widthratio fb total 100 %}%; background: linear-gradient(90deg, #1877f2, #0d65d9);"></div>
+                <div class="fill" style="width: {{ fb|pct:total }}%; background: linear-gradient(90deg, #1877f2, #0d65d9);"></div>
             </div>
         </div>
         {% endif %}
