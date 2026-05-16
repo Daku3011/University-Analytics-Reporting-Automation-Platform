@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Dashboard</h2>
+    <span class="text-muted">Welcome, {{ user.username }}</span>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="number">{{ total_views|default:"0" }}</div>
+            <div class="label">Total Views</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="number">{{ total_reach|default:"0" }}</div>
+            <div class="label">Total Reach</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="number">{{ events_count|default:"0" }}</div>
+            <div class="label">Total Events</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="number">{{ colleges_count|default:"0" }}</div>
+            <div class="label">Colleges</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-8">
+        <div class="card p-4">
+            <h5>Monthly Performance</h5>
+            <canvas id="performanceChart" height="200"></canvas>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-4">
+            <h5>Recent Events</h5>
+            <ul class="list-unstyled">
+                {% for e in recent_events %}
+                <li class="mb-2 pb-2 border-bottom">
+                    <strong>{{ e.title|truncatechars:40 }}</strong><br>
+                    <small class="text-muted">{{ e.college.code }} | {{ e.date }}</small>
+                </li>
+                {% empty %}
+                <li class="text-muted">No events yet</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+const chartData = {{ chart_data|safe }};
+new Chart(document.getElementById('performanceChart'), {
+    type: 'bar',
+    data: {
+        labels: chartData.labels,
+        datasets: [{
+            label: 'Views',
+            data: chartData.views,
+            backgroundColor: '#4f46e5'
+        }, {
+            label: 'Reach',
+            data: chartData.reach,
+            backgroundColor: '#06b6d4'
+        }]
+    }
+});
+</script>
+{% endblock %}

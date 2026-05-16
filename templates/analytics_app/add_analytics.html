@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}Add Analytics{% endblock %}
+{% block content %}
+<h2 class="mb-4">Add Monthly Analytics</h2>
+<div class="card p-4">
+    <form method="post">
+        {% csrf_token %}
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">College</label>
+                <select name="college" class="form-select">
+                    {% for c in colleges %}
+                    <option value="{{ c.id }}">{{ c.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Month</label>
+                <select name="month" class="form-select">
+                    {% for num, name in months %}
+                    <option value="{{ num }}">{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Year</label>
+                <input type="number" name="year" class="form-control" value="2026">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Instagram Views</label>
+                <input type="number" name="instagram_views" class="form-control" value="0">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Facebook Views</label>
+                <input type="number" name="facebook_views" class="form-control" value="0">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Total Views</label>
+                <input type="number" name="total_views" class="form-control" value="0">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Instagram Reach</label>
+                <input type="number" name="instagram_reach" class="form-control" value="0">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Facebook Reach</label>
+                <input type="number" name="facebook_reach" class="form-control" value="0">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Total Reach</label>
+                <input type="number" name="total_reach" class="form-control" value="0">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Followers Gained</label>
+                <input type="number" name="followers_gained" class="form-control" value="0">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Reels Count</label>
+                <input type="number" name="reels_count" class="form-control" value="0">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Graphics Count</label>
+                <input type="number" name="graphics_count" class="form-control" value="0">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Instagram Followers</label>
+                <input type="number" name="instagram_followers" class="form-control" value="0">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Facebook Followers</label>
+                <input type="number" name="facebook_followers" class="form-control" value="0">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">YouTube Subscribers</label>
+                <input type="number" name="youtube_subscribers" class="form-control" value="0">
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary mt-3">Save Analytics</button>
+    </form>
+</div>
+{% endblock %}

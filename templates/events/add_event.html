@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Add Event{% endblock %}
+{% block content %}
+<h2 class="mb-4">Add Event</h2>
+<div class="card p-4">
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="row g-3">
+            <div class="col-md-8">
+                <label class="form-label">Title</label>
+                <input type="text" name="title" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Category</label>
+                <select name="category" class="form-select">
+                    <option value="workshop">Workshop</option>
+                    <option value="festival">Festival</option>
+                    <option value="placement">Placement</option>
+                    <option value="achievement">Achievement</option>
+                    <option value="conference">Conference</option>
+                    <option value="guest_lecture">Guest Lecture</option>
+                    <option value="academic">Academic</option>
+                    <option value="cultural">Cultural</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Date</label>
+                <input type="date" name="date" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">College</label>
+                <select name="college" class="form-select">
+                    {% for c in colleges %}
+                    <option value="{{ c.id }}">{{ c.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-12">
+                <label class="form-label">Description</label>
+                <textarea name="description" class="form-control" rows="3"></textarea>
+            </div>
+            <div class="col-12">
+                <label class="form-label">Media (images/videos)</label>
+                <input type="file" name="media" class="form-control" multiple>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary mt-3">Save Event</button>
+    </form>
+</div>
+{% endblock %}

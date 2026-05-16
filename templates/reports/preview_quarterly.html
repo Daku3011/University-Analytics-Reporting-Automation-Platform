@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}Quarterly Report{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3">
+    <h2>Quarterly Report Generated</h2>
+    <a href="{{ report.pdf_file.url }}" class="btn btn-success" target="_blank">Download PDF</a>
+</div>
+<div class="card p-4">
+    <p><strong>Period:</strong> Q{{ report.quarter }} {{ report.year }}</p>
+    <p><strong>Generated:</strong> {{ report.created_at }}</p>
+    {% if report.ai_summary %}
+    <div class="alert alert-info">
+        <h5>AI Summary</h5>
+        <p>{{ report.ai_summary|linebreaks }}</p>
+    </div>
+    {% endif %}
+    <iframe src="{{ report.pdf_file.url }}" width="100%" height="800px" style="border: 1px solid #ddd;"></iframe>
+</div>
+{% endblock %}

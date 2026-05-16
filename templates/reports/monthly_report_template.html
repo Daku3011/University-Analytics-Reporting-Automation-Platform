@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page { size: A4; margin: 20mm 15mm; }
+        body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color: #333; }
+        .cover-page { text-align: center; padding-top: 200px; page-break-after: always; }
+        .cover-page h1 { font-size: 48px; letter-spacing: 8px; color: #1a1f36; }
+        .cover-page h2 { font-size: 36px; color: #4f46e5; margin-top: 20px; }
+        .cover-page .presented { margin-top: 60px; font-size: 16px; color: #666; }
+        .section-title { font-size: 24px; color: #1a1f36; border-bottom: 3px solid #4f46e5; padding-bottom: 8px; margin: 30px 0 20px; }
+        .metric-grid { display: flex; flex-wrap: wrap; gap: 15px; margin: 20px 0; }
+        .metric-card { flex: 1; min-width: 180px; background: #f8f9fc; border-radius: 10px; padding: 20px; text-align: center; border: 1px solid #e2e8f0; }
+        .metric-card .value { font-size: 32px; font-weight: 700; color: #4f46e5; }
+        .metric-card .label { font-size: 13px; color: #718096; margin-top: 5px; }
+        .event-card { border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin: 10px 0; page-break-inside: avoid; }
+        .event-card h4 { margin: 0 0 5px; font-size: 16px; color: #1a1f36; }
+        .event-card .date { color: #718096; font-size: 13px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        th { background: #f8f9fc; font-weight: 600; color: #1a1f36; }
+        .top-post { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #eee; }
+        .top-post .views { font-weight: 700; color: #4f46e5; }
+        .page-break { page-break-before: always; }
+        .footer { text-align: center; color: #a0aec0; font-size: 12px; margin-top: 50px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
+    </style>
+</head>
+<body>
+
+<div class="cover-page">
+    <h1>MONTHLY REPORT</h1>
+    <h2>{{ month_name|upper }} {{ year }}</h2>
+    <p class="presented">PRESENTED BY : {{ college.name|upper }}</p>
+</div>
+
+{% if analytics %}
+<div>
+    <div class="section-title">Overview</div>
+    <div class="metric-grid">
+        <div class="metric-card">
+            <div class="value">{{ analytics.instagram_views|default:"0" }}</div>
+            <div class="label">Instagram Views</div>
+        </div>
+        <div class="metric-card">
+            <div class="value">{{ analytics.facebook_views|default:"0" }}</div>
+            <div class="label">Facebook Views</div>
+        </div>
+        <div class="metric-card">
+            <div class="value">{{ analytics.total_views|default:"0" }}</div>
+            <div class="label">Total Views</div>
+        </div>
+        <div class="metric-card">
+            <div class="value">{{ analytics.total_reach|default:"0" }}</div>
+            <div class="label">Total Reach</div>
+        </div>
+    </div>
+    <div class="metric-grid">
+        <div class="metric-card">
+            <div class="value">{{ analytics.followers_gained|default:"0" }}</div>
+            <div class="label">Followers Gained</div>
+        </div>
+        <div class="metric-card">
+            <div class="value">{{ analytics.reels_count|default:"0" }}</div>
+            <div class="label">Reels Created</div>
+        </div>
+        <div class="metric-card">
+            <div class="value">{{ analytics.graphics_count|default:"0" }}</div>
+            <div class="label">Graphics Created</div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="page-break">
+    <div class="section-title">Events & Activities</div>
+    {% for event in events %}
+    <div class="event-card">
+        <h4>{{ event.title }}</h4>
+        <div class="date">{{ event.date }} | {{ event.get_category_display }}</div>
+        {% if event.description %}
+        <p style="margin-top: 8px; font-size: 14px;">{{ event.description|truncatechars:200 }}</p>
+        {% endif %}
+    </div>
+    {% empty %}
+    <p class="text-muted">No events recorded for this month.</p>
+    {% endfor %}
+</div>
+
+<div class="page-break">
+    <div class="section-title">Top Performing Posts - Instagram</div>
+    {% for post in top_ig %}
+    <div class="top-post">
+        <span>#{{ forloop.counter }} {{ post.caption|truncatechars:60 }}</span>
+        <span class="views">{{ post.views }} views | {{ post.likes }} likes | {{ post.shares }} shares</span>
+    </div>
+    {% empty %}
+    <p class="text-muted">No top posts data.</p>
+    {% endfor %}
+</div>
+
+<div>
+    <div class="section-title">Top Performing Posts - Facebook</div>
+    {% for post in top_fb %}
+    <div class="top-post">
+        <span>#{{ forloop.counter }} {{ post.caption|truncatechars:60 }}</span>
+        <span class="views">{{ post.views }} views | {{ post.likes }} likes</span>
+    </div>
+    {% empty %}
+    <p class="text-muted">No top posts data.</p>
+    {% endfor %}
+</div>
+
+{% if newspapers %}
+<div class="page-break">
+    <div class="section-title">Media Coverage - Newspaper</div>
+    <table>
+        <thead>
+            <tr><th>Publication</th><th>Date</th><th>Page</th><th>Headline</th></tr>
+        </thead>
+        <tbody>
+            {% for n in newspapers %}
+            <tr>
+                <td>{{ n.publication }}</td>
+                <td>{{ n.date }}</td>
+                <td>{{ n.page }}</td>
+                <td>{{ n.headline|truncatechars:50 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% if press_releases %}
+<div class="page-break">
+    <div class="section-title">Press Releases</div>
+    {% for pr in press_releases %}
+    <div class="event-card">
+        <h4>{{ pr.title }}</h4>
+        <div class="date">{{ pr.date_submitted }} | {{ pr.placements }} placements | Reach: {{ pr.potential_reach }}</div>
+        <p style="margin-top: 8px; font-size: 13px;">{{ pr.content|truncatechars:300 }}</p>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="footer">
+    <p>MEDIA MANAGEMENT BY PRIMEX MEDIA SERVICES</p>
+    <p>Generated by SU Analytics Platform | {{ month_name }} {{ year }}</p>
+</div>
+
+</body>
+</html>
