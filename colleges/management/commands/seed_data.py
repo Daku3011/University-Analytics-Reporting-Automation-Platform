@@ -1,0 +1,95 @@
+from django.core.management.base import BaseCommand
+from colleges.models import College
+from events.models import Event
+from analytics_app.models import MonthlyAnalytics, TopPost
+
+EVENTS = [
+    {"month": 1, "day": 6, "title": "New Year Posts", "category": "other"},
+    {"month": 1, "day": 13, "title": "Bird Rescue Training Program | SU-Nature Club", "category": "workshop"},
+    {"month": 1, "day": 13, "title": "SCET Organises One-Day AI Conclave with Industry Experts", "category": "conference"},
+    {"month": 1, "day": 21, "title": "Cyber Security in the Era of AI", "category": "workshop"},
+    {"month": 1, "day": 23, "title": "4th Convocation Ceremony - Awards Degrees to Over 2,000 Students", "category": "academic"},
+    {"month": 1, "day": 27, "title": "Two-Day R&D Awareness and Capacity Building Workshop", "category": "workshop"},
+    {"month": 1, "day": 28, "title": "SCCCA Professor Completes Official Statistics Training at NSSTA", "category": "achievement"},
+    {"month": 1, "day": 29, "title": "Third Student Conference on Atmanirbhar Bharat", "category": "conference"},
+    {"month": 2, "day": 1, "title": "SU Carnival 2026 Posts Begin", "category": "festival"},
+    {"month": 2, "day": 11, "title": "SU Carnival 2026 - Grand Confluence of Culture, Creativity & Learning", "category": "festival"},
+    {"month": 2, "day": 17, "title": "Sarvajanik University brings home 1st Prize at IIM-B Plan Competition", "category": "achievement"},
+    {"month": 2, "day": 17, "title": "Celebrating 150 Years of Vande Mataram", "category": "cultural"},
+    {"month": 2, "day": 21, "title": "Surat Art Street 2026 - Two-Day Celebration at SCET Amphitheatre", "category": "cultural"},
+    {"month": 2, "day": 25, "title": "SUMUN 2.0 - Sarvajanik University Hosts Grand Model United Nations Conference", "category": "conference"},
+    {"month": 2, "day": 26, "title": "SRLIM Organizes Stractical - The Startup Battle National-Level Competition", "category": "conference"},
+    {"month": 3, "day": 6, "title": "BRCM College - Power of Emotions in Positive Mental Health", "category": "workshop"},
+    {"month": 3, "day": 10, "title": "Samantvam - Gender Sensitisation Programme by Women Development Cell", "category": "workshop"},
+    {"month": 3, "day": 11, "title": "BRCM Guest Lecture on Display Advertising for SYBBA", "category": "guest_lecture"},
+    {"month": 3, "day": 12, "title": "BRCM Guest Lecture on Search Engine Advertising", "category": "guest_lecture"},
+    {"month": 3, "day": 13, "title": "Google Workspace FDP - Empowering Faculty with Digital Skills", "category": "workshop"},
+    {"month": 3, "day": 16, "title": "BRCM College organized Bizz Stratathon", "category": "academic"},
+    {"month": 3, "day": 17, "title": "SCOL Session with DLSA Surat", "category": "workshop"},
+    {"month": 3, "day": 24, "title": "MoU with India Accelerator to Boost Startup Ecosystem", "category": "achievement"},
+    {"month": 3, "day": 25, "title": "Fulbright-Nehru Fellowship Opportunities Session 2027-28", "category": "academic"},
+    {"month": 3, "day": 27, "title": "Sanskrit Short Film Training Workshop at Chunilal Gandhi Vidyabhavan", "category": "workshop"},
+    {"month": 3, "day": 30, "title": "Samanvay-26 - Annual Function of BRCM College", "category": "festival"},
+]
+
+ANALYTICS_DATA = [
+    {"month": 1, "year": 2026, "ig_views": 283200, "fb_views": 47300, "yt_views": 463, "total_views": 330900, "ig_reach": 18500, "fb_reach": 14400, "total_reach": 32900, "ig_followers": 155, "fb_followers": 0, "yt_subs": 18, "gained": 193, "reels": 2, "graphics": 37},
+    {"month": 2, "year": 2026, "ig_views": 587200, "fb_views": 34500, "yt_views": 350, "total_views": 622050, "ig_reach": 56100, "fb_reach": 10100, "total_reach": 66200, "ig_followers": 432, "fb_followers": 0, "yt_subs": 26, "gained": 460, "reels": 15, "graphics": 30},
+    {"month": 3, "year": 2026, "ig_views": 235200, "fb_views": 27100, "yt_views": 282, "total_views": 262300, "ig_reach": 19900, "fb_reach": 7400, "total_reach": 27300, "ig_followers": 111, "fb_followers": 0, "yt_subs": 16, "gained": 130, "reels": 0, "graphics": 26},
+]
+
+TOP_POSTS = {
+    1: {
+        "instagram": [{"views": 17100, "likes": 291, "shares": 161}, {"views": 12600, "likes": 257, "shares": 135}, {"views": 11200, "likes": 213, "shares": 68}, {"views": 8500, "likes": 217, "shares": 124}, {"views": 7200, "likes": 157, "shares": 27}],
+        "facebook": [{"views": 13200, "likes": 203}, {"views": 10900, "likes": 96}, {"views": 7100, "likes": 125}, {"views": 8400, "likes": 164}, {"views": 1600, "likes": 27}],
+    },
+    2: {
+        "instagram": [{"views": 43800, "likes": 896, "shares": 267}, {"views": 37600, "likes": 1500, "shares": 525}, {"views": 20900, "likes": 495, "shares": 521}, {"views": 18100, "likes": 334, "shares": 91}, {"views": 15600, "likes": 605, "shares": 104}],
+        "facebook": [{"views": 16600, "likes": 487}, {"views": 9800, "likes": 362}, {"views": 7400, "likes": 127}, {"views": 18100, "likes": 334}, {"views": 10300, "likes": 201}],
+    },
+    3: {
+        "instagram": [{"views": 11700, "likes": 141, "shares": 0}, {"views": 8700, "likes": 113, "shares": 0}, {"views": 7300, "likes": 178, "shares": 0}, {"views": 8000, "likes": 140, "shares": 0}, {"views": 5700, "likes": 95, "shares": 0}],
+        "facebook": [{"views": 8000, "likes": 140}, {"views": 5800, "likes": 34}, {"views": 6400, "likes": 106}, {"views": 3300, "likes": 44}, {"views": 2900, "likes": 24}],
+    },
+}
+
+class Command(BaseCommand):
+    help = 'Seed demo data from January-March 2026 reports'
+
+    def handle(self, *args, **options):
+        college, _ = College.objects.get_or_create(
+            code="SU", defaults={"name": "Sarvajanik University"}
+        )
+
+        for a in ANALYTICS_DATA:
+            MonthlyAnalytics.objects.update_or_create(
+                college=college, month=a["month"], year=a["year"],
+                defaults={
+                    "instagram_views": a["ig_views"], "facebook_views": a["fb_views"],
+                    "total_views": a["total_views"], "instagram_reach": a["ig_reach"],
+                    "facebook_reach": a["fb_reach"], "total_reach": a["total_reach"],
+                    "instagram_followers": a["ig_followers"], "youtube_subscribers": a["yt_subs"],
+                    "followers_gained": a["gained"], "reels_count": a["reels"],
+                    "graphics_count": a["graphics"],
+                }
+            )
+
+        for ev in EVENTS:
+            Event.objects.get_or_create(
+                college=college,
+                title=ev["title"],
+                date=f"2026-{ev['month']:02d}-{ev['day']:02d}",
+                defaults={"category": ev["category"]}
+            )
+
+        TopPost.objects.all().delete()
+        for month_num, posts in TOP_POSTS.items():
+            for platform_key in ["instagram", "facebook"]:
+                for p in posts.get(platform_key, []):
+                    TopPost.objects.create(
+                        college=college, month=month_num, year=2026,
+                        platform=platform_key, views=p["views"],
+                        likes=p["likes"], shares=p.get("shares", 0),
+                    )
+
+        self.stdout.write(self.style.SUCCESS(f"Seed data loaded: {len(ANALYTICS_DATA)} months, {len(EVENTS)} events, {sum(len(v['instagram'])+len(v['facebook']) for v in TOP_POSTS.values())} top posts"))
