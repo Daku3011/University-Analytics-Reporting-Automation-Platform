@@ -1,19 +1,23 @@
 # ── Stage: Build ─────────────────────────────────────────────────────────────
 FROM python:3.10-slim
 
-# Install GTK3/Pango/Cairo (required by WeasyPrint for PDF generation)
+# Install native libraries required by WeasyPrint for PDF generation.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libglib2.0-0 \
+    libgobject-2.0-0 \
+    libcairo2 \
     libpango-1.0-0 \
     libpangocairo-1.0-0 \
-    libcairo2 \
-    libgdk-pixbuf-xlib-2.0-0 \
-    libgdk-pixbuf2.0-common \
-    libffi-dev \
+    libpangoft2-1.0-0 \
+    libgdk-pixbuf-2.0-0 \
+    libffi8 \
     shared-mime-info \
     fonts-liberation \
     fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*
+
+# Some WeasyPrint loaders look up this exact name; provide compatibility alias.
+RUN ln -sf /usr/lib/x86_64-linux-gnu/libgobject-2.0.so.0 /usr/lib/x86_64-linux-gnu/libgobject-2.0-0
 
 # Set working directory
 WORKDIR /app
@@ -35,7 +39,10 @@ RUN python manage.py collectstatic --noinput --settings=su_analytics.settings ||
 
 # Run migrations and create superuser on startup via entrypoint
 COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+RUN apt-get update && apt-get install -y --no-install-recommends dos2unix && \
+    dos2unix /entrypoint.sh && \
+    chmod +x /entrypoint.sh && \
+    rm -rf /var/lib/apt/lists/*
 
 # HF Spaces runs on port 7860
 EXPOSE 7860

@@ -21,6 +21,9 @@ SECRET_KEY = os.environ.get(
 
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 
+# Treat DEBUG=False as production unless explicitly overridden
+IS_PRODUCTION = os.environ.get('DJANGO_PRODUCTION', 'False') == 'True' or not DEBUG
+
 ALLOWED_HOSTS = os.environ.get(
     'ALLOWED_HOSTS',
     '127.0.0.1,localhost,.hf.space,.huggingface.co'
@@ -80,15 +83,16 @@ LOGOUT_REDIRECT_URL = 'login'
 SESSION_COOKIE_AGE = 3600
 # Session ends when browser closes
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-# Required for cross-origin iframe (HF Spaces): SameSite=None + Secure
+# Required for cross-origin iframe in production (HF Spaces): SameSite=None + Secure
+# For local HTTP development, use Lax + non-secure cookies so login sessions persist.
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SAMESITE = 'None'
-SESSION_COOKIE_SECURE = True   # SameSite=None requires Secure
+SESSION_COOKIE_SAMESITE = 'None' if IS_PRODUCTION else 'Lax'
+SESSION_COOKIE_SECURE = IS_PRODUCTION
 
 # ── CSRF Security ─────────────────────────────────────────────────────────────
 CSRF_COOKIE_HTTPONLY = True
-CSRF_COOKIE_SAMESITE = 'None'
-CSRF_COOKIE_SECURE = True      # SameSite=None requires Secure
+CSRF_COOKIE_SAMESITE = 'None' if IS_PRODUCTION else 'Lax'
+CSRF_COOKIE_SECURE = IS_PRODUCTION
 
 # ── Security Headers ──────────────────────────────────────────────────────────
 # X-Frame-Options intentionally NOT set — HF Spaces must embed app from different origin
@@ -102,6 +106,8 @@ CSRF_TRUSTED_ORIGINS = [
     'https://*.huggingface.co',
     'http://127.0.0.1:8000',
     'http://localhost:8000',
+    'http://127.0.0.1:7860',
+    'http://localhost:7860',
 ]
 
 WSGI_APPLICATION = 'su_analytics.wsgi.application'

@@ -72,11 +72,16 @@ def generate_monthly(request):
             'press_releases': press_releases,
         }
         html_string = render_to_string('reports/monthly_report_template.html', context)
-        from weasyprint import HTML  # lazy import — requires GTK/Pango on Windows
-        pdf_dir = settings.MEDIA_ROOT / 'reports' / 'monthly'
-        pdf_dir.mkdir(parents=True, exist_ok=True)
-        pdf_path = pdf_dir / f'{college.code}_{month}_{year}.pdf'
-        HTML(string=html_string).write_pdf(pdf_path)
+        try:
+            from weasyprint import HTML  # lazy import — requires GTK/Pango on Windows
+            pdf_dir = settings.MEDIA_ROOT / 'reports' / 'monthly'
+            pdf_dir.mkdir(parents=True, exist_ok=True)
+            pdf_path = pdf_dir / f'{college.code}_{month}_{year}.pdf'
+            HTML(string=html_string).write_pdf(pdf_path)
+        except (ImportError, OSError) as e:
+            # WeasyPrint not available on this system (e.g., Windows without GTK)
+            messages.warning(request, f'PDF generation skipped: {str(e)}')
+            pdf_path = None
 
         report = MonthlyReport.objects.create(
             college=college, month=month, year=year,
@@ -218,11 +223,16 @@ Use clear professional language suitable for a university administration report.
             'newspapers_count': all_newspapers.count(),
         }
         html_string = render_to_string('reports/quarterly_report_template.html', context)
-        from weasyprint import HTML  # lazy import — requires GTK/Pango on Windows
-        pdf_dir = settings.MEDIA_ROOT / 'reports' / 'quarterly'
-        pdf_dir.mkdir(parents=True, exist_ok=True)
-        pdf_path = pdf_dir / f'Q{quarter}_{year}.pdf'
-        HTML(string=html_string).write_pdf(pdf_path)
+        try:
+            from weasyprint import HTML  # lazy import — requires GTK/Pango on Windows
+            pdf_dir = settings.MEDIA_ROOT / 'reports' / 'quarterly'
+            pdf_dir.mkdir(parents=True, exist_ok=True)
+            pdf_path = pdf_dir / f'Q{quarter}_{year}.pdf'
+            HTML(string=html_string).write_pdf(pdf_path)
+        except (ImportError, OSError) as e:
+            # WeasyPrint not available on this system
+            messages.warning(request, f'PDF generation skipped: {str(e)}')
+            pdf_path = None
 
         report = QuarterlyReport.objects.create(
             quarter=quarter, year=year,

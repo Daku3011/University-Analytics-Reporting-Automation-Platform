@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 set -e
 
 echo "--- SU Analytics: Starting up ---"
@@ -24,9 +24,15 @@ else:
 "
 
 echo "Starting Gunicorn server on port 7860..."
+# Ensure a writable temporary directory exists for Gunicorn worker tmp files
+mkdir -p /tmp
+export TMPDIR=/tmp
+
+# Use a stable worker temp dir to avoid FileNotFoundError in worker tmp handling
 exec gunicorn su_analytics.wsgi:application \
     --bind 0.0.0.0:7860 \
     --workers 1 \
+    --worker-tmp-dir /tmp \
     --timeout 600 \
     --graceful-timeout 600 \
     --access-logfile - \
