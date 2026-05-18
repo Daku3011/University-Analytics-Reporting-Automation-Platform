@@ -239,20 +239,251 @@ def preview_quarterly(request, report_id):
     return render(request, 'reports/preview_quarterly.html', {'report': report})
 
 
-# ── New Feature: Upload Large Report → Gemini Summarises → Condensed PDF ──────
+# ── New Feature: Upload 3 Monthly PDFs → Gemini Condenses → Quarterly PDF ─────
 
-ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx'}
-MAX_UPLOAD_MB = 50  # Gemini Files API supports up to 50 MB inline
+ALLOWED_EXTENSIONS = {'pdf'}   # Only PDF — Gemini natively understands PDF structure
 
 
-def _extract_docx_text(file_path):
-    """Fallback: extract plain text from DOCX for Gemini text prompt."""
+def _save_uploaded_file(ufile, prefix):
+    """Stream-save an uploaded file to disk without loading it all into memory."""
+    import pathlib
+    upload_dir = settings.MEDIA_ROOT / 'reports' / 'uploaded_sources'
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    safe_name = f"{prefix}_{ufile.name.replace(' ', '_').replace('/', '_')}"
+    save_path = upload_dir / safe_name
+    with open(save_path, 'wb') as fout:
+        for chunk in ufile.chunks(chunk_size=8 * 1024 * 1024):   # 8 MB chunks
+            fout.write(chunk)
+    return save_path, f'reports/uploaded_sources/{safe_name}'
+
+
+def _gemini_upload_and_wait(client, file_path):
+    """
+    Upload a PDF to Gemini Files API and wait until it's ACTIVE.
+    Returns the uploaded file object ready to use in generate_content.
+    Supports files up to 2 GB (no inline byte limit).
+    """
+    import time
+    import io
+
+    with open(file_path, 'rb') as f:
+        file_bytes = io.BytesIO(f.read())
+
+    from google.genai import types as genai_types
+    uploaded = client.files.upload(
+        file=file_bytes,
+        config=genai_types.UploadFileConfig(mime_type='application/pdf')
+    )
+
+    # Poll until ACTIVE (large files can take 30-60 seconds)
+    max_wait = 300   # 5 minutes max
+    waited   = 0
+    while uploaded.state.name == 'PROCESSING' and waited < max_wait:
+        time.sleep(5)
+        waited += 5
+        uploaded = client.files.get(name=uploaded.name)
+
+    if uploaded.state.name == 'FAILED':
+        raise Exception(f"Gemini file processing failed for {file_path.name}")
+
+    return uploaded
+
+
+@login_required
+def upload_document_report(request):
+    """
+    Faculty uploads up to 3 monthly PDF reports (Jan + Feb + Mar, each up to 70 MB).
+    Each PDF is saved to disk, uploaded to Gemini Files API, then Gemini reads all
+    three and condenses them into a professional 3-month quarterly summary PDF.
+    """
+    if request.method != 'POST':
+        return redirect('report_dashboard')
+
+    title   = request.POST.get('doc_title', '').strip() or 'Uploaded Report'
+    quarter = int(request.POST.get('doc_quarter', 1))
+    year    = int(request.POST.get('doc_year', date.today().year))
+
+    # ── Collect the uploaded files ────────────────────────────────────────────
+    files_in = [
+        request.FILES.get('source_file_1'),
+        request.FILES.get('source_file_2'),
+        request.FILES.get('source_file_3'),
+    ]
+    files_in = [f for f in files_in if f]   # drop any not uploaded
+
+    if not files_in:
+        return redirect('report_dashboard')
+
+    # Validate extensions
+    for f in files_in:
+        if f.name.rsplit('.', 1)[-1].lower() not in ALLOWED_EXTENSIONS:
+            return redirect('report_dashboard')
+
+    # ── Save each file to disk ────────────────────────────────────────────────
+    saved_paths    = []   # pathlib.Path objects
+    saved_relative = []   # 'reports/uploaded_sources/…' strings
+    for i, ufile in enumerate(files_in, start=1):
+        prefix = f"{year}_Q{quarter}_m{i}"
+        path, rel = _save_uploaded_file(ufile, prefix)
+        saved_paths.append(path)
+        saved_relative.append(rel)
+
+    # ── Gemini Files API: upload each PDF & wait for ACTIVE ──────────────────
+    quarter_label  = {1: 'January–March', 2: 'April–June',
+                      3: 'July–September', 4: 'October–December'}.get(quarter, '')
+    quarter_months = {1: ('January', 'February', 'March'),
+                      2: ('April',   'May',      'June'),
+                      3: ('July',    'August',   'September'),
+                      4: ('October', 'November', 'December')}.get(quarter, ('Month 1', 'Month 2', 'Month 3'))
+
+    ai_summary      = ''
+    gemini_config   = getattr(settings, 'GEMINI_CONFIG', {})
+    model_name      = gemini_config.get('MODEL', 'gemini-2.5-flash')
+    api_key         = os.environ.get('GEMINI_API_KEY', '')
+    uploaded_gemini = []   # keep references for cleanup
+
     try:
-        import docx
-        doc = docx.Document(file_path)
-        return '\n\n'.join(p.text for p in doc.paragraphs if p.text.strip())
-    except ImportError:
-        return None
+        from google import genai
+        client = genai.Client(api_key=api_key)
+
+        for i, fpath in enumerate(saved_paths):
+            gfile = _gemini_upload_and_wait(client, fpath)
+            uploaded_gemini.append(gfile)
+
+        # Build month list for the prompt
+        months_uploaded = ', '.join(quarter_months[:len(saved_paths)])
+
+        prompt = f"""You are an expert communications analyst for Sarvajanik University.
+
+The attached {len(saved_paths)} document(s) are the monthly activity reports for:
+{months_uploaded} {year}
+
+Each document covers social media analytics, events conducted, newspaper/TV/online media
+coverage, press releases, and other university communications activities.
+
+Your task: Consolidate all {len(saved_paths)} monthly reports and produce a single, concise,
+professional **{quarter_label} {year} — 3-Month Quarterly Summary Report** with these sections:
+
+<h2>1. Executive Overview</h2>
+<p>Brief paragraph on the quarter's overall highlights and key achievements across all months.</p>
+
+<h2>2. Social Media Performance</h2>
+<ul>
+<li>Key platforms: Instagram, Facebook, YouTube (summarise all months)</li>
+<li>Total views, reach, followers gained across the quarter</li>
+<li>Top-performing content and trends</li>
+</ul>
+
+<h2>3. Events Highlights</h2>
+<ul>
+<li>Major events conducted (list by month if useful)</li>
+<li>Total events count and estimated attendance/impact</li>
+</ul>
+
+<h2>4. Media Coverage</h2>
+<ul>
+<li>Newspaper, TV, and online coverage — total placements</li>
+<li>Estimated total reach across the quarter</li>
+<li>Notable coverage mentions</li>
+</ul>
+
+<h2>5. Press Releases &amp; Communications</h2>
+<ul>
+<li>Total press releases issued</li>
+<li>Key messages and themes communicated</li>
+</ul>
+
+<h2>6. Month-by-Month Highlights</h2>
+<p>Brief bullet summary for each month covered.</p>
+
+<h2>7. Key Takeaways &amp; Recommendations</h2>
+<ul>
+<li>3–5 actionable bullet points on what worked and what to improve next quarter</li>
+</ul>
+
+IMPORTANT: Output valid HTML only using <h2>, <h3>, <p>, <ul>, <li>, <strong> tags.
+Be factual and use real numbers from the documents wherever available.
+Do NOT use markdown formatting — output HTML only."""
+
+        # Send all uploaded files + prompt to Gemini in a single call
+        contents = [*uploaded_gemini, prompt]
+        response = client.models.generate_content(
+            model=model_name,
+            contents=contents,
+        )
+
+        raw = response.text or ''
+        # Fallback: if Gemini returns markdown despite instructions, convert it
+        if '<h2>' not in raw and '<p>' not in raw:
+            raw = markdown.markdown(raw, extensions=['extra'])
+        ai_summary = raw
+
+    except Exception as exc:
+        ai_summary = (
+            f"<div style='padding:12px 16px;background:#fbecea;"
+            f"border:1px solid #f0c8c5;border-radius:6px;"
+            f"font-size:13.5px;color:#7a2a22;'>"
+            f"<strong>Gemini error:</strong> {exc}</div>"
+        )
+    finally:
+        # Clean up uploaded files from Gemini (they expire in 48h anyway)
+        try:
+            from google import genai as _genai
+            _client = _genai.Client(api_key=api_key)
+            for gf in uploaded_gemini:
+                try:
+                    _client.files.delete(name=gf.name)
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+    # ── Generate output PDF ───────────────────────────────────────────────────
+    context = {
+        'title': title,
+        'quarter': quarter,
+        'quarter_label': quarter_label,
+        'year': year,
+        'ai_summary': ai_summary,
+        'uploaded_by': request.user.get_full_name() or request.user.username,
+        'months_covered': months_uploaded if 'months_uploaded' in dir() else quarter_label,
+    }
+    html_string = render_to_string('reports/doc_quarterly_template.html', context)
+
+    import pathlib
+    out_dir = settings.MEDIA_ROOT / 'reports' / 'doc_quarterly'
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_filename = f"DocQ{quarter}_{year}_u{request.user.id}.pdf"
+    out_path     = out_dir / out_filename
+
+    try:
+        from weasyprint import HTML as WeasyprintHTML
+        WeasyprintHTML(string=html_string).write_pdf(out_path)
+        pdf_relative = f'reports/doc_quarterly/{out_filename}'
+    except Exception:
+        pdf_relative = None
+
+    # ── Save to DB ────────────────────────────────────────────────────────────
+    report = UploadedDocumentReport.objects.create(
+        title=title,
+        quarter=quarter,
+        year=year,
+        source_file_1=saved_relative[0] if len(saved_relative) > 0 else '',
+        source_file_2=saved_relative[1] if len(saved_relative) > 1 else None,
+        source_file_3=saved_relative[2] if len(saved_relative) > 2 else None,
+        ai_summary=ai_summary,
+        output_pdf=pdf_relative,
+        uploaded_by=request.user,
+    )
+    return redirect('preview_document_report', report_id=report.id)
+
+
+@login_required
+def preview_document_report(request, report_id):
+    report = get_object_or_404(UploadedDocumentReport, id=report_id)
+    return render(request, 'reports/preview_document_report.html', {'report': report})
+
+
 
 
 @login_required

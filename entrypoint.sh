@@ -26,7 +26,8 @@ else:
 echo "Starting Gunicorn server on port 7860..."
 exec gunicorn su_analytics.wsgi:application \
     --bind 0.0.0.0:7860 \
-    --workers 2 \
-    --timeout 120 \
+    --workers 1 \
+    --timeout 600 \
+    --graceful-timeout 600 \
     --access-logfile - \
     --error-logfile -

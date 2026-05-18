@@ -96,7 +96,7 @@
         </div>
     </div>
 
-    <!-- NEW: Upload Large Document → AI Condenses -->
+    <!-- NEW: Upload 3 Monthly Reports → AI Condenses -->
     <div class="card" style="border:1.5px solid #c8c4f8;">
         <div class="card-body">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
@@ -105,21 +105,21 @@
                 </div>
                 <div>
                     <div style="font-size:14px;font-weight:600;color:var(--text-primary);">Upload & Condense</div>
-                    <div style="font-size:12px;color:var(--text-muted);">Large PDF/DOCX → AI 3-month summary</div>
+                    <div style="font-size:12px;color:var(--text-muted);">3 monthly PDFs → AI quarterly summary</div>
                 </div>
             </div>
 
-            <form method="post" action="{% url 'upload_document_report' %}" enctype="multipart/form-data">
+            <form method="post" action="{% url 'upload_document_report' %}" enctype="multipart/form-data" id="doc-upload-form">
                 {% csrf_token %}
                 <div class="form-group">
                     <label class="form-label" for="id_doc_title">Report Title</label>
                     <input type="text" name="doc_title" id="id_doc_title" class="form-control"
-                           placeholder="e.g. Annual PR Activity Report" maxlength="300">
+                           placeholder="e.g. Q1 2026 Activity Summary" maxlength="300">
                 </div>
                 <div class="grid grid-2">
                     <div class="form-group">
                         <label class="form-label" for="id_doc_quarter">Quarter</label>
-                        <select name="doc_quarter" id="id_doc_quarter" class="form-control form-select">
+                        <select name="doc_quarter" id="id_doc_quarter" class="form-control form-select" onchange="updateMonthLabels()">
                             <option value="1">Q1 (Jan–Mar)</option>
                             <option value="2">Q2 (Apr–Jun)</option>
                             <option value="3">Q3 (Jul–Sep)</option>
@@ -132,40 +132,75 @@
                     </div>
                 </div>
 
-                <!-- File upload zone -->
-                <div class="form-group">
-                    <label class="form-label" for="id_source_file">Upload Report File</label>
-                    <label for="id_source_file" style="display:flex;flex-direction:column;align-items:center;
-                           gap:8px;padding:18px 12px;border:2px dashed #c8c4f8;border-radius:8px;
-                           cursor:pointer;background:#fafaff;transition:border-color .2s;"
-                           id="upload-zone">
-                        <i class="ph ph-upload-simple" style="font-size:24px;color:#5b52cc;"></i>
-                        <span style="font-size:13px;color:var(--text-secondary);text-align:center;">
-                            Click to upload PDF or DOCX<br>
-                            <span style="font-size:11.5px;color:var(--text-muted);">Up to 50 MB · Supports 100+ page reports</span>
-                        </span>
-                        <span id="file-name-display" style="font-size:12px;color:#5b52cc;font-weight:500;display:none;"></span>
+                <!-- Three month upload zones -->
+                <div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase;">
+                    Upload Monthly Reports (PDF only, up to 70 MB each)
+                </div>
+                <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">
+                    <!-- Month 1 -->
+                    <label for="id_sf1" class="month-upload-zone" style="display:flex;align-items:center;gap:10px;padding:10px 12px;
+                           border:1.5px dashed #c8c4f8;border-radius:8px;cursor:pointer;background:#fafaff;transition:border-color .2s;">
+                        <div style="width:28px;height:28px;border-radius:6px;background:#f0f0ff;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            <i class="ph ph-file-pdf" style="font-size:15px;color:#5b52cc;"></i>
+                        </div>
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-size:13px;font-weight:500;color:var(--text-primary);" id="label-m1">Month 1 (January)</div>
+                            <div style="font-size:11.5px;color:var(--text-muted);" id="fname-1">Click to select PDF</div>
+                        </div>
+                        <i class="ph ph-upload-simple" style="font-size:16px;color:#5b52cc;flex-shrink:0;"></i>
                     </label>
-                    <input type="file" name="source_file" id="id_source_file" accept=".pdf,.doc,.docx"
-                           style="display:none;" required onchange="showFileName(this)">
+                    <input type="file" name="source_file_1" id="id_sf1" accept=".pdf" required
+                           style="display:none;" onchange="showFile(this,'fname-1')">
+
+                    <!-- Month 2 -->
+                    <label for="id_sf2" class="month-upload-zone" style="display:flex;align-items:center;gap:10px;padding:10px 12px;
+                           border:1.5px dashed #c8c4f8;border-radius:8px;cursor:pointer;background:#fafaff;transition:border-color .2s;">
+                        <div style="width:28px;height:28px;border-radius:6px;background:#f0f0ff;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            <i class="ph ph-file-pdf" style="font-size:15px;color:#5b52cc;"></i>
+                        </div>
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-size:13px;font-weight:500;color:var(--text-primary);" id="label-m2">Month 2 (February)</div>
+                            <div style="font-size:11.5px;color:var(--text-muted);" id="fname-2">Click to select PDF</div>
+                        </div>
+                        <i class="ph ph-upload-simple" style="font-size:16px;color:#5b52cc;flex-shrink:0;"></i>
+                    </label>
+                    <input type="file" name="source_file_2" id="id_sf2" accept=".pdf"
+                           style="display:none;" onchange="showFile(this,'fname-2')">
+
+                    <!-- Month 3 -->
+                    <label for="id_sf3" class="month-upload-zone" style="display:flex;align-items:center;gap:10px;padding:10px 12px;
+                           border:1.5px dashed #c8c4f8;border-radius:8px;cursor:pointer;background:#fafaff;transition:border-color .2s;">
+                        <div style="width:28px;height:28px;border-radius:6px;background:#f0f0ff;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            <i class="ph ph-file-pdf" style="font-size:15px;color:#5b52cc;"></i>
+                        </div>
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-size:13px;font-weight:500;color:var(--text-primary);" id="label-m3">Month 3 (March)</div>
+                            <div style="font-size:11.5px;color:var(--text-muted);" id="fname-3">Click to select PDF</div>
+                        </div>
+                        <i class="ph ph-upload-simple" style="font-size:16px;color:#5b52cc;flex-shrink:0;"></i>
+                    </label>
+                    <input type="file" name="source_file_3" id="id_sf3" accept=".pdf"
+                           style="display:none;" onchange="showFile(this,'fname-3')">
                 </div>
 
                 <div style="background:#f0f0ff;border:1px solid #c8c4f8;border-radius:6px;padding:10px 12px;
-                            font-size:12.5px;color:#5b52cc;margin-bottom:14px;display:flex;align-items:flex-start;gap:8px;">
-                    <i class="ph ph-info" style="font-size:15px;flex-shrink:0;margin-top:1px;"></i>
-                    Gemini reads your entire document natively (no text extraction needed for PDFs)
-                    and produces a structured 6-section 3-month summary.
+                            font-size:12px;color:#5b52cc;margin-bottom:12px;display:flex;align-items:flex-start;gap:8px;">
+                    <i class="ph ph-info" style="font-size:14px;flex-shrink:0;margin-top:1px;"></i>
+                    Gemini Files API handles PDFs up to 70 MB each natively.
+                    Processing 3 large files may take 2–5 minutes — please wait.
                 </div>
 
                 <button type="submit" class="btn" id="upload-btn"
-                        style="width:100%;background:#5b52cc;color:#fff;border-color:#5b52cc;">
-                    <i class="ph ph-brain"></i> Upload & Generate AI Summary
+                        style="width:100%;background:#5b52cc;color:#fff;border-color:#5b52cc;font-size:13.5px;">
+                    <i class="ph ph-brain"></i> Generate AI Quarterly Summary
                 </button>
             </form>
         </div>
     </div>
 
 </div>
+
+
 
 <!-- ── Row 2: History tables ────────────────────────────────────────────── -->
 <div class="grid grid-3">
@@ -261,24 +296,49 @@
 </div>
 
 <script>
-function showFileName(input) {
-    const display = document.getElementById('file-name-display');
-    const zone = document.getElementById('upload-zone');
+const QUARTER_MONTHS = {
+    '1': ['January',  'February', 'March'],
+    '2': ['April',    'May',      'June'],
+    '3': ['July',     'August',   'September'],
+    '4': ['October',  'November', 'December'],
+};
+
+function showFile(input, displayId) {
+    const display = document.getElementById(displayId);
+    const label   = input.previousElementSibling || input.closest('div').querySelector('label');
     if (input.files && input.files[0]) {
         const name = input.files[0].name;
         const size = (input.files[0].size / 1024 / 1024).toFixed(1);
         display.textContent = name + ' (' + size + ' MB)';
-        display.style.display = 'block';
-        zone.style.borderColor = '#5b52cc';
-        zone.style.background = '#f5f4ff';
+        display.style.color = '#5b52cc';
+        // Highlight the zone
+        const zone = input.previousElementSibling;
+        if (zone) { zone.style.borderColor = '#5b52cc'; zone.style.background = '#f5f4ff'; }
     }
 }
 
+function updateMonthLabels() {
+    const q      = document.getElementById('id_doc_quarter').value;
+    const months = QUARTER_MONTHS[q] || ['Month 1', 'Month 2', 'Month 3'];
+    document.getElementById('label-m1').textContent = 'Month 1 (' + months[0] + ') — required';
+    document.getElementById('label-m2').textContent = 'Month 2 (' + months[1] + ') — optional';
+    document.getElementById('label-m3').textContent = 'Month 3 (' + months[2] + ') — optional';
+}
+
+// Initialise labels on page load
+updateMonthLabels();
+
 // Show loading state on form submit
-document.querySelector('form[action*="upload-document"]').addEventListener('submit', function() {
+document.getElementById('doc-upload-form').addEventListener('submit', function() {
     const btn = document.getElementById('upload-btn');
-    btn.innerHTML = '<i class="ph ph-spinner"></i> Uploading & Processing… (this may take 30–60s)';
+    btn.innerHTML = '<i class="ph ph-circle-notch" style="animation:spin 1s linear infinite;display:inline-block;"></i>'
+                  + ' Uploading & processing… this takes 2–5 min, please wait';
     btn.disabled = true;
+    btn.style.opacity = '0.75';
 });
 </script>
+<style>
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+
 {% endblock %}

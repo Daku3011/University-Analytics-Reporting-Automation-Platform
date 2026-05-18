@@ -106,6 +106,11 @@ CSRF_TRUSTED_ORIGINS = [
 
 WSGI_APPLICATION = 'su_analytics.wsgi.application'
 
+# ── File Upload Limits ────────────────────────────────────────────────────────
+# Faculty upload 3 monthly PDFs, each up to 70 MB → allow 250 MB total
+DATA_UPLOAD_MAX_MEMORY_SIZE = 250 * 1024 * 1024   # 250 MB total request body
+FILE_UPLOAD_MAX_MEMORY_SIZE = 1 * 1024 * 1024     # >1 MB → write to temp disk file
+
 # ── Database ──────────────────────────────────────────────────────────────────
 DATABASES = {
     'default': {

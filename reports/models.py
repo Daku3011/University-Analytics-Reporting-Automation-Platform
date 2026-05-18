@@ -80,9 +80,9 @@ class PressRelease(models.Model):
 
 class UploadedDocumentReport(models.Model):
     """
-    Faculty uploads a large PDF/DOCX report (e.g. 90-100 page detailed report).
-    Gemini reads the document natively and condenses it into a professional
-    3-month (quarterly) summary report stored as a PDF.
+    Faculty uploads up to 3 monthly PDF reports (e.g. Jan + Feb + Mar, each up to 70 MB).
+    Gemini reads all 3 via the Files API and condenses them into a professional
+    3-month quarterly summary report stored as a PDF.
     """
     QUARTER_CHOICES = [
         (1, 'Q1 (Jan–Mar)'),
@@ -90,13 +90,33 @@ class UploadedDocumentReport(models.Model):
         (3, 'Q3 (Jul–Sep)'),
         (4, 'Q4 (Oct–Dec)'),
     ]
+    QUARTER_MONTHS = {
+        1: ('January', 'February', 'March'),
+        2: ('April',   'May',      'June'),
+        3: ('July',    'August',   'September'),
+        4: ('October', 'November', 'December'),
+    }
+
     title        = models.CharField(max_length=300, help_text="Short label for this report")
     quarter      = models.IntegerField(choices=QUARTER_CHOICES)
     year         = models.IntegerField(default=2026)
-    source_file  = models.FileField(
+
+    # One file per month — only month 1 is required
+    source_file_1 = models.FileField(
         upload_to='reports/uploaded_sources/',
-        help_text="Upload the original detailed report (PDF or DOCX)"
+        help_text="Month 1 report PDF (required)"
     )
+    source_file_2 = models.FileField(
+        upload_to='reports/uploaded_sources/',
+        blank=True, null=True,
+        help_text="Month 2 report PDF (optional)"
+    )
+    source_file_3 = models.FileField(
+        upload_to='reports/uploaded_sources/',
+        blank=True, null=True,
+        help_text="Month 3 report PDF (optional)"
+    )
+
     ai_summary   = models.TextField(blank=True, help_text="Gemini-generated HTML summary")
     output_pdf   = models.FileField(
         upload_to='reports/doc_quarterly/',
@@ -121,3 +141,10 @@ class UploadedDocumentReport(models.Model):
         mapping = {1: 'January–March', 2: 'April–June',
                    3: 'July–September', 4: 'October–December'}
         return mapping.get(self.quarter, '')
+
+    def get_month_names(self):
+        return self.QUARTER_MONTHS.get(self.quarter, ('Month 1', 'Month 2', 'Month 3'))
+
+    def uploaded_files_count(self):
+        return sum(1 for f in [self.source_file_1, self.source_file_2, self.source_file_3] if f)
+
