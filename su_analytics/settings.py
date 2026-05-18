@@ -50,7 +50,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'accounts.middleware.SessionTimeoutMiddleware',     # Custom: auto-logout idle users
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # XFrameOptionsMiddleware removed — HF Spaces embeds app in iframe from different origin
 ]
 
 ROOT_URLCONF = 'su_analytics.urls'
@@ -80,19 +80,19 @@ LOGOUT_REDIRECT_URL = 'login'
 SESSION_COOKIE_AGE = 3600
 # Session ends when browser closes
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-# Protect session cookie
+# Required for cross-origin iframe (HF Spaces): SameSite=None + Secure
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SAMESITE = 'Lax'
-# Only transmit over HTTPS in production (set True in prod)
-SESSION_COOKIE_SECURE = False
+SESSION_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_SECURE = True   # SameSite=None requires Secure
 
 # ── CSRF Security ─────────────────────────────────────────────────────────────
 CSRF_COOKIE_HTTPONLY = True
-CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'None'
+CSRF_COOKIE_SECURE = True      # SameSite=None requires Secure
 
 # ── Security Headers ──────────────────────────────────────────────────────────
-# Allow HF Spaces to embed the app in an iframe
-X_FRAME_OPTIONS = 'SAMEORIGIN'
+# X-Frame-Options intentionally NOT set — HF Spaces must embed app from different origin
+# (huggingface.co embedding dwarkesh3011-su-report-analytics.hf.space)
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 
