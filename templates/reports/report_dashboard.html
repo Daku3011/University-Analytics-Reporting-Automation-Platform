@@ -85,7 +85,7 @@
                 </div>
             </div>
 
-            <form method="post" action="{% url 'generate_quarterly' %}">
+            <form method="post" action="{% url 'generate_quarterly' %}" id="quarterly-report-form">
                 {% csrf_token %}
                 <div class="form-group">
                     <label class="form-label" for="id_quarter">Quarter</label>
@@ -104,9 +104,17 @@
                     <i class="ph ph-robot" style="font-size:15px;flex-shrink:0;margin-top:1px;"></i>
                     Gemini AI generates a narrative summary from your analytics data. Rate limit: 1/60s, 50/day.
                 </div>
-                <button type="submit" class="btn btn-success" style="width:100%;">
+                <button type="submit" class="btn btn-success" id="quarterly-btn" style="width:100%;">
                     <i class="ph ph-sparkle"></i> Generate Quarterly Report
                 </button>
+
+                <!-- Quarterly Report Progress Bar -->
+                <div id="quarterly-progress-container" style="display:none;margin-top:15px;">
+                    <div class="progress-bar-container" style="width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin-bottom: 8px;">
+                        <div id="quarterly-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #10b981, #34d399); transition: width 0.5s ease; animation: pulse 2s infinite;"></div>
+                    </div>
+                    <div id="quarterly-status-message" style="color: #047857; font-weight: 500; font-size: 12px; text-align: center;">Initializing...</div>
+                </div>
             </form>
         </div>
     </div>
@@ -351,9 +359,49 @@ document.getElementById('doc-upload-form').addEventListener('submit', function()
     btn.disabled = true;
     btn.style.opacity = '0.75';
 });
+
+// Show loading state and progress bar on Quarterly Report form submit
+document.getElementById('quarterly-report-form').addEventListener('submit', function() {
+    const btn = document.getElementById('quarterly-btn');
+    const progressContainer = document.getElementById('quarterly-progress-container');
+    const progressBar = document.getElementById('quarterly-progress-bar');
+    const statusMsg = document.getElementById('quarterly-status-message');
+    
+    btn.innerHTML = '<i class="ph ph-circle-notch" style="animation:spin 1s linear infinite;display:inline-block;"></i>'
+                  + ' Generating... please wait';
+    btn.disabled = true;
+    btn.style.opacity = '0.75';
+    
+    progressContainer.style.display = 'block';
+    
+    let progress = 5;
+    progressBar.style.width = progress + '%';
+    
+    const interval = setInterval(function() {
+        if (progress < 95) {
+            progress += (95 - progress) * 0.08;
+            progressBar.style.width = progress + '%';
+            
+            if (progress < 30) {
+                statusMsg.textContent = 'Extracting analytics metrics from database...';
+            } else if (progress < 75) {
+                statusMsg.textContent = 'Gemini AI is generating narrative summary...';
+            } else {
+                statusMsg.textContent = 'Compiling report and formatting PDF...';
+            }
+        } else {
+            clearInterval(interval);
+        }
+    }, 450);
+});
 </script>
 <style>
 @keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse {
+    0% { opacity: 0.8; }
+    50% { opacity: 1; }
+    100% { opacity: 0.8; }
+}
 </style>
 
 {% endblock %}
