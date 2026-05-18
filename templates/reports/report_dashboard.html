@@ -10,8 +10,8 @@
     </div>
 </div>
 
-<!-- Generate Reports -->
-<div class="grid grid-2" style="margin-bottom:28px;">
+<!-- ── Row 1: Three report generation cards ─────────────────────────────── -->
+<div class="grid grid-3" style="margin-bottom:28px;">
 
     <!-- Monthly Report -->
     <div class="card">
@@ -57,7 +57,7 @@
         </div>
     </div>
 
-    <!-- Quarterly Report -->
+    <!-- Quarterly Report (existing AI feature) -->
     <div class="card">
         <div class="card-body">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
@@ -66,7 +66,7 @@
                 </div>
                 <div>
                     <div style="font-size:14px;font-weight:600;color:var(--text-primary);">Quarterly Report</div>
-                    <div style="font-size:12px;color:var(--text-muted);">AI-powered summary via Gemini</div>
+                    <div style="font-size:12px;color:var(--text-muted);">AI summary from analytics data</div>
                 </div>
             </div>
 
@@ -87,7 +87,7 @@
                 </div>
                 <div style="background:var(--accent-2-light);border:1px solid #b8e0d5;border-radius:6px;padding:10px 12px;font-size:12.5px;color:#3d7a6a;margin-bottom:14px;display:flex;align-items:flex-start;gap:8px;">
                     <i class="ph ph-robot" style="font-size:15px;flex-shrink:0;margin-top:1px;"></i>
-                    Gemini AI will generate a professional narrative summary. Rate limit: 1 per 60s, 50/day.
+                    Gemini AI generates a narrative summary from your analytics data. Rate limit: 1/60s, 50/day.
                 </div>
                 <button type="submit" class="btn btn-success" style="width:100%;">
                     <i class="ph ph-sparkle"></i> Generate Quarterly Report
@@ -95,10 +95,81 @@
             </form>
         </div>
     </div>
+
+    <!-- NEW: Upload Large Document → AI Condenses -->
+    <div class="card" style="border:1.5px solid #c8c4f8;">
+        <div class="card-body">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+                <div style="width:36px;height:36px;border-radius:8px;background:#f0f0ff;display:flex;align-items:center;justify-content:center;">
+                    <i class="ph ph-brain" style="font-size:18px;color:#5b52cc;"></i>
+                </div>
+                <div>
+                    <div style="font-size:14px;font-weight:600;color:var(--text-primary);">Upload & Condense</div>
+                    <div style="font-size:12px;color:var(--text-muted);">Large PDF/DOCX → AI 3-month summary</div>
+                </div>
+            </div>
+
+            <form method="post" action="{% url 'upload_document_report' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label class="form-label" for="id_doc_title">Report Title</label>
+                    <input type="text" name="doc_title" id="id_doc_title" class="form-control"
+                           placeholder="e.g. Annual PR Activity Report" maxlength="300">
+                </div>
+                <div class="grid grid-2">
+                    <div class="form-group">
+                        <label class="form-label" for="id_doc_quarter">Quarter</label>
+                        <select name="doc_quarter" id="id_doc_quarter" class="form-control form-select">
+                            <option value="1">Q1 (Jan–Mar)</option>
+                            <option value="2">Q2 (Apr–Jun)</option>
+                            <option value="3">Q3 (Jul–Sep)</option>
+                            <option value="4">Q4 (Oct–Dec)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="id_doc_year">Year</label>
+                        <input type="number" name="doc_year" id="id_doc_year" class="form-control" value="2026" min="2020" max="2030">
+                    </div>
+                </div>
+
+                <!-- File upload zone -->
+                <div class="form-group">
+                    <label class="form-label" for="id_source_file">Upload Report File</label>
+                    <label for="id_source_file" style="display:flex;flex-direction:column;align-items:center;
+                           gap:8px;padding:18px 12px;border:2px dashed #c8c4f8;border-radius:8px;
+                           cursor:pointer;background:#fafaff;transition:border-color .2s;"
+                           id="upload-zone">
+                        <i class="ph ph-upload-simple" style="font-size:24px;color:#5b52cc;"></i>
+                        <span style="font-size:13px;color:var(--text-secondary);text-align:center;">
+                            Click to upload PDF or DOCX<br>
+                            <span style="font-size:11.5px;color:var(--text-muted);">Up to 50 MB · Supports 100+ page reports</span>
+                        </span>
+                        <span id="file-name-display" style="font-size:12px;color:#5b52cc;font-weight:500;display:none;"></span>
+                    </label>
+                    <input type="file" name="source_file" id="id_source_file" accept=".pdf,.doc,.docx"
+                           style="display:none;" required onchange="showFileName(this)">
+                </div>
+
+                <div style="background:#f0f0ff;border:1px solid #c8c4f8;border-radius:6px;padding:10px 12px;
+                            font-size:12.5px;color:#5b52cc;margin-bottom:14px;display:flex;align-items:flex-start;gap:8px;">
+                    <i class="ph ph-info" style="font-size:15px;flex-shrink:0;margin-top:1px;"></i>
+                    Gemini reads your entire document natively (no text extraction needed for PDFs)
+                    and produces a structured 6-section 3-month summary.
+                </div>
+
+                <button type="submit" class="btn" id="upload-btn"
+                        style="width:100%;background:#5b52cc;color:#fff;border-color:#5b52cc;">
+                    <i class="ph ph-brain"></i> Upload & Generate AI Summary
+                </button>
+            </form>
+        </div>
+    </div>
+
 </div>
 
-<!-- Report History -->
-<div class="grid grid-2">
+<!-- ── Row 2: History tables ────────────────────────────────────────────── -->
+<div class="grid grid-3">
+
     <!-- Monthly History -->
     <div class="card">
         <div class="card-header" style="padding:18px 20px 0;font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px;">
@@ -107,23 +178,21 @@
         </div>
         <div class="card-body" style="padding:12px 0 0;">
             {% for r in monthly_reports %}
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--border-light);">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 20px;border-bottom:1px solid var(--border-light);">
                 <div>
-                    <div style="font-size:13.5px;font-weight:500;color:var(--text-primary);">
+                    <div style="font-size:13px;font-weight:500;color:var(--text-primary);">
                         {{ r.college.code }} — {{ r.get_month_display }} {{ r.year }}
                     </div>
-                    <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">
-                        Generated {{ r.created_at|date:"d M Y, H:i" }}
-                    </div>
+                    <div style="font-size:11.5px;color:var(--text-muted);">{{ r.created_at|date:"d M Y" }}</div>
                 </div>
                 <a href="{{ r.pdf_file.url }}" class="btn btn-sm btn-outline" target="_blank" rel="noopener">
-                    <i class="ph ph-arrow-square-out"></i> View PDF
+                    <i class="ph ph-arrow-square-out"></i>
                 </a>
             </div>
             {% empty %}
-            <div style="padding:28px 20px;text-align:center;color:var(--text-muted);font-size:13.5px;">
-                <i class="ph ph-file-x" style="font-size:28px;display:block;margin-bottom:8px;opacity:0.4;"></i>
-                No monthly reports generated yet
+            <div style="padding:28px 20px;text-align:center;color:var(--text-muted);font-size:13px;">
+                <i class="ph ph-file-x" style="font-size:26px;display:block;margin-bottom:8px;opacity:0.4;"></i>
+                No monthly reports yet
             </div>
             {% endfor %}
         </div>
@@ -137,27 +206,79 @@
         </div>
         <div class="card-body" style="padding:12px 0 0;">
             {% for r in quarterly_reports %}
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--border-light);">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 20px;border-bottom:1px solid var(--border-light);">
                 <div>
-                    <div style="font-size:13.5px;font-weight:500;color:var(--text-primary);">
-                        Q{{ r.quarter }} {{ r.year }}
-                    </div>
-                    <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">
-                        <span class="badge badge-teal">AI Summary included</span>
+                    <div style="font-size:13px;font-weight:500;color:var(--text-primary);">Q{{ r.quarter }} {{ r.year }}</div>
+                    <div style="font-size:11.5px;color:var(--text-muted);">
+                        <span class="badge badge-teal">AI Summary</span>
                     </div>
                 </div>
-                <a href="{{ r.pdf_file.url }}" class="btn btn-sm btn-outline" target="_blank" rel="noopener"
+                <a href="{% url 'preview_quarterly' r.id %}" class="btn btn-sm btn-outline"
                    style="border-color:var(--accent-2);color:var(--accent-2);">
-                    <i class="ph ph-arrow-square-out"></i> View PDF
+                    <i class="ph ph-arrow-square-out"></i>
                 </a>
             </div>
             {% empty %}
-            <div style="padding:28px 20px;text-align:center;color:var(--text-muted);font-size:13.5px;">
-                <i class="ph ph-file-x" style="font-size:28px;display:block;margin-bottom:8px;opacity:0.4;"></i>
-                No quarterly reports generated yet
+            <div style="padding:28px 20px;text-align:center;color:var(--text-muted);font-size:13px;">
+                <i class="ph ph-file-x" style="font-size:26px;display:block;margin-bottom:8px;opacity:0.4;"></i>
+                No quarterly reports yet
             </div>
             {% endfor %}
         </div>
     </div>
+
+    <!-- AI Document Condensed History -->
+    <div class="card" style="border-color:#c8c4f8;">
+        <div class="card-header" style="padding:18px 20px 0;font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px;">
+            <i class="ph ph-brain" style="color:#5b52cc;font-size:15px;"></i>
+            AI Condensed Reports
+        </div>
+        <div class="card-body" style="padding:12px 0 0;">
+            {% for r in doc_reports %}
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 20px;border-bottom:1px solid var(--border-light);">
+                <div>
+                    <div style="font-size:13px;font-weight:500;color:var(--text-primary);">
+                        {{ r.title|truncatechars:30 }}
+                    </div>
+                    <div style="font-size:11.5px;color:var(--text-muted);">
+                        Q{{ r.quarter }} {{ r.year }} · {{ r.created_at|date:"d M Y" }}
+                    </div>
+                </div>
+                <a href="{% url 'preview_document_report' r.id %}" class="btn btn-sm btn-outline"
+                   style="border-color:#5b52cc;color:#5b52cc;">
+                    <i class="ph ph-arrow-square-out"></i>
+                </a>
+            </div>
+            {% empty %}
+            <div style="padding:28px 20px;text-align:center;color:var(--text-muted);font-size:13px;">
+                <i class="ph ph-upload-simple" style="font-size:26px;display:block;margin-bottom:8px;opacity:0.4;"></i>
+                Upload a large report to condense it
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
 </div>
+
+<script>
+function showFileName(input) {
+    const display = document.getElementById('file-name-display');
+    const zone = document.getElementById('upload-zone');
+    if (input.files && input.files[0]) {
+        const name = input.files[0].name;
+        const size = (input.files[0].size / 1024 / 1024).toFixed(1);
+        display.textContent = name + ' (' + size + ' MB)';
+        display.style.display = 'block';
+        zone.style.borderColor = '#5b52cc';
+        zone.style.background = '#f5f4ff';
+    }
+}
+
+// Show loading state on form submit
+document.querySelector('form[action*="upload-document"]').addEventListener('submit', function() {
+    const btn = document.getElementById('upload-btn');
+    btn.innerHTML = '<i class="ph ph-spinner"></i> Uploading & Processing… (this may take 30–60s)';
+    btn.disabled = true;
+});
+</script>
 {% endblock %}

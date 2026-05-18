@@ -7,4 +7,7 @@ urlpatterns = [
     path('generate-quarterly/', views.generate_quarterly, name='generate_quarterly'),
     path('preview/<int:report_id>/', views.preview_monthly, name='preview_monthly'),
     path('preview-quarterly/<int:report_id>/', views.preview_quarterly, name='preview_quarterly'),
+    # New: Upload large document → Gemini condenses → quarterly summary PDF
+    path('upload-document/', views.upload_document_report, name='upload_document_report'),
+    path('preview-document/<int:report_id>/', views.preview_document_report, name='preview_document_report'),
 ]

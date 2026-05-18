@@ -13,18 +13,20 @@ from django.core.cache import cache
 from colleges.models import College
 from events.models import Event
 from analytics_app.models import MonthlyAnalytics, TopPost
-from .models import MonthlyReport, QuarterlyReport, NewspaperCoverage, PressRelease
+from .models import MonthlyReport, QuarterlyReport, NewspaperCoverage, PressRelease, UploadedDocumentReport
 
 
 @login_required
 def report_dashboard(request):
     monthly_reports = MonthlyReport.objects.select_related('college').all().order_by('-created_at')[:20]
     quarterly_reports = QuarterlyReport.objects.all().order_by('-created_at')[:10]
+    doc_reports = UploadedDocumentReport.objects.all().order_by('-created_at')[:10]
     colleges = College.objects.all()
     months = range(1, 13)
     return render(request, 'reports/report_dashboard.html', {
         'monthly_reports': monthly_reports,
         'quarterly_reports': quarterly_reports,
+        'doc_reports': doc_reports,
         'colleges': colleges,
         'months': months,
     })
@@ -230,7 +232,191 @@ Use clear professional language suitable for a university administration report.
     return redirect('report_dashboard')
 
 
+
 @login_required
 def preview_quarterly(request, report_id):
     report = get_object_or_404(QuarterlyReport, id=report_id)
     return render(request, 'reports/preview_quarterly.html', {'report': report})
+
+
+# ── New Feature: Upload Large Report → Gemini Summarises → Condensed PDF ──────
+
+ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx'}
+MAX_UPLOAD_MB = 50  # Gemini Files API supports up to 50 MB inline
+
+
+def _extract_docx_text(file_path):
+    """Fallback: extract plain text from DOCX for Gemini text prompt."""
+    try:
+        import docx
+        doc = docx.Document(file_path)
+        return '\n\n'.join(p.text for p in doc.paragraphs if p.text.strip())
+    except ImportError:
+        return None
+
+
+@login_required
+def upload_document_report(request):
+    """
+    Faculty uploads a large PDF/DOCX (up to 50 MB).
+    Gemini reads it natively via the Files API and produces a concise
+    3-month quarterly summary which is then rendered as a PDF.
+    """
+    if request.method != 'POST':
+        return redirect('report_dashboard')
+
+    title   = request.POST.get('doc_title', '').strip() or 'Uploaded Report'
+    quarter = int(request.POST.get('doc_quarter', 1))
+    year    = int(request.POST.get('doc_year', date.today().year))
+    ufile   = request.FILES.get('source_file')
+
+    if not ufile:
+        return redirect('report_dashboard')
+
+    ext = ufile.name.rsplit('.', 1)[-1].lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        return redirect('report_dashboard')
+
+    # ── Save source file first ────────────────────────────────────────────────
+    import pathlib
+    upload_dir = settings.MEDIA_ROOT / 'reports' / 'uploaded_sources'
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    safe_name = f"{year}_Q{quarter}_{ufile.name.replace(' ', '_')}"
+    save_path = upload_dir / safe_name
+    with open(save_path, 'wb') as fout:
+        for chunk in ufile.chunks():
+            fout.write(chunk)
+
+    # ── Gemini Files API: upload & summarise ──────────────────────────────────
+    ai_summary = ''
+    gemini_config = getattr(settings, 'GEMINI_CONFIG', {})
+    model_name    = gemini_config.get('MODEL', 'gemini-2.5-flash')
+    api_key       = os.environ.get('GEMINI_API_KEY', '')
+
+    quarter_label = {1: 'January–March', 2: 'April–June',
+                     3: 'July–September', 4: 'October–December'}.get(quarter, '')
+
+    try:
+        from google import genai
+        from google.genai import types as genai_types
+
+        client = genai.Client(api_key=api_key)
+
+        prompt = f"""You are an expert communications analyst for Sarvajanik University.
+The attached document is a detailed {quarter_label} {year} report (may be 50–100+ pages)
+covering social media analytics, events, newspaper coverage, press releases, and other activities.
+
+Your task: Produce a concise, professional **3-Month Quarterly Summary Report** with these sections:
+
+## 1. Executive Overview
+Brief paragraph on the quarter's overall highlights and key achievements.
+
+## 2. Social Media Performance
+- Key platforms: Instagram, Facebook, YouTube (if present)
+- Total views, reach, followers gained
+- Top-performing content and trends
+
+## 3. Events Highlights
+- Major events conducted
+- Attendance / impact
+
+## 4. Media Coverage
+- Newspaper / TV / online coverage summary
+- Reach and notable placements
+
+## 5. Press Releases & Communications
+- Number of releases issued
+- Key messages communicated
+
+## 6. Key Takeaways & Recommendations
+3–5 bullet points summarising what worked and what to improve next quarter.
+
+Format the output in clean HTML using <h2>, <h3>, <p>, <ul>, <li> tags.
+Be factual, concise, and professional. Use numbers from the document wherever available."""
+
+        if ext == 'pdf':
+            # Send PDF bytes directly — Gemini understands PDF natively
+            pdf_bytes = save_path.read_bytes()
+            response = client.models.generate_content(
+                model=model_name,
+                contents=[
+                    genai_types.Part.from_bytes(
+                        data=pdf_bytes,
+                        mime_type='application/pdf',
+                    ),
+                    prompt,
+                ]
+            )
+        else:
+            # DOCX: extract text and send as a text prompt
+            docx_text = _extract_docx_text(str(save_path))
+            if docx_text:
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=[
+                        f"DOCUMENT CONTENT:\n\n{docx_text[:100000]}\n\n---\n\n{prompt}"
+                    ]
+                )
+            else:
+                ai_summary = ("<div style='padding:12px 16px;background:#fbecea;"
+                              "border:1px solid #f0c8c5;border-radius:6px;"
+                              "font-size:13.5px;color:#7a2a22;'>"
+                              "<strong>Could not read DOCX file.</strong> "
+                              "Please install python-docx or upload a PDF instead.</div>")
+                response = None
+
+        if response:
+            raw = response.text or ''
+            # Convert markdown if Gemini returns it instead of HTML
+            if '<h2>' not in raw and '<p>' not in raw:
+                raw = markdown.markdown(raw, extensions=['extra'])
+            ai_summary = raw
+
+    except Exception as exc:
+        ai_summary = (
+            f"<div style='padding:12px 16px;background:#fbecea;"
+            f"border:1px solid #f0c8c5;border-radius:6px;"
+            f"font-size:13.5px;color:#7a2a22;'>"
+            f"<strong>Gemini error:</strong> {exc}</div>"
+        )
+
+    # ── Generate output PDF ───────────────────────────────────────────────────
+    context = {
+        'title': title,
+        'quarter': quarter,
+        'quarter_label': quarter_label,
+        'year': year,
+        'ai_summary': ai_summary,
+        'uploaded_by': request.user.get_full_name() or request.user.username,
+    }
+    html_string = render_to_string('reports/doc_quarterly_template.html', context)
+
+    out_dir = settings.MEDIA_ROOT / 'reports' / 'doc_quarterly'
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_filename = f"DocQ{quarter}_{year}_{request.user.id}.pdf"
+    out_path = out_dir / out_filename
+
+    try:
+        from weasyprint import HTML as WeasyprintHTML
+        WeasyprintHTML(string=html_string).write_pdf(out_path)
+        pdf_relative = f'reports/doc_quarterly/{out_filename}'
+    except Exception:
+        pdf_relative = None
+
+    # ── Save to DB ────────────────────────────────────────────────────────────
+    report = UploadedDocumentReport.objects.create(
+        title=title,
+        quarter=quarter,
+        year=year,
+        source_file=f'reports/uploaded_sources/{safe_name}',
+        ai_summary=ai_summary,
+        output_pdf=pdf_relative,
+        uploaded_by=request.user,
+    )
+    return redirect('preview_document_report', report_id=report.id)
+
+
+@login_required
+def preview_document_report(request, report_id):
+    report = get_object_or_404(UploadedDocumentReport, id=report_id)
+    return render(request, 'reports/preview_document_report.html', {'report': report})
