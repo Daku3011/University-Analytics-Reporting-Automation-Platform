@@ -165,3 +165,11 @@ GEMINI_CONFIG = {
 # ── Login Throttling ──────────────────────────────────────────────────────────
 LOGIN_MAX_ATTEMPTS = 5          # Max failed attempts before lockout
 LOGIN_LOCKOUT_SECONDS = 900     # 15-minute lockout
+
+# ── Celery & Redis Background Tasks ───────────────────────────────────────────
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
