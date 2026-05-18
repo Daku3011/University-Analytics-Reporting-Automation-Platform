@@ -21,7 +21,7 @@ db.sqlite3-journal
 
 # ── Media / User Uploads ─────────────────────────────────────
 media/
-Reports/
+media/reports/         # exclude generated PDF report files (in media only)
 
 # ── Static (collected) ───────────────────────────────────────
 staticfiles/

@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block title %}AI Document Report — {{ report.title }}{% endblock %}
+{% block topbar_title %}AI Document Summary{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>{{ report.title }}</h1>
+        <p>Q{{ report.quarter }} {{ report.year }} — {{ report.get_quarter_months }} &nbsp;·&nbsp; Uploaded {{ report.created_at|date:"d M Y, H:i" }}</p>
+    </div>
+    <div style="display:flex;gap:10px;">
+        <a href="{% url 'report_dashboard' %}" class="btn btn-secondary">
+            <i class="ph ph-arrow-left"></i> Back to Reports
+        </a>
+        {% if report.output_pdf %}
+        <a href="{{ report.output_pdf.url }}" class="btn btn-primary" target="_blank" rel="noopener">
+            <i class="ph ph-file-arrow-down"></i> Download PDF
+        </a>
+        {% endif %}
+        {% if report.source_file %}
+        <a href="{{ report.source_file.url }}" class="btn btn-secondary" target="_blank" rel="noopener">
+            <i class="ph ph-file"></i> Original File
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Status badge -->
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+    <div style="display:flex;align-items:center;gap:7px;background:#f0f0ff;border:1px solid #c8c4f8;border-radius:20px;padding:5px 14px;font-size:12px;color:#5b52cc;font-weight:500;">
+        <i class="ph ph-sparkle" style="font-size:14px;"></i>
+        Condensed by Gemini AI from {{ report.source_file.name|slice:"28:" }}
+    </div>
+</div>
+
+<!-- AI Summary -->
+{% if report.ai_summary %}
+<div class="card" style="margin-bottom:20px;">
+    <div class="card-body">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+            <div style="width:32px;height:32px;border-radius:8px;background:#f0f0ff;display:flex;align-items:center;justify-content:center;">
+                <i class="ph ph-brain" style="font-size:17px;color:#5b52cc;"></i>
+            </div>
+            <div>
+                <div style="font-size:14px;font-weight:600;color:var(--text-primary);">AI-Generated 3-Month Summary</div>
+                <div style="font-size:12px;color:var(--text-muted);">Extracted from full detailed report · Powered by Gemini</div>
+            </div>
+        </div>
+
+        <!-- Render the AI HTML summary -->
+        <div style="font-size:14px;line-height:1.75;color:var(--text-secondary);">
+            <style>
+                .ai-content h2 { font-size:15px;font-weight:700;color:#4f46e5;margin:20px 0 8px;padding-bottom:5px;border-bottom:1.5px solid #e8e6ff; }
+                .ai-content h3 { font-size:13.5px;font-weight:600;color:var(--text-primary);margin:14px 0 6px; }
+                .ai-content p  { margin-bottom:10px; }
+                .ai-content ul,.ai-content ol { margin:8px 0 12px 20px; }
+                .ai-content li { margin-bottom:5px; }
+                .ai-content strong { color:var(--text-primary); }
+            </style>
+            <div class="ai-content">
+                {{ report.ai_summary|safe }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- PDF Preview -->
+{% if report.output_pdf %}
+<div class="card">
+    <div class="card-header" style="padding:16px 20px 0;font-size:13px;font-weight:600;color:var(--text-secondary);display:flex;align-items:center;gap:7px;">
+        <i class="ph ph-file-pdf" style="color:#5b52cc;font-size:15px;"></i>
+        Generated PDF Report
+    </div>
+    <div class="card-body" style="padding:16px;">
+        <iframe
+            src="{{ report.output_pdf.url }}"
+            width="100%"
+            height="820px"
+            style="border:1px solid var(--border);border-radius:6px;display:block;"
+            title="{{ report.title }} PDF"
+        ></iframe>
+        <p style="font-size:12px;color:var(--text-muted);margin-top:10px;display:flex;align-items:center;gap:5px;">
+            <i class="ph ph-info"></i>
+            If the PDF doesn't display, <a href="{{ report.output_pdf.url }}" target="_blank" style="color:#5b52cc;">Download it directly</a>.
+        </p>
+    </div>
+</div>
+{% else %}
+<div style="padding:20px;background:#fdf2e6;border:1px solid #f0d4b0;border-radius:8px;font-size:13.5px;color:#7a4a1a;display:flex;gap:10px;align-items:flex-start;">
+    <i class="ph ph-warning" style="font-size:18px;flex-shrink:0;margin-top:2px;"></i>
+    <div><strong>PDF generation skipped</strong> — WeasyPrint/GTK may not be available in this environment.
+    The AI summary above is still available to read and copy.</div>
+</div>
+{% endif %}
+{% endblock %}
