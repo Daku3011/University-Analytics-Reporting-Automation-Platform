@@ -1,136 +1,281 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{{ title }} — Q{{ quarter }} {{ year }}</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'DM Sans', sans-serif; font-size: 13pt; color: #1a1a2e; background: #fff; line-height: 1.65; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ title }} — Q{{ quarter }} {{ year }}</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
 
-  .cover {
-    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-    color: white; padding: 60px 50px 50px;
-    border-bottom: 6px solid #7c3aed;
-  }
-  .cover .university { font-size: 11pt; opacity: 0.85; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 12px; }
-  .cover h1 { font-size: 28pt; font-weight: 700; line-height: 1.2; margin-bottom: 10px; }
-  .cover .subtitle { font-size: 14pt; opacity: 0.9; margin-bottom: 24px; }
-  .cover .meta { font-size: 11pt; opacity: 0.75; }
-  .cover .badge {
-    display: inline-block; background: rgba(255,255,255,0.2);
-    border: 1px solid rgba(255,255,255,0.4);
-    border-radius: 20px; padding: 4px 14px;
-    font-size: 10pt; margin-top: 16px;
-  }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-  .content { padding: 40px 50px; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13pt;
+      color: #1a1a2e;
+      background: #fff;
+      line-height: 1.65;
+    }
 
-  h2 { font-size: 15pt; font-weight: 700; color: #4f46e5; margin: 28px 0 10px;
-       padding-bottom: 6px; border-bottom: 2px solid #e8e6ff; }
-  h3 { font-size: 13pt; font-weight: 600; color: #1a1a2e; margin: 18px 0 8px; }
-  p  { margin-bottom: 12px; color: #2d2d4e; }
-  ul, ol { margin: 10px 0 14px 22px; }
-  li { margin-bottom: 6px; color: #2d2d4e; }
-  strong { color: #1a1a2e; }
+    .cover {
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+      color: white;
+      padding: 60px 50px 50px;
+      border-bottom: 6px solid #7c3aed;
+    }
 
-  .section-box {
-    background: #f8f7ff; border-left: 4px solid #4f46e5;
-    border-radius: 0 6px 6px 0; padding: 16px 20px; margin: 12px 0;
-  }
+    .cover .university {
+      font-size: 11pt;
+      opacity: 0.85;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
 
-  .footer {
-    margin-top: 40px; padding: 20px 50px;
-    background: #f5f5f5; border-top: 1px solid #e0e0e0;
-    font-size: 10pt; color: #888; display: flex;
-    justify-content: space-between;
-  }
+    .cover h1 {
+      font-size: 28pt;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 10px;
+    }
 
-  .ai-badge {
-    background: #f0f0ff; border: 1px solid #c8c4f8;
-    border-radius: 6px; padding: 8px 14px; font-size: 10pt;
-    color: #5b52cc; margin-bottom: 24px; display: inline-block;
-  }
+    .cover .subtitle {
+      font-size: 14pt;
+      opacity: 0.9;
+      margin-bottom: 24px;
+    }
 
-  /* ── Enhanced Visual Layout Styles (for Gemini use) ── */
-  
-  /* Metric Cards */
-  .metric-grid { 
-    display: flex; flex-wrap: wrap; gap: 15px; margin: 20px 0; 
-  }
-  .metric-card { 
-    background: #fdfcff; border: 1px solid #e9ecef; border-radius: 8px; 
-    padding: 16px 20px; flex: 1; min-width: 160px; text-align: center; 
-    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-    border-top: 4px solid #4f46e5;
-  }
-  .metric-value { 
-    font-size: 26pt; font-weight: 700; color: #1a1a2e; margin-bottom: 4px; line-height: 1.1;
-  }
-  .metric-label { 
-    font-size: 10pt; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;
-  }
+    .cover .meta {
+      font-size: 11pt;
+      opacity: 0.75;
+    }
 
-  /* Data Tables */
-  table { 
-    width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 11pt; 
-    border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-  }
-  thead { background: #4f46e5; }
-  th { 
-    color: white; padding: 12px 16px; text-align: left; font-weight: 600;
-  }
-  td { 
-    padding: 12px 16px; border-bottom: 1px solid #eee; color: #2d2d4e;
-  }
-  tr:nth-child(even) td { background: #faf9ff; }
-  tr:last-child td { border-bottom: none; }
+    .cover .badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: 10pt;
+      margin-top: 16px;
+    }
 
-  /* SVG Chart Container */
-  .chart-container { 
-    background: white; border: 1px solid #e8e6ff; border-radius: 10px; 
-    padding: 24px; margin: 24px 0; text-align: center;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.04);
-  }
-  svg { max-width: 100%; height: auto; }
+    .content {
+      padding: 40px 50px;
+    }
 
-  /* Pull Quotes / Highlights */
-  .highlight-quote {
-    font-size: 14pt; font-weight: 500; font-style: italic; color: #4f46e5;
-    text-align: center; margin: 30px 40px; padding: 20px;
-    background: #f8f7ff; border-radius: 8px; border: 1px solid #e8e6ff;
-    position: relative;
-  }
-  .highlight-quote::before {
-    content: "“"; position: absolute; top: -10px; left: 10px;
-    font-size: 40pt; color: rgba(79, 70, 229, 0.2); font-family: serif; line-height: 1;
-  }
-</style>
+    h2 {
+      font-size: 15pt;
+      font-weight: 700;
+      color: #4f46e5;
+      margin: 28px 0 10px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid #e8e6ff;
+    }
+
+    h3 {
+      font-size: 13pt;
+      font-weight: 600;
+      color: #1a1a2e;
+      margin: 18px 0 8px;
+    }
+
+    p {
+      margin-bottom: 12px;
+      color: #2d2d4e;
+    }
+
+    ul,
+    ol {
+      margin: 10px 0 14px 22px;
+    }
+
+    li {
+      margin-bottom: 6px;
+      color: #2d2d4e;
+    }
+
+    strong {
+      color: #1a1a2e;
+    }
+
+    .section-box {
+      background: #f8f7ff;
+      border-left: 4px solid #4f46e5;
+      border-radius: 0 6px 6px 0;
+      padding: 16px 20px;
+      margin: 12px 0;
+    }
+
+    .footer {
+      margin-top: 40px;
+      padding: 20px 50px;
+      background: #f5f5f5;
+      border-top: 1px solid #e0e0e0;
+      font-size: 10pt;
+      color: #888;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .ai-badge {
+      background: #f0f0ff;
+      border: 1px solid #c8c4f8;
+      border-radius: 6px;
+      padding: 8px 14px;
+      font-size: 10pt;
+      color: #5b52cc;
+      margin-bottom: 24px;
+      display: inline-block;
+    }
+
+    /* ── Enhanced Visual Layout Styles (for Gemini use) ── */
+
+    /* Metric Cards */
+    .metric-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin: 20px 0;
+    }
+
+    .metric-card {
+      background: #fdfcff;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      padding: 16px 20px;
+      flex: 1;
+      min-width: 160px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+      border-top: 4px solid #4f46e5;
+    }
+
+    .metric-value {
+      font-size: 26pt;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 4px;
+      line-height: 1.1;
+    }
+
+    .metric-label {
+      font-size: 10pt;
+      color: #6c757d;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    /* Data Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 24px 0;
+      font-size: 11pt;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    }
+
+    thead {
+      background: #4f46e5;
+    }
+
+    th {
+      color: white;
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 600;
+    }
+
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #eee;
+      color: #2d2d4e;
+    }
+
+    tr:nth-child(even) td {
+      background: #faf9ff;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* SVG Chart Container */
+    .chart-container {
+      background: white;
+      border: 1px solid #e8e6ff;
+      border-radius: 10px;
+      padding: 24px;
+      margin: 24px 0;
+      text-align: center;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    }
+
+    svg {
+      max-width: 100%;
+      height: auto;
+    }
+
+    /* Pull Quotes / Highlights */
+    .highlight-quote {
+      font-size: 14pt;
+      font-weight: 500;
+      font-style: italic;
+      color: #4f46e5;
+      text-align: center;
+      margin: 30px 40px;
+      padding: 20px;
+      background: #f8f7ff;
+      border-radius: 8px;
+      border: 1px solid #e8e6ff;
+      position: relative;
+    }
+
+    .highlight-quote::before {
+      content: "“";
+      position: absolute;
+      top: -10px;
+      left: 10px;
+      font-size: 40pt;
+      color: rgba(79, 70, 229, 0.2);
+      font-family: serif;
+      line-height: 1;
+    }
+  </style>
 </head>
+
 <body>
 
-<!-- Cover -->
-<div class="cover">
-  <div class="university">Sarvajanik University</div>
-  <h1>{{ title }}</h1>
-  <div class="subtitle">Q{{ quarter }} {{ year }} — {{ quarter_label }}</div>
-  <div class="meta">Prepared by: {{ uploaded_by }}</div>
-  <div class="badge">✦ AI-Condensed Report</div>
-</div>
-
-<!-- Summary Content -->
-<div class="content">
-  <div class="ai-badge">
-    ✦ This summary was generated by Gemini AI from the uploaded detailed report
+  <!-- Cover -->
+  <div class="cover">
+    <div class="university">Sarvajanik University</div>
+    <h1>{{ title }}</h1>
+    <div class="subtitle">Q{{ quarter }} {{ year }} — {{ quarter_label }}</div>
+    <div class="meta">Prepared by: {{ uploaded_by }}</div>
+    <!-- <div class="badge">✦ AI-Condensed Report</div> -->
   </div>
-  {{ ai_summary|safe }}
-</div>
 
-<div class="footer">
-  <span>Sarvajanik University — Internal Use Only</span>
-  <span>Generated via SU Analytics Platform · AI-Condensed</span>
-</div>
+  <!-- Summary Content -->
+  <div class="content">
+    <div class="ai-badge">
+      ✦ This summary was generated by Gemini AI from the uploaded detailed report
+    </div>
+    {{ ai_summary|safe }}
+  </div>
+
+  <div class="footer">
+    <span>Sarvajanik University — Internal Use Only</span>
+    <span>Generated via SU Analytics Platform · AI-Condensed</span>
+  </div>
 
 </body>
+
 </html>

@@ -361,17 +361,129 @@ def upload_document_report(request):
 
     try:
         from google import genai
+        from google.genai import types as genai_types
         client = genai.Client(api_key=api_key)
 
+        extracted_data_list = []
+        
+        # Helper to split large PDFs before sending to Gemini
+        def split_pdf_if_needed(fpath, max_size_mb=20):
+            import os
+            file_size_mb = os.path.getsize(fpath) / (1024 * 1024)
+            if file_size_mb <= max_size_mb:
+                return [fpath]
+            
+            try:
+                from pypdf import PdfReader, PdfWriter
+                from pathlib import Path
+            except ImportError:
+                print("[upload_document_report] pypdf not installed, cannot split. It may fail.")
+                return [fpath]
+                
+            print(f"[upload_document_report] Splitting {fpath.name} ({file_size_mb:.1f}MB) into chunks...")
+            reader = PdfReader(fpath)
+            total_pages = len(reader.pages)
+            num_chunks = int((file_size_mb // max_size_mb) + 1)
+            pages_per_chunk = (total_pages // num_chunks) + 1
+            
+            chunk_paths = []
+            for j in range(num_chunks):
+                writer = PdfWriter()
+                start_page = j * pages_per_chunk
+                end_page = min((j + 1) * pages_per_chunk, total_pages)
+                
+                if start_page >= total_pages:
+                    break
+                    
+                for page_num in range(start_page, end_page):
+                    writer.add_page(reader.pages[page_num])
+                    
+                chunk_path = Path(fpath).parent / f"{fpath.stem}_chunk{j+1}.pdf"
+                with open(chunk_path, "wb") as f_out:
+                    writer.write(f_out)
+                chunk_paths.append(chunk_path)
+            return chunk_paths
+        
+        # ── Map Phase: Extract JSON data from each file individually ──
         for i, fpath in enumerate(saved_paths):
-            gfile = _gemini_upload_and_wait(client, fpath)
-            uploaded_gemini.append(gfile)
+            print(f"[upload_document_report] Processing {fpath.name}...")
+            chunk_paths = split_pdf_if_needed(fpath)
+            
+            uploaded_gfiles = []
+            for chunk_path in chunk_paths:
+                print(f"[upload_document_report] Uploading {chunk_path.name} to Gemini...")
+                gfile = _gemini_upload_and_wait(client, chunk_path)
+                uploaded_gfiles.append(gfile)
+            
+            try:
+                print(f"[upload_document_report] Extracting JSON data from {fpath.name}...")
+                month_name = quarter_months[i] if i < len(quarter_months) else f"Month {i+1}"
+                map_prompt = f"""Extract the core metrics and activities from this monthly report for {month_name} {year}. 
+Please output a strict JSON object detailing:
+- "month": "{month_name}"
+- "executive_summary": A brief 1-2 sentence highlight.
+- "social_metrics": object with total_reach, total_views, followers_gained.
+- "top_posts": array of objects (date, platform, topic, reach).
+- "events": array of objects (date, name, attendance, impact).
+- "media_coverage": object (total_placements, total_reach, key_mentions).
+- "press_releases": total count.
+- "takeaways": array of bullet points."""
+                
+                try:
+                    resp = client.models.generate_content(
+                        model=model_name,
+                        contents=uploaded_gfiles + [map_prompt]
+                    )
+                except Exception as map_exc:
+                    if 'INVALID_ARGUMENT' in str(map_exc) or '400' in str(map_exc):
+                        print(f"[upload_document_report] {model_name} failed with INVALID_ARGUMENT for {fpath.name}. Retrying with gemini-2.5-pro...")
+                        try:
+                            resp = client.models.generate_content(
+                                model="gemini-2.5-pro",
+                                contents=uploaded_gfiles + [map_prompt]
+                            )
+                        except Exception as inner_exc:
+                            print(f"[upload_document_report] Fallback to gemini-2.5-pro also failed: {inner_exc}")
+                            raise inner_exc
+                    else:
+                        raise map_exc
+                extracted_data_list.append(resp.text)
+                print(f"[upload_document_report] Successfully extracted data for {month_name}.")
+                
+            except Exception as e:
+                print(f"[upload_document_report] CRITICAL WARNING: Could not extract data from {fpath.name}. Skipping this month. Error: {e}")
+                # Inject a safe placeholder so the entire report doesn't crash
+                extracted_data_list.append(f"""{{
+                    "month": "{month_name}",
+                    "executive_summary": "Data could not be automatically extracted for this month due to document complexity limits.",
+                    "social_metrics": {{"total_reach": 0, "total_views": 0, "followers_gained": 0}},
+                    "top_posts": [],
+                    "events": [],
+                    "media_coverage": {{"total_placements": 0, "total_reach": 0, "key_mentions": []}},
+                    "press_releases": 0,
+                    "takeaways": ["Please review this month manually as the AI encountered an extraction error."]
+                }}""")
+            finally:
+                # Immediate cleanup to save Gemini storage quota and bypass 3,600 page limits
+                for uf in uploaded_gfiles:
+                    try:
+                        client.files.delete(name=uf.name)
+                        print(f"[upload_document_report] Deleted {uf.name} from Gemini.")
+                    except Exception as cleanup_exc:
+                        print(f"[upload_document_report] Cleanup warning for {uf.name}: {cleanup_exc}")
 
         # Build month list for the prompt
         months_uploaded = ', '.join(quarter_months[:len(saved_paths)])
+        
+        # Combine all extracted JSON into a single text block
+        combined_json_text = "\n\n".join([f"--- Data Extract {i+1} ---\n{data}" for i, data in enumerate(extracted_data_list)])
 
+        # ── Reduce Phase: Generate final HTML report from the consolidated JSON ──
         prompt = f"""You are an expert data analyst and report designer for Sarvajanik University.
-The attached {len(saved_paths)} document(s) represent the detailed monthly activity reports for: {months_uploaded} {year}.
+The following JSON data represents the extracted metrics and activities for the months of {months_uploaded} {year}.
+
+RAW EXTRACTED DATA:
+{combined_json_text}
 
 Your task: Produce a highly visual, professional **{quarter_label} Quarterly Summary Report** in clean HTML.
 DO NOT JUST WRITE LONG TEXT. You must use data visualization (SVG), metric cards, and data tables to summarize the data.
@@ -408,23 +520,28 @@ Structure your response exactly into these sections:
 
 IMPORTANT RULES: 
 - Output ONLY valid HTML. Do not wrap in markdown codeblocks (like ```html). 
+- Do NOT use markdown formatting like **bold**. You MUST use HTML <strong> tags for emphasis.
 - Create professional, accurate SVG charts based on the real data in the documents. 
 - Use the exact CSS classes provided. Do not use inline styles unless necessary for the SVG drawing.
 - Extract actual numbers and names from the PDF reports. Ensure accurate consolidation across {len(saved_paths)} months.
 """
-
-        # Send all uploaded files + prompt to Gemini in a single call
-        contents = [*uploaded_gemini, prompt]
-        print(f"[upload_document_report] Sending {len(uploaded_gemini)} files to Gemini. Total combined size: {sum(f.stat().st_size for f in saved_paths)/1024/1024:.1f} MB")
+        # Send the consolidated text prompt to Gemini
+        print(f"[upload_document_report] Generating final HTML report from consolidated data...")
         
         response = client.models.generate_content(
             model=model_name,
-            contents=contents,
+            contents=prompt,
         )
 
         raw = response.text or ''
+        
+        # Fallback: if Gemini returns markdown bold despite instructions, convert it
+        import re
+        raw = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', raw)
+        
         # Fallback: if Gemini returns markdown despite instructions, convert it
         if '<h2>' not in raw and '<p>' not in raw:
+            import markdown
             raw = markdown.markdown(raw, extensions=['extra'])
         ai_summary = raw
 
@@ -432,15 +549,10 @@ IMPORTANT RULES:
         err_str = str(exc)
         print(f"[upload_document_report] Gemini Generation Error: {err_str}")
         
-        # 400 INVALID_ARGUMENT usually means the combined PDFs exceed the 3,600-page limit
-        if 'INVALID_ARGUMENT' in err_str or '400' in err_str:
-            err_msg = (
-                "The AI rejected the request because the combined size or page count of the uploaded reports is too large. "
-                "Gemini supports a maximum of <strong>3,600 total pages</strong> per request. "
-                "Please try uploading just one or two months at a time, or compress the PDFs to reduce complexity."
-            )
-        else:
-            err_msg = str(exc)
+        err_msg = (
+            "An error occurred while generating the AI summary. "
+            f"Details: {err_str}"
+        )
 
         ai_summary = (
             f"<div style='padding:16px 20px;background:#fef2f2;"
@@ -450,17 +562,7 @@ IMPORTANT RULES:
             f"{err_msg}</div>"
         )
     finally:
-        # Clean up uploaded files from Gemini (they expire in 48h anyway)
-        try:
-            from google import genai as _genai
-            _client = _genai.Client(api_key=api_key)
-            for gf in uploaded_gemini:
-                try:
-                    _client.files.delete(name=gf.name)
-                except Exception:
-                    pass
-        except Exception:
-            pass
+        pass
 
     # ── Generate output PDF ───────────────────────────────────────────────────
     context = {
