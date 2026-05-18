@@ -91,9 +91,18 @@ CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Lax'
 
 # ── Security Headers ──────────────────────────────────────────────────────────
-X_FRAME_OPTIONS = 'DENY'
+# Allow HF Spaces to embed the app in an iframe
+X_FRAME_OPTIONS = 'SAMEORIGIN'
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
+
+# Trusted origins for CSRF (required for HF Spaces cross-origin requests)
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.hf.space',
+    'https://*.huggingface.co',
+    'http://127.0.0.1:8000',
+    'http://localhost:8000',
+]
 
 WSGI_APPLICATION = 'su_analytics.wsgi.application'
 
