@@ -4,15 +4,18 @@
 # ============================================================
 
 # ── Web Framework ────────────────────────────────────────────
-Django==5.2.14
+Django==5.2.1
+gunicorn==23.0.0          # Production WSGI server for HF Spaces
+whitenoise==6.9.0         # Serve static files without a separate web server
 
 # ── PDF Generation ───────────────────────────────────────────
 # WeasyPrint renders HTML/CSS templates into PDF reports
 weasyprint==68.1
 
-# ── AI / Generative AI ───────────────────────────────────────
-# Google Gemini API used for AI-powered quarterly report summaries
-google-generativeai==0.8.6
+# ── AI / Generative AI (gemini-api-dev skill) ────────────────
+# NEW: google-genai (replaces deprecated google-generativeai)
+# Ref: https://ai.google.dev/gemini-api/docs/migrate.md.txt
+google-genai
 python-dotenv==1.2.2
 markdown==3.10.2
 
@@ -20,5 +23,3 @@ markdown==3.10.2
 # Pillow is required by Django's ImageField (college logos,
 # newspaper clippings, top-post screenshots)
 Pillow==12.2.0
-
-dotenv

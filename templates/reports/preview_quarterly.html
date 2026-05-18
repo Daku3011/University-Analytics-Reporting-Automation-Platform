@@ -1,19 +1,59 @@
 {% extends 'base.html' %}
-{% block title %}Quarterly Report{% endblock %}
+{% block title %}Quarterly Report — Q{{ report.quarter }} {{ report.year }}{% endblock %}
+{% block topbar_title %}Quarterly Report Preview{% endblock %}
+
 {% block content %}
-<div class="d-flex justify-content-between mb-3">
-    <h2>Quarterly Report Generated</h2>
-    <a href="{{ report.pdf_file.url }}" class="btn btn-success" target="_blank">Download PDF</a>
-</div>
-<div class="card p-4">
-    <p><strong>Period:</strong> Q{{ report.quarter }} {{ report.year }}</p>
-    <p><strong>Generated:</strong> {{ report.created_at }}</p>
-    {% if report.ai_summary %}
-    <div class="alert alert-info">
-        <h5>AI Summary</h5>
-        <p>{{ report.ai_summary|linebreaks }}</p>
+<div class="page-header">
+    <div>
+        <h1>Q{{ report.quarter }} {{ report.year }} — Quarterly Report</h1>
+        <p>Generated {{ report.created_at|date:"d M Y, H:i" }}</p>
     </div>
-    {% endif %}
-    <iframe src="{{ report.pdf_file.url }}" width="100%" height="800px" style="border: 1px solid #ddd;"></iframe>
+    <div style="display:flex;gap:10px;">
+        <a href="{% url 'report_dashboard' %}" class="btn btn-secondary">
+            <i class="ph ph-arrow-left"></i> Back to Reports
+        </a>
+        <a href="{{ report.pdf_file.url }}" class="btn btn-primary" target="_blank" rel="noopener">
+            <i class="ph ph-file-arrow-down"></i> Download PDF
+        </a>
+    </div>
+</div>
+
+<!-- AI Summary -->
+{% if report.ai_summary %}
+<div class="card" style="margin-bottom:20px;">
+    <div class="card-body">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+            <div style="width:30px;height:30px;border-radius:6px;background:var(--accent-2-light);display:flex;align-items:center;justify-content:center;">
+                <i class="ph ph-sparkle" style="font-size:16px;color:var(--accent-2);"></i>
+            </div>
+            <span style="font-size:14px;font-weight:600;color:var(--text-primary);">AI-Generated Summary</span>
+            <span style="font-size:11px;color:var(--text-muted);margin-left:4px;">Powered by Gemini</span>
+        </div>
+        <div style="font-size:14px;line-height:1.7;color:var(--text-secondary);">
+            {{ report.ai_summary|safe }}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- PDF Embed -->
+<div class="card">
+    <div class="card-header" style="padding:16px 20px 0;font-size:13px;font-weight:600;color:var(--text-secondary);display:flex;align-items:center;gap:7px;">
+        <i class="ph ph-file-pdf" style="color:var(--accent);font-size:15px;"></i>
+        PDF Preview
+    </div>
+    <div class="card-body" style="padding:16px;">
+        <iframe
+            src="{{ report.pdf_file.url }}"
+            width="100%"
+            height="820px"
+            style="border:1px solid var(--border);border-radius:6px;display:block;"
+            title="Q{{ report.quarter }} {{ report.year }} Quarterly Report PDF"
+        ></iframe>
+        <p style="font-size:12px;color:var(--text-muted);margin-top:10px;display:flex;align-items:center;gap:5px;">
+            <i class="ph ph-info"></i>
+            If the PDF doesn't display, click <a href="{{ report.pdf_file.url }}" target="_blank" style="color:var(--accent);">Download PDF</a> to open it directly.
+        </p>
+    </div>
 </div>
 {% endblock %}

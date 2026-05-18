@@ -3,34 +3,313 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SU Analytics - Login</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>SU Analytics — Sign In</title>
+    <meta name="description" content="Sign in to Sarvajanik University Analytics Platform">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web@2.1.1/src/index.js"></script>
     <style>
-        body { background: #1a1f36; font-family: 'Segoe UI', Tahoma, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-        .login-card { background: #fff; border-radius: 16px; padding: 40px; width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
-        .login-card h2 { color: #1a1f36; font-weight: 700; text-align: center; margin-bottom: 30px; }
-        .login-card .brand { text-align: center; font-size: 24px; color: #4f46e5; font-weight: 700; margin-bottom: 10px; }
+        :root {
+            --bg:           #f8f7f5;
+            --surface:      #ffffff;
+            --border:       #e5e0d8;
+            --accent:       #7c6ef7;
+            --accent-light: #ede9ff;
+            --accent-dark:  #5b4fd4;
+            --text-primary: #1e1c19;
+            --text-muted:   #9a948e;
+            --danger:       #b5534a;
+            --danger-light: #fbecea;
+            --warning:      #c97a2f;
+            --warning-light:#fdf2e6;
+            --font-body:    'DM Sans', system-ui, sans-serif;
+            --radius:       10px;
+            --radius-sm:    6px;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { -webkit-font-smoothing: antialiased; }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--bg);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                radial-gradient(circle at 25% 25%, rgba(124,110,247,0.05) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(108,191,166,0.05) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .login-wrapper {
+            width: 100%;
+            max-width: 400px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .login-brand {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+        .login-brand-icon {
+            width: 48px; height: 48px;
+            background: var(--accent);
+            border-radius: 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+            box-shadow: 0 8px 24px rgba(124,110,247,0.25);
+        }
+        .login-brand-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .login-brand-sub {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .login-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 32px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.07), 0 1px 4px rgba(0,0,0,0.04);
+        }
+        .login-card h1 {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+        }
+
+        .alert {
+            padding: 11px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 13.5px;
+            display: flex;
+            align-items: flex-start;
+            gap: 9px;
+            margin-bottom: 18px;
+        }
+        .alert i { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+        .alert-danger  { background: var(--danger-light); color: var(--danger); border: 1px solid #f0c8c5; }
+        .alert-warning { background: var(--warning-light); color: var(--warning); border: 1px solid #f0d4b0; }
+
+        .form-group { margin-bottom: 16px; }
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #5a5650;
+            margin-bottom: 6px;
+        }
+        .input-wrapper { position: relative; }
+        .input-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 17px;
+            pointer-events: none;
+        }
+        .form-control {
+            width: 100%;
+            padding: 10px 12px 10px 38px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-family: var(--font-body);
+            font-size: 14px;
+            color: var(--text-primary);
+            background: var(--surface);
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(124,110,247,0.12);
+        }
+        .form-control::placeholder { color: var(--text-muted); }
+        .form-control:disabled { background: #f5f4f2; opacity: 0.7; cursor: not-allowed; }
+
+        .input-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-size: 17px;
+            padding: 0;
+            line-height: 1;
+        }
+        .input-toggle:hover { color: var(--text-primary); }
+
+        .form-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #5a5650;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+        .form-checkbox input[type="checkbox"] {
+            width: 15px; height: 15px;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 11px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-family: var(--font-body);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-login:hover { background: var(--accent-dark); }
+        .btn-login:active { transform: scale(0.99); }
+        .btn-login:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .login-footer {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 12.5px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
-    <div class="login-card">
-        <div class="brand">📊 SU Analytics</div>
-        <h2>Login</h2>
-        {% if error %}
-            <div class="alert alert-danger">{{ error }}</div>
-        {% endif %}
-        <form method="post">
-            {% csrf_token %}
-            <div class="mb-3">
-                <label class="form-label">Username</label>
-                <input type="text" name="username" class="form-control form-control-lg" required>
+    <div class="login-wrapper">
+        <div class="login-brand">
+            <div class="login-brand-icon">
+                <i class="ph ph-chart-bar" style="font-size:22px;color:#fff;"></i>
             </div>
-            <div class="mb-3">
-                <label class="form-label">Password</label>
-                <input type="password" name="password" class="form-control form-control-lg" required>
+            <div class="login-brand-name">SU Analytics</div>
+            <div class="login-brand-sub">Sarvajanik University Reporting Platform</div>
+        </div>
+
+        <div class="login-card">
+            <h1>Sign in to your account</h1>
+
+            {% if session_expired %}
+            <div class="alert alert-warning">
+                <i class="ph ph-clock-countdown"></i>
+                <span>Your session expired due to inactivity. Please sign in again.</span>
             </div>
-            <button type="submit" class="btn btn-primary btn-lg w-100">Login</button>
-        </form>
+            {% endif %}
+
+            {% if error %}
+            <div class="alert alert-danger">
+                <i class="ph ph-warning-circle"></i>
+                <span>{{ error }}</span>
+            </div>
+            {% endif %}
+
+            <form method="post" id="login-form">
+                {% csrf_token %}
+                {% if request.GET.next %}
+                <input type="hidden" name="next" value="{{ request.GET.next }}">
+                {% endif %}
+
+                <div class="form-group">
+                    <label class="form-label" for="id_username">Username</label>
+                    <div class="input-wrapper">
+                        <i class="ph ph-user input-icon"></i>
+                        <input type="text" id="id_username" name="username" class="form-control"
+                               placeholder="Enter your username" autocomplete="username" required
+                               {% if locked %}disabled="disabled"{% endif %}>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="id_password">Password</label>
+                    <div class="input-wrapper">
+                        <i class="ph ph-lock input-icon"></i>
+                        <input type="password" id="id_password" name="password" class="form-control"
+                               placeholder="Enter your password" autocomplete="current-password"
+                               style="padding-right: 40px;" required
+                               {% if locked %}disabled="disabled"{% endif %}>
+                        <button type="button" class="input-toggle" id="togglePassword" aria-label="Show/hide password">
+                            <i class="ph ph-eye" id="toggleIcon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <label class="form-checkbox">
+                    <input type="checkbox" name="remember_me" id="remember_me">
+                    Keep me signed in for 7 days
+                </label>
+
+                <button type="submit" class="btn-login" id="login-btn"
+                        {% if locked %}disabled="disabled"{% endif %}>
+                    <i class="ph ph-sign-in"></i>
+                    Sign in
+                </button>
+            </form>
+        </div>
+
+        <!-- <div class="login-footer">
+            <i class="ph ph-lock"></i>
+            Secured with CSRF protection &amp; session encryption
+        </div> -->
     </div>
+
+    <script>
+        const toggleBtn = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('id_password');
+        const toggleIcon = document.getElementById('toggleIcon');
+
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                const isPassword = passwordInput.type === 'password';
+                passwordInput.type = isPassword ? 'text' : 'password';
+                toggleIcon.className = isPassword ? 'ph ph-eye-slash' : 'ph ph-eye';
+            });
+        }
+
+        const form = document.getElementById('login-form');
+        const loginBtn = document.getElementById('login-btn');
+        if (form) {
+            form.addEventListener('submit', () => {
+                if (loginBtn && !loginBtn.disabled) {
+                    loginBtn.disabled = true;
+                    loginBtn.innerHTML = '<i class="ph ph-circle-notch" style="animation:spin 1s linear infinite"></i> Signing in...';
+                }
+            });
+        }
+    </script>
 </body>
 </html>

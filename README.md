@@ -1,3 +1,14 @@
+---
+title: SU Analytics
+emoji: 📊
+colorFrom: purple
+colorTo: teal
+sdk: docker
+pinned: false
+license: mit
+app_port: 7860
+---
+
 # 📊 SU Analytics — University Analytics Reporting Platform
 
 > **A Django-powered internal platform** for Sarvajanik University to track, manage, and auto-generate PDF reports from social media analytics, events, newspaper coverage, and press releases — with AI-assisted quarterly summaries via Google Gemini.

@@ -1,14 +1,20 @@
-import os, json, markdown
+import os
+import json
+import markdown
 from datetime import date
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.template.loader import render_to_string
 from django.conf import settings
-from weasyprint import HTML
+from django.core.cache import cache
+# WeasyPrint requires system GTK/Pango libraries.
+# Import lazily inside view functions so the app starts even if GTK isn't installed.
+# See: https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#windows
 from colleges.models import College
 from events.models import Event
 from analytics_app.models import MonthlyAnalytics, TopPost
 from .models import MonthlyReport, QuarterlyReport, NewspaperCoverage, PressRelease
+
 
 @login_required
 def report_dashboard(request):
@@ -23,16 +29,19 @@ def report_dashboard(request):
         'months': months,
     })
 
+
 @login_required
 def generate_monthly(request):
     if request.method == 'POST':
         college_id = request.POST.get('college')
         month = int(request.POST['month'])
         year = int(request.POST['year'])
+
         if hasattr(request.user, 'profile') and request.user.profile.college:
             college = request.user.profile.college
         else:
             college = College.objects.get(id=college_id)
+
         analytics = MonthlyAnalytics.objects.filter(college=college, month=month, year=year).first()
         events = Event.objects.filter(college=college, date__month=month, date__year=year)
         top_ig = TopPost.objects.filter(college=college, month=month, year=year, platform='instagram')[:5]
@@ -43,16 +52,15 @@ def generate_monthly(request):
         month_name = date(year, month, 1).strftime('%B')
 
         max_views = 1
-        for a_val in [analytics]:
-            if a_val:
-                max_views = max(max_views, a_val.instagram_views, a_val.facebook_views, a_val.total_views)
+        if analytics:
+            max_views = max(1, analytics.instagram_views, analytics.facebook_views, analytics.total_views)
 
         context = {
             'college': college,
             'month_name': month_name,
             'year': year,
             'analytics': analytics,
-            'max_views': max_views or 1,
+            'max_views': max_views,
             'events': events,
             'events_count': events.count(),
             'top_ig': top_ig,
@@ -61,6 +69,7 @@ def generate_monthly(request):
             'press_releases': press_releases,
         }
         html_string = render_to_string('reports/monthly_report_template.html', context)
+        from weasyprint import HTML  # lazy import — requires GTK/Pango on Windows
         pdf_dir = settings.MEDIA_ROOT / 'reports' / 'monthly'
         pdf_dir.mkdir(parents=True, exist_ok=True)
         pdf_path = pdf_dir / f'{college.code}_{month}_{year}.pdf'
@@ -74,10 +83,12 @@ def generate_monthly(request):
         return redirect('preview_monthly', report_id=report.id)
     return redirect('report_dashboard')
 
+
 @login_required
 def preview_monthly(request, report_id):
     report = get_object_or_404(MonthlyReport, id=report_id)
     return render(request, 'reports/preview_monthly.html', {'report': report})
+
 
 @login_required
 def generate_quarterly(request):
@@ -106,59 +117,80 @@ def generate_quarterly(request):
                 'facebook_views': sum(a.facebook_views for a in qs),
             }
 
-        # AI summary via Gemini with Rate Limiting
+        # ── AI Summary via Gemini (gemini-api-dev skill) ──────────────────
         ai_summary = ""
-        from django.core.cache import cache
-        from django.contrib import messages
-        import time
-
-        # Keys for tracking
+        gemini_config = getattr(settings, 'GEMINI_CONFIG', {})
+        model_name = gemini_config.get('MODEL', 'gemini-2.5-flash')
         cooldown_key = f"gemini_cooldown_{request.user.id}"
         limit_key = f"gemini_limit_{request.user.id}_{date.today()}"
-        
-        # 1. Check Cooldown
+
         last_call = cache.get(cooldown_key)
         if last_call:
-            ai_summary = "AI summary skipped due to cooldown. Please wait 60 seconds."
+            ai_summary = ("<div style='display:flex;align-items:flex-start;gap:10px;padding:12px 16px;"
+                          "background:#fdf2e6;border:1px solid #f0d4b0;border-radius:6px;'>"
+                          "<i class='ph ph-clock' style='font-size:18px;color:#c97a2f;flex-shrink:0;margin-top:2px;'></i>"
+                          "<div style='font-size:13.5px;color:#7a4a1a;'><strong>AI summary skipped</strong>"
+                          " &mdash; Please wait 60 seconds before generating again.</div></div>")
         else:
-            # 2. Check Daily Limit
             daily_count = cache.get(limit_key, 0)
-            if daily_count >= settings.GEMINI_CONFIG['DAILY_LIMIT']:
-                ai_summary = f"AI summary skipped. Daily limit of {settings.GEMINI_CONFIG['DAILY_LIMIT']} reached."
+            daily_limit = gemini_config.get('DAILY_LIMIT', 50)
+            if daily_count >= daily_limit:
+                ai_summary = ("<div style='display:flex;align-items:flex-start;gap:10px;padding:12px 16px;"
+                              "background:#fbecea;border:1px solid #f0c8c5;border-radius:6px;'>"
+                              "<i class='ph ph-warning-circle' style='font-size:18px;color:#b5534a;flex-shrink:0;margin-top:2px;'></i>"
+                              f"<div style='font-size:13.5px;color:#7a2a22;'><strong>Daily limit reached</strong>"
+                              f" &mdash; {daily_limit} AI summaries used today. Resets at midnight.</div></div>")
             else:
                 try:
-                    import google.generativeai as genai
-                    genai.configure(api_key=os.environ.get('GEMINI_API_KEY', ''))
-                    model = genai.GenerativeModel('gemini-2.5-flash')
-                    prompt = f"""Analyze the following university social media quarterly data and generate a professional summary.
+                    # New SDK: google-genai (replaces google-generativeai)
+                    from google import genai
+                    client = genai.Client(api_key=os.environ.get('GEMINI_API_KEY', ''))
+
+                    prompt = f"""You are an analytics reporting assistant for Sarvajanik University.
+Analyze the following social media quarterly data and write a professional narrative summary.
 
 Quarter: Q{quarter} {year}
-Months: {', '.join(month_names)}
+Months covered: {', '.join(month_names)}
 
-Monthly Analytics:
+Monthly breakdown:
 {json.dumps(analytics_by_month, indent=2)}
 
-Top Instagram Posts: {[{'views': p.views, 'likes': p.likes, 'shares': p.shares} for p in all_top_ig[:3]]}
-Top Facebook Posts: {[{'views': p.views, 'likes': p.likes} for p in all_top_fb[:3]]}
+Top Instagram posts (views/likes/shares):
+{[{'views': p.views, 'likes': p.likes, 'shares': p.shares} for p in all_top_ig[:3]]}
 
-Write a professional quarterly summary with:
-1. Best performing month
-2. Platform comparison (Instagram vs Facebook)
-3. Event impact highlights
-4. Engagement trends
-5. Recommendations for next quarter"""
-                    response = model.generate_content(prompt)
-                    ai_summary = response.text
-                    
-                    # 3. Update tracking on success
-                    cache.set(cooldown_key, True, settings.GEMINI_CONFIG['COOLDOWN_SECONDS'])
-                    cache.set(limit_key, daily_count + 1, 86400) # 24 hours
-                    
-                    # Convert markdown to HTML
-                    ai_summary = markdown.markdown(ai_summary)
-                    
+Top Facebook posts (views/likes):
+{[{'views': p.views, 'likes': p.likes} for p in all_top_fb[:3]]}
+
+Write a structured professional quarterly summary with these sections:
+1. Quarter Overview — overall performance highlights
+2. Best Performing Month — which month and why
+3. Platform Comparison — Instagram vs Facebook performance
+4. Engagement Trends — follower growth patterns
+5. Recommendations — 3 actionable recommendations for next quarter
+
+Use clear professional language suitable for a university administration report."""
+
+                    response = client.models.generate_content(
+                        model=model_name,
+                        contents=prompt,
+                    )
+                    raw_text = response.text
+
+                    # Update rate-limit tracking
+                    cooldown_secs = gemini_config.get('COOLDOWN_SECONDS', 60)
+                    cache.set(cooldown_key, True, cooldown_secs)
+                    cache.set(limit_key, daily_count + 1, 86400)
+
+                    # Convert markdown → HTML
+                    ai_summary = markdown.markdown(raw_text)
+
+                except ImportError:
+                    ai_summary = (
+                        "<p class='ai-notice'>Install the new Gemini SDK: "
+                        "<code>pip install google-genai</code></p>"
+                    )
                 except Exception as e:
-                    ai_summary = f"AI summary unavailable. Error: {str(e)}"
+                    ai_summary = f"<p class='ai-notice'>AI summary unavailable: {str(e)}</p>"
 
         totals = {}
         max_monthly_val = 1
@@ -183,6 +215,7 @@ Write a professional quarterly summary with:
             'newspapers_count': all_newspapers.count(),
         }
         html_string = render_to_string('reports/quarterly_report_template.html', context)
+        from weasyprint import HTML  # lazy import — requires GTK/Pango on Windows
         pdf_dir = settings.MEDIA_ROOT / 'reports' / 'quarterly'
         pdf_dir.mkdir(parents=True, exist_ok=True)
         pdf_path = pdf_dir / f'Q{quarter}_{year}.pdf'
@@ -195,6 +228,7 @@ Write a professional quarterly summary with:
         )
         return redirect('preview_quarterly', report_id=report.id)
     return redirect('report_dashboard')
+
 
 @login_required
 def preview_quarterly(request, report_id):

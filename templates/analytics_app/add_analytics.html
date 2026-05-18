@@ -1,81 +1,134 @@
 {% extends 'base.html' %}
 {% block title %}Add Analytics{% endblock %}
+{% block topbar_title %}Add Monthly Analytics{% endblock %}
+
 {% block content %}
-<h2 class="mb-4">Add Monthly Analytics</h2>
-<div class="card p-4">
-    <form method="post">
-        {% csrf_token %}
-        <div class="row g-3">
-            <div class="col-md-4">
-                <label class="form-label">College</label>
-                <select name="college" class="form-select">
-                    {% for c in colleges %}
-                    <option value="{{ c.id }}">{{ c.name }}</option>
-                    {% endfor %}
-                </select>
+<div class="page-header">
+    <div>
+        <h1>Monthly Analytics Entry</h1>
+        <p>Record social media performance data for a college</p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+
+            <!-- Period Selection -->
+            <div class="section-title" style="margin-bottom:10px;">
+                <i class="ph ph-calendar" style="margin-right:4px;"></i> Reporting Period
             </div>
-            <div class="col-md-4">
-                <label class="form-label">Month</label>
-                <select name="month" class="form-select">
-                    {% for num, name in months %}
-                    <option value="{{ num }}">{{ name }}</option>
-                    {% endfor %}
-                </select>
+            <div class="grid grid-3" style="margin-bottom:28px;">
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label" for="id_college">College</label>
+                    <select name="college" id="id_college" class="form-control form-select">
+                        {% for c in colleges %}
+                        <option value="{{ c.id }}">{{ c.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label" for="id_month">Month</label>
+                    <select name="month" id="id_month" class="form-control form-select">
+                        {% for num, name in months %}
+                        <option value="{{ num }}">{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label" for="id_year">Year</label>
+                    <input type="number" name="year" id="id_year" class="form-control" value="2026" min="2020" max="2030">
+                </div>
             </div>
-            <div class="col-md-4">
-                <label class="form-label">Year</label>
-                <input type="number" name="year" class="form-control" value="2026">
+
+            <hr style="border:none;border-top:1px solid var(--border-light);margin-bottom:24px;">
+
+            <!-- Instagram -->
+            <div class="section-title">
+                <i class="ph ph-instagram-logo" style="margin-right:4px;color:#e1306c;"></i> Instagram
             </div>
-            <div class="col-md-4">
-                <label class="form-label">Instagram Views</label>
-                <input type="number" name="instagram_views" class="form-control" value="0">
+            <div class="grid grid-3" style="margin-bottom:24px;">
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label" for="id_ig_views">Views</label>
+                    <input type="number" name="instagram_views" id="id_ig_views" class="form-control" value="0" min="0">
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label" for="id_ig_reach">Reach</label>
+                    <input type="number" name="instagram_reach" id="id_ig_reach" class="form-control" value="0" min="0">
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label" for="id_ig_followers">Followers (total)</label>
+                    <input type="number" name="instagram_followers" id="id_ig_followers" class="form-control" value="0" min="0">
+                </div>
             </div>
-            <div class="col-md-4">
-                <label class="form-label">Facebook Views</label>
-                <input type="number" name="facebook_views" class="form-control" value="0">
+
+            <!-- Facebook -->
+            <div class="section-title">
+                <i class="ph ph-facebook-logo" style="margin-right:4px;color:#1877f2;"></i> Facebook
             </div>
-            <div class="col-md-4">
-                <label class="form-label">Total Views</label>
-                <input type="number" name="total_views" class="form-control" value="0">
+            <div class="grid grid-3" style="margin-bottom:24px;">
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label" for="id_fb_views">Views</label>
+                    <input type="number" name="facebook_views" id="id_fb_views" class="form-control" value="0" min="0">
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label" for="id_fb_reach">Reach</label>
+                    <input type="number" name="facebook_reach" id="id_fb_reach" class="form-control" value="0" min="0">
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label" for="id_fb_followers">Followers (total)</label>
+                    <input type="number" name="facebook_followers" id="id_fb_followers" class="form-control" value="0" min="0">
+                </div>
             </div>
-            <div class="col-md-4">
-                <label class="form-label">Instagram Reach</label>
-                <input type="number" name="instagram_reach" class="form-control" value="0">
+
+            <!-- YouTube + Aggregates -->
+            <div class="section-title">
+                <i class="ph ph-youtube-logo" style="margin-right:4px;color:#ff0000;"></i> YouTube &amp; Aggregates
             </div>
-            <div class="col-md-4">
-                <label class="form-label">Facebook Reach</label>
-                <input type="number" name="facebook_reach" class="form-control" value="0">
+            <div class="grid grid-3" style="margin-bottom:24px;">
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label" for="id_yt_subs">YouTube Subscribers</label>
+                    <input type="number" name="youtube_subscribers" id="id_yt_subs" class="form-control" value="0" min="0">
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label" for="id_total_views">Total Views (all platforms)</label>
+                    <input type="number" name="total_views" id="id_total_views" class="form-control" value="0" min="0">
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label" for="id_total_reach">Total Reach (all platforms)</label>
+                    <input type="number" name="total_reach" id="id_total_reach" class="form-control" value="0" min="0">
+                </div>
             </div>
-            <div class="col-md-4">
-                <label class="form-label">Total Reach</label>
-                <input type="number" name="total_reach" class="form-control" value="0">
+
+            <!-- Content Stats -->
+            <div class="section-title">
+                <i class="ph ph-images" style="margin-right:4px;"></i> Content Output
             </div>
-            <div class="col-md-3">
-                <label class="form-label">Followers Gained</label>
-                <input type="number" name="followers_gained" class="form-control" value="0">
+            <div class="grid grid-3" style="margin-bottom:28px;">
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label" for="id_followers_gained">Followers Gained</label>
+                    <input type="number" name="followers_gained" id="id_followers_gained" class="form-control" value="0" min="0">
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label" for="id_reels_count">Reels Published</label>
+                    <input type="number" name="reels_count" id="id_reels_count" class="form-control" value="0" min="0">
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label" for="id_graphics_count">Graphics Published</label>
+                    <input type="number" name="graphics_count" id="id_graphics_count" class="form-control" value="0" min="0">
+                </div>
             </div>
-            <div class="col-md-3">
-                <label class="form-label">Reels Count</label>
-                <input type="number" name="reels_count" class="form-control" value="0">
+
+            <div style="display:flex;gap:10px;">
+                <button type="submit" class="btn btn-primary">
+                    <i class="ph ph-floppy-disk"></i> Save Analytics
+                </button>
+                <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+                    <i class="ph ph-x"></i> Cancel
+                </a>
             </div>
-            <div class="col-md-3">
-                <label class="form-label">Graphics Count</label>
-                <input type="number" name="graphics_count" class="form-control" value="0">
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">Instagram Followers</label>
-                <input type="number" name="instagram_followers" class="form-control" value="0">
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">Facebook Followers</label>
-                <input type="number" name="facebook_followers" class="form-control" value="0">
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">YouTube Subscribers</label>
-                <input type="number" name="youtube_subscribers" class="form-control" value="0">
-            </div>
-        </div>
-        <button type="submit" class="btn btn-primary mt-3">Save Analytics</button>
-    </form>
+        </form>
+    </div>
 </div>
 {% endblock %}

@@ -1,51 +1,87 @@
 {% extends 'base.html' %}
 {% block title %}Add Event{% endblock %}
+{% block topbar_title %}Add Event{% endblock %}
+
 {% block content %}
-<h2 class="mb-4">Add Event</h2>
-<div class="card p-4">
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        <div class="row g-3">
-            <div class="col-md-8">
-                <label class="form-label">Title</label>
-                <input type="text" name="title" class="form-control" required>
+<div class="page-header">
+    <div>
+        <h1>Log a New Event</h1>
+        <p>Record university events, programs, and achievements</p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <!-- Event Details -->
+            <div class="section-title" style="margin-bottom:10px;">
+                <i class="ph ph-info" style="margin-right:4px;"></i> Event Details
             </div>
-            <div class="col-md-4">
-                <label class="form-label">Category</label>
-                <select name="category" class="form-select">
-                    <option value="workshop">Workshop</option>
-                    <option value="festival">Festival</option>
-                    <option value="placement">Placement</option>
-                    <option value="achievement">Achievement</option>
-                    <option value="conference">Conference</option>
-                    <option value="guest_lecture">Guest Lecture</option>
-                    <option value="academic">Academic</option>
-                    <option value="cultural">Cultural</option>
-                    <option value="other">Other</option>
-                </select>
+            <div class="grid grid-2" style="margin-bottom:0;">
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label" for="id_title">Event Title</label>
+                    <input type="text" name="title" id="id_title" class="form-control" placeholder="e.g. Annual Tech Fest 2026" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="id_category">Category</label>
+                    <select name="category" id="id_category" class="form-control form-select">
+                        <option value="workshop">Workshop</option>
+                        <option value="festival">Festival</option>
+                        <option value="placement">Placement</option>
+                        <option value="achievement">Achievement</option>
+                        <option value="conference">Conference</option>
+                        <option value="guest_lecture">Guest Lecture</option>
+                        <option value="academic">Academic</option>
+                        <option value="cultural">Cultural</option>
+                        <option value="sports">Sports</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="id_date">Event Date</label>
+                    <input type="date" name="date" id="id_date" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="id_college">College</label>
+                    <select name="college" id="id_college" class="form-control form-select">
+                        {% for c in colleges %}
+                        <option value="{{ c.id }}">{{ c.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
             </div>
-            <div class="col-md-6">
-                <label class="form-label">Date</label>
-                <input type="date" name="date" class="form-control" required>
+
+            <div class="form-group">
+                <label class="form-label" for="id_description">Description</label>
+                <textarea name="description" id="id_description" class="form-control" rows="4" placeholder="Brief description of the event, key highlights, speakers, or outcomes..."></textarea>
             </div>
-            <div class="col-md-6">
-                <label class="form-label">College</label>
-                <select name="college" class="form-select">
-                    {% for c in colleges %}
-                    <option value="{{ c.id }}">{{ c.name }}</option>
-                    {% endfor %}
-                </select>
+
+            <hr style="border:none;border-top:1px solid var(--border-light);margin-bottom:20px;">
+
+            <!-- Media Upload -->
+            <div class="section-title" style="margin-bottom:10px;">
+                <i class="ph ph-paperclip" style="margin-right:4px;"></i> Media Attachments
             </div>
-            <div class="col-12">
-                <label class="form-label">Description</label>
-                <textarea name="description" class="form-control" rows="3"></textarea>
+            <div class="form-group">
+                <label class="form-label" for="id_media">Images, Videos, PDFs, Posters</label>
+                <input type="file" name="media" id="id_media" class="form-control" multiple accept="image/*,video/*,.pdf">
+                <p style="font-size:12px;color:var(--text-muted);margin-top:6px;display:flex;align-items:center;gap:5px;">
+                    <i class="ph ph-info"></i>
+                    Hold Ctrl (or Cmd) to select multiple files. Accepted: images, videos, PDFs.
+                </p>
             </div>
-            <div class="col-12">
-                <label class="form-label">Media (images/videos)</label>
-                <input type="file" name="media" class="form-control" multiple>
+
+            <div style="display:flex;gap:10px;margin-top:8px;">
+                <button type="submit" class="btn btn-primary">
+                    <i class="ph ph-check"></i> Save Event
+                </button>
+                <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+                    <i class="ph ph-x"></i> Cancel
+                </a>
             </div>
-        </div>
-        <button type="submit" class="btn btn-primary mt-3">Save Event</button>
-    </form>
+        </form>
+    </div>
 </div>
 {% endblock %}

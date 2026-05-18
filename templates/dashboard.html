@@ -1,76 +1,161 @@
 {% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block topbar_title %}Dashboard{% endblock %}
+
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Dashboard</h2>
-    <span class="text-muted">Welcome, {{ user.username }}</span>
-</div>
-
-<div class="row g-4 mb-4">
-    <div class="col-md-3">
-        <div class="card stat-card">
-            <div class="number">{{ total_views|default:"0" }}</div>
-            <div class="label">Total Views</div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card stat-card">
-            <div class="number">{{ total_reach|default:"0" }}</div>
-            <div class="label">Total Reach</div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card stat-card">
-            <div class="number">{{ events_count|default:"0" }}</div>
-            <div class="label">Total Events</div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card stat-card">
-            <div class="number">{{ colleges_count|default:"0" }}</div>
-            <div class="label">Colleges</div>
-        </div>
+<div class="page-header">
+    <div>
+        <h1>Overview</h1>
+        <p>Platform-wide analytics summary across all colleges</p>
     </div>
 </div>
 
-<div class="row g-4">
-    <div class="col-md-8">
-        <div class="card p-4">
-            <h5>Monthly Performance</h5>
-            <canvas id="performanceChart" height="200"></canvas>
+<!-- Stat Cards -->
+<div class="grid grid-4" style="margin-bottom: 24px;">
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="ph ph-eye" style="font-size:18px;"></i>
         </div>
+        <div class="stat-number">{{ total_views|default:"0" }}</div>
+        <div class="stat-label">Total Views</div>
     </div>
-    <div class="col-md-4">
-        <div class="card p-4">
-            <h5>Recent Events</h5>
-            <ul class="list-unstyled">
-                {% for e in recent_events %}
-                <li class="mb-2 pb-2 border-bottom">
-                    <strong>{{ e.title|truncatechars:40 }}</strong><br>
-                    <small class="text-muted">{{ e.college.code }} | {{ e.date }}</small>
-                </li>
-                {% empty %}
-                <li class="text-muted">No events yet</li>
-                {% endfor %}
-            </ul>
+
+    <div class="stat-card teal">
+        <div class="stat-icon">
+            <i class="ph ph-broadcast" style="font-size:18px;"></i>
         </div>
+        <div class="stat-number">{{ total_reach|default:"0" }}</div>
+        <div class="stat-label">Total Reach</div>
+    </div>
+
+    <div class="stat-card amber">
+        <div class="stat-icon">
+            <i class="ph ph-calendar-check" style="font-size:18px;"></i>
+        </div>
+        <div class="stat-number">{{ events_count|default:"0" }}</div>
+        <div class="stat-label">Total Events</div>
+    </div>
+
+    <div class="stat-card green">
+        <div class="stat-icon">
+            <i class="ph ph-buildings" style="font-size:18px;"></i>
+        </div>
+        <div class="stat-number">{{ colleges_count|default:"0" }}</div>
+        <div class="stat-label">Colleges</div>
     </div>
 </div>
 
+<!-- Chart + Recent Events -->
+<div class="grid" style="grid-template-columns: 1fr 340px;">
+    <div class="card">
+        <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;padding:20px 20px 0;">
+            <span style="font-size:14px;font-weight:600;color:var(--text-primary);">Monthly Performance</span>
+            <span style="font-size:12px;color:var(--text-muted);">Views &amp; Reach</span>
+        </div>
+        <div class="card-body">
+            <canvas id="performanceChart" height="190"></canvas>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header" style="padding:20px 20px 0;font-size:14px;font-weight:600;color:var(--text-primary);">
+            <div style="display:flex;align-items:center;gap:8px;">
+                <i class="ph ph-clock-clockwise" style="color:var(--accent);"></i>
+                Recent Events
+            </div>
+        </div>
+        <div class="card-body" style="padding-top:14px;">
+            {% for e in recent_events %}
+            <div style="display:flex;flex-direction:column;gap:2px;padding:10px 0;border-bottom:1px solid var(--border-light);">
+                <span style="font-size:13.5px;font-weight:500;color:var(--text-primary);">
+                    {{ e.title|truncatechars:42 }}
+                </span>
+                <span style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:6px;">
+                    <i class="ph ph-building"></i> {{ e.college.code }}
+                    <i class="ph ph-dot-outline"></i>
+                    <i class="ph ph-calendar-blank"></i> {{ e.date }}
+                </span>
+            </div>
+            {% empty %}
+            <div style="text-align:center;padding:24px 0;color:var(--text-muted);font-size:13.5px;">
+                <i class="ph ph-calendar" style="font-size:28px;display:block;margin-bottom:8px;opacity:0.4;"></i>
+                No events yet
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 const chartData = {{ chart_data|safe }};
+
+// Use design system colors
+const accentColor    = '#7c6ef7';
+const tealColor      = '#6cbfa6';
+
 new Chart(document.getElementById('performanceChart'), {
     type: 'bar',
     data: {
         labels: chartData.labels,
-        datasets: [{
-            label: 'Views',
-            data: chartData.views,
-            backgroundColor: '#4f46e5'
-        }, {
-            label: 'Reach',
-            data: chartData.reach,
-            backgroundColor: '#06b6d4'
-        }]
+        datasets: [
+            {
+                label: 'Views',
+                data: chartData.views,
+                backgroundColor: accentColor + '99',
+                borderColor: accentColor,
+                borderWidth: 1.5,
+                borderRadius: 4,
+            },
+            {
+                label: 'Reach',
+                data: chartData.reach,
+                backgroundColor: tealColor + '99',
+                borderColor: tealColor,
+                borderWidth: 1.5,
+                borderRadius: 4,
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'top',
+                align: 'end',
+                labels: {
+                    font: { family: 'DM Sans', size: 12 },
+                    boxWidth: 12,
+                    boxHeight: 12,
+                    borderRadius: 3,
+                    usePointStyle: false,
+                    color: '#5a5650',
+                }
+            },
+            tooltip: {
+                backgroundColor: '#ffffff',
+                titleColor: '#1e1c19',
+                bodyColor: '#5a5650',
+                borderColor: '#e5e0d8',
+                borderWidth: 1,
+                titleFont: { family: 'DM Sans', weight: '600' },
+                bodyFont: { family: 'DM Mono', size: 13 },
+                padding: 10,
+            }
+        },
+        scales: {
+            x: {
+                grid: { display: false },
+                ticks: { font: { family: 'DM Sans', size: 12 }, color: '#9a948e' }
+            },
+            y: {
+                grid: { color: '#f0ece6', lineWidth: 1 },
+                ticks: { font: { family: 'DM Mono', size: 11 }, color: '#9a948e' },
+                border: { dash: [4, 4] }
+            }
+        }
     }
 });
 </script>
