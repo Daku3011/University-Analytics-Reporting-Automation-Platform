@@ -2,7 +2,7 @@
 title: SU Analytics
 emoji: 📊
 colorFrom: purple
-colorTo: teal
+colorTo: indigo
 sdk: docker
 pinned: false
 license: mit
