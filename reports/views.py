@@ -4,6 +4,7 @@ import markdown
 from datetime import date
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from django.template.loader import render_to_string
 from django.conf import settings
 from django.core.cache import cache
@@ -259,20 +260,20 @@ def _save_uploaded_file(ufile, prefix):
 
 def _gemini_upload_and_wait(client, file_path):
     """
-    Upload a PDF to Gemini Files API and wait until it's ACTIVE.
+    Upload a PDF to Gemini Files API directly from disk and wait until ACTIVE.
     Returns the uploaded file object ready to use in generate_content.
-    Supports files up to 2 GB (no inline byte limit).
     """
     import time
-    import io
-
-    with open(file_path, 'rb') as f:
-        file_bytes = io.BytesIO(f.read())
-
     from google.genai import types as genai_types
+
+    # Pass the string path directly so the SDK handles streaming and filename inference.
+    # This prevents loading 70MB files entirely into RAM.
     uploaded = client.files.upload(
-        file=file_bytes,
-        config=genai_types.UploadFileConfig(mime_type='application/pdf')
+        file=str(file_path),
+        config=genai_types.UploadFileConfig(
+            mime_type='application/pdf',
+            display_name=file_path.name
+        )
     )
 
     # Poll until ACTIVE (large files can take 30-60 seconds)
@@ -283,8 +284,8 @@ def _gemini_upload_and_wait(client, file_path):
         waited += 5
         uploaded = client.files.get(name=uploaded.name)
 
-    if uploaded.state.name == 'FAILED':
-        raise Exception(f"Gemini file processing failed for {file_path.name}")
+    if uploaded.state.name != 'ACTIVE':
+        raise Exception(f"Gemini file processing failed or timed out for {file_path.name}. Final state: {uploaded.state.name}")
 
     return uploaded
 
@@ -303,6 +304,12 @@ def upload_document_report(request):
     quarter = int(request.POST.get('doc_quarter', 1))
     year    = int(request.POST.get('doc_year', date.today().year))
 
+    # ── DEBUG: print what Django received ─────────────────────────────────────
+    print(f"[upload_document_report] request.FILES keys: {list(request.FILES.keys())}")
+    print(f"[upload_document_report] request.POST keys:  {list(request.POST.keys())}")
+    for k, f in request.FILES.items():
+        print(f"  FILE '{k}': name={f.name!r}, size={f.size} bytes ({f.size/1024/1024:.1f} MB)")
+
     # ── Collect the uploaded files ────────────────────────────────────────────
     files_in = [
         request.FILES.get('source_file_1'),
@@ -312,11 +319,21 @@ def upload_document_report(request):
     files_in = [f for f in files_in if f]   # drop any not uploaded
 
     if not files_in:
+        messages.error(request,
+            'No PDF files were received by the server. '
+            'This usually means the files are too large (check DATA_UPLOAD_MAX_MEMORY_SIZE) '
+            'or the form did not include the files. Please try again.')
+        print("[upload_document_report] GUARD: files_in is empty — no files received")
         return redirect('report_dashboard')
 
     # Validate extensions
     for f in files_in:
-        if f.name.rsplit('.', 1)[-1].lower() not in ALLOWED_EXTENSIONS:
+        ext = f.name.rsplit('.', 1)[-1].lower() if '.' in f.name else ''
+        if ext not in ALLOWED_EXTENSIONS:
+            messages.error(request,
+                f"File '{f.name}' is not a PDF. Only PDF files are supported. "
+                f"Got extension: '{ext}' — allowed: {ALLOWED_EXTENSIONS}")
+            print(f"[upload_document_report] GUARD: bad extension '{ext}' for file '{f.name}'")
             return redirect('report_dashboard')
 
     # ── Save each file to disk ────────────────────────────────────────────────
@@ -353,60 +370,53 @@ def upload_document_report(request):
         # Build month list for the prompt
         months_uploaded = ', '.join(quarter_months[:len(saved_paths)])
 
-        prompt = f"""You are an expert communications analyst for Sarvajanik University.
+        prompt = f"""You are an expert data analyst and report designer for Sarvajanik University.
+The attached {len(saved_paths)} document(s) represent the detailed monthly activity reports for: {months_uploaded} {year}.
 
-The attached {len(saved_paths)} document(s) are the monthly activity reports for:
-{months_uploaded} {year}
+Your task: Produce a highly visual, professional **{quarter_label} Quarterly Summary Report** in clean HTML.
+DO NOT JUST WRITE LONG TEXT. You must use data visualization (SVG), metric cards, and data tables to summarize the data.
 
-Each document covers social media analytics, events conducted, newspaper/TV/online media
-coverage, press releases, and other university communications activities.
+You must exclusively output HTML using these specific CSS classes which are already defined:
+- `<div class="metric-grid">` containing `<div class="metric-card"><div class="metric-value">X</div><div class="metric-label">Y</div></div>`
+- `<div class="chart-container">` containing raw, well-formatted `<svg>` code for charts.
+- Standard `<table>`, `<thead>`, `<tbody>`, `<tr>`, `<th>`, `<td>` for tabular data.
+- `<div class="highlight-quote">` for important text highlights, quotes, or overarching quarter themes.
 
-Your task: Consolidate all {len(saved_paths)} monthly reports and produce a single, concise,
-professional **{quarter_label} {year} — 3-Month Quarterly Summary Report** with these sections:
+Structure your response exactly into these sections:
 
 <h2>1. Executive Overview</h2>
-<p>Brief paragraph on the quarter's overall highlights and key achievements across all months.</p>
+- Start with a `<div class="highlight-quote">` highlighting the quarter's most impressive overarching achievement.
+- Follow with a `<div class="metric-grid">` showing 3-4 top-level aggregate metrics for the quarter (e.g., Total Reach, Total Events, New Followers, Total PR).
 
 <h2>2. Social Media Performance</h2>
+- Use metric cards for platform-specific stats (Instagram, Facebook, YouTube).
+- Create a beautiful **inline SVG bar chart** or **pie chart** comparing the reach, views, or follower growth across different platforms. Make the SVG clean, using #4f46e5 and #7c3aed colors, with clear text labels and axes. Set viewBox appropriately.
+- A styled `<table>` listing the Top 3-5 Performing Posts across the quarter (Date, Platform, Topic, Reach/Engagement).
+
+<h2>3. Events & Activities</h2>
+- A `<table>` listing the 5 most significant events (Date, Event Name, Attendance/Impact).
+- Provide a brief `<p>` analyzing the overall success and engagement of these events.
+
+<h2>4. Media & Press Coverage</h2>
+- Metric cards for Number of Press Releases and Total Media Mentions.
+- A bulleted list `<ul>` of key newspapers, channels, or online portals that covered the university.
+
+<h2>5. Key Takeaways & Recommendations</h2>
 <ul>
-<li>Key platforms: Instagram, Facebook, YouTube (summarise all months)</li>
-<li>Total views, reach, followers gained across the quarter</li>
-<li>Top-performing content and trends</li>
+<li>3–5 actionable bullet points on what worked and what to improve next quarter based on the data.</li>
 </ul>
 
-<h2>3. Events Highlights</h2>
-<ul>
-<li>Major events conducted (list by month if useful)</li>
-<li>Total events count and estimated attendance/impact</li>
-</ul>
-
-<h2>4. Media Coverage</h2>
-<ul>
-<li>Newspaper, TV, and online coverage — total placements</li>
-<li>Estimated total reach across the quarter</li>
-<li>Notable coverage mentions</li>
-</ul>
-
-<h2>5. Press Releases &amp; Communications</h2>
-<ul>
-<li>Total press releases issued</li>
-<li>Key messages and themes communicated</li>
-</ul>
-
-<h2>6. Month-by-Month Highlights</h2>
-<p>Brief bullet summary for each month covered.</p>
-
-<h2>7. Key Takeaways &amp; Recommendations</h2>
-<ul>
-<li>3–5 actionable bullet points on what worked and what to improve next quarter</li>
-</ul>
-
-IMPORTANT: Output valid HTML only using <h2>, <h3>, <p>, <ul>, <li>, <strong> tags.
-Be factual and use real numbers from the documents wherever available.
-Do NOT use markdown formatting — output HTML only."""
+IMPORTANT RULES: 
+- Output ONLY valid HTML. Do not wrap in markdown codeblocks (like ```html). 
+- Create professional, accurate SVG charts based on the real data in the documents. 
+- Use the exact CSS classes provided. Do not use inline styles unless necessary for the SVG drawing.
+- Extract actual numbers and names from the PDF reports. Ensure accurate consolidation across {len(saved_paths)} months.
+"""
 
         # Send all uploaded files + prompt to Gemini in a single call
         contents = [*uploaded_gemini, prompt]
+        print(f"[upload_document_report] Sending {len(uploaded_gemini)} files to Gemini. Total combined size: {sum(f.stat().st_size for f in saved_paths)/1024/1024:.1f} MB")
+        
         response = client.models.generate_content(
             model=model_name,
             contents=contents,
@@ -419,11 +429,25 @@ Do NOT use markdown formatting — output HTML only."""
         ai_summary = raw
 
     except Exception as exc:
+        err_str = str(exc)
+        print(f"[upload_document_report] Gemini Generation Error: {err_str}")
+        
+        # 400 INVALID_ARGUMENT usually means the combined PDFs exceed the 3,600-page limit
+        if 'INVALID_ARGUMENT' in err_str or '400' in err_str:
+            err_msg = (
+                "The AI rejected the request because the combined size or page count of the uploaded reports is too large. "
+                "Gemini supports a maximum of <strong>3,600 total pages</strong> per request. "
+                "Please try uploading just one or two months at a time, or compress the PDFs to reduce complexity."
+            )
+        else:
+            err_msg = str(exc)
+
         ai_summary = (
-            f"<div style='padding:12px 16px;background:#fbecea;"
-            f"border:1px solid #f0c8c5;border-radius:6px;"
-            f"font-size:13.5px;color:#7a2a22;'>"
-            f"<strong>Gemini error:</strong> {exc}</div>"
+            f"<div style='padding:16px 20px;background:#fef2f2;"
+            f"border:1px solid #fecaca;border-radius:8px;"
+            f"font-size:14px;color:#b91c1c;margin:20px 0;'>"
+            f"<h3 style='margin-top:0;margin-bottom:8px;font-size:16px;color:#991b1b;'><i class='ph ph-warning-circle'></i> AI Generation Failed</h3>"
+            f"{err_msg}</div>"
         )
     finally:
         # Clean up uploaded files from Gemini (they expire in 48h anyway)
@@ -483,171 +507,3 @@ def preview_document_report(request, report_id):
     report = get_object_or_404(UploadedDocumentReport, id=report_id)
     return render(request, 'reports/preview_document_report.html', {'report': report})
 
-
-
-
-@login_required
-def upload_document_report(request):
-    """
-    Faculty uploads a large PDF/DOCX (up to 50 MB).
-    Gemini reads it natively via the Files API and produces a concise
-    3-month quarterly summary which is then rendered as a PDF.
-    """
-    if request.method != 'POST':
-        return redirect('report_dashboard')
-
-    title   = request.POST.get('doc_title', '').strip() or 'Uploaded Report'
-    quarter = int(request.POST.get('doc_quarter', 1))
-    year    = int(request.POST.get('doc_year', date.today().year))
-    ufile   = request.FILES.get('source_file')
-
-    if not ufile:
-        return redirect('report_dashboard')
-
-    ext = ufile.name.rsplit('.', 1)[-1].lower()
-    if ext not in ALLOWED_EXTENSIONS:
-        return redirect('report_dashboard')
-
-    # ── Save source file first ────────────────────────────────────────────────
-    import pathlib
-    upload_dir = settings.MEDIA_ROOT / 'reports' / 'uploaded_sources'
-    upload_dir.mkdir(parents=True, exist_ok=True)
-    safe_name = f"{year}_Q{quarter}_{ufile.name.replace(' ', '_')}"
-    save_path = upload_dir / safe_name
-    with open(save_path, 'wb') as fout:
-        for chunk in ufile.chunks():
-            fout.write(chunk)
-
-    # ── Gemini Files API: upload & summarise ──────────────────────────────────
-    ai_summary = ''
-    gemini_config = getattr(settings, 'GEMINI_CONFIG', {})
-    model_name    = gemini_config.get('MODEL', 'gemini-2.5-flash')
-    api_key       = os.environ.get('GEMINI_API_KEY', '')
-
-    quarter_label = {1: 'January–March', 2: 'April–June',
-                     3: 'July–September', 4: 'October–December'}.get(quarter, '')
-
-    try:
-        from google import genai
-        from google.genai import types as genai_types
-
-        client = genai.Client(api_key=api_key)
-
-        prompt = f"""You are an expert communications analyst for Sarvajanik University.
-The attached document is a detailed {quarter_label} {year} report (may be 50–100+ pages)
-covering social media analytics, events, newspaper coverage, press releases, and other activities.
-
-Your task: Produce a concise, professional **3-Month Quarterly Summary Report** with these sections:
-
-## 1. Executive Overview
-Brief paragraph on the quarter's overall highlights and key achievements.
-
-## 2. Social Media Performance
-- Key platforms: Instagram, Facebook, YouTube (if present)
-- Total views, reach, followers gained
-- Top-performing content and trends
-
-## 3. Events Highlights
-- Major events conducted
-- Attendance / impact
-
-## 4. Media Coverage
-- Newspaper / TV / online coverage summary
-- Reach and notable placements
-
-## 5. Press Releases & Communications
-- Number of releases issued
-- Key messages communicated
-
-## 6. Key Takeaways & Recommendations
-3–5 bullet points summarising what worked and what to improve next quarter.
-
-Format the output in clean HTML using <h2>, <h3>, <p>, <ul>, <li> tags.
-Be factual, concise, and professional. Use numbers from the document wherever available."""
-
-        if ext == 'pdf':
-            # Send PDF bytes directly — Gemini understands PDF natively
-            pdf_bytes = save_path.read_bytes()
-            response = client.models.generate_content(
-                model=model_name,
-                contents=[
-                    genai_types.Part.from_bytes(
-                        data=pdf_bytes,
-                        mime_type='application/pdf',
-                    ),
-                    prompt,
-                ]
-            )
-        else:
-            # DOCX: extract text and send as a text prompt
-            docx_text = _extract_docx_text(str(save_path))
-            if docx_text:
-                response = client.models.generate_content(
-                    model=model_name,
-                    contents=[
-                        f"DOCUMENT CONTENT:\n\n{docx_text[:100000]}\n\n---\n\n{prompt}"
-                    ]
-                )
-            else:
-                ai_summary = ("<div style='padding:12px 16px;background:#fbecea;"
-                              "border:1px solid #f0c8c5;border-radius:6px;"
-                              "font-size:13.5px;color:#7a2a22;'>"
-                              "<strong>Could not read DOCX file.</strong> "
-                              "Please install python-docx or upload a PDF instead.</div>")
-                response = None
-
-        if response:
-            raw = response.text or ''
-            # Convert markdown if Gemini returns it instead of HTML
-            if '<h2>' not in raw and '<p>' not in raw:
-                raw = markdown.markdown(raw, extensions=['extra'])
-            ai_summary = raw
-
-    except Exception as exc:
-        ai_summary = (
-            f"<div style='padding:12px 16px;background:#fbecea;"
-            f"border:1px solid #f0c8c5;border-radius:6px;"
-            f"font-size:13.5px;color:#7a2a22;'>"
-            f"<strong>Gemini error:</strong> {exc}</div>"
-        )
-
-    # ── Generate output PDF ───────────────────────────────────────────────────
-    context = {
-        'title': title,
-        'quarter': quarter,
-        'quarter_label': quarter_label,
-        'year': year,
-        'ai_summary': ai_summary,
-        'uploaded_by': request.user.get_full_name() or request.user.username,
-    }
-    html_string = render_to_string('reports/doc_quarterly_template.html', context)
-
-    out_dir = settings.MEDIA_ROOT / 'reports' / 'doc_quarterly'
-    out_dir.mkdir(parents=True, exist_ok=True)
-    out_filename = f"DocQ{quarter}_{year}_{request.user.id}.pdf"
-    out_path = out_dir / out_filename
-
-    try:
-        from weasyprint import HTML as WeasyprintHTML
-        WeasyprintHTML(string=html_string).write_pdf(out_path)
-        pdf_relative = f'reports/doc_quarterly/{out_filename}'
-    except Exception:
-        pdf_relative = None
-
-    # ── Save to DB ────────────────────────────────────────────────────────────
-    report = UploadedDocumentReport.objects.create(
-        title=title,
-        quarter=quarter,
-        year=year,
-        source_file=f'reports/uploaded_sources/{safe_name}',
-        ai_summary=ai_summary,
-        output_pdf=pdf_relative,
-        uploaded_by=request.user,
-    )
-    return redirect('preview_document_report', report_id=report.id)
-
-
-@login_required
-def preview_document_report(request, report_id):
-    report = get_object_or_404(UploadedDocumentReport, id=report_id)
-    return render(request, 'reports/preview_document_report.html', {'report': report})

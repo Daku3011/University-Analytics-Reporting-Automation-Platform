@@ -52,6 +52,60 @@
     border-radius: 6px; padding: 8px 14px; font-size: 10pt;
     color: #5b52cc; margin-bottom: 24px; display: inline-block;
   }
+
+  /* ── Enhanced Visual Layout Styles (for Gemini use) ── */
+  
+  /* Metric Cards */
+  .metric-grid { 
+    display: flex; flex-wrap: wrap; gap: 15px; margin: 20px 0; 
+  }
+  .metric-card { 
+    background: #fdfcff; border: 1px solid #e9ecef; border-radius: 8px; 
+    padding: 16px 20px; flex: 1; min-width: 160px; text-align: center; 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    border-top: 4px solid #4f46e5;
+  }
+  .metric-value { 
+    font-size: 26pt; font-weight: 700; color: #1a1a2e; margin-bottom: 4px; line-height: 1.1;
+  }
+  .metric-label { 
+    font-size: 10pt; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;
+  }
+
+  /* Data Tables */
+  table { 
+    width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 11pt; 
+    border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  }
+  thead { background: #4f46e5; }
+  th { 
+    color: white; padding: 12px 16px; text-align: left; font-weight: 600;
+  }
+  td { 
+    padding: 12px 16px; border-bottom: 1px solid #eee; color: #2d2d4e;
+  }
+  tr:nth-child(even) td { background: #faf9ff; }
+  tr:last-child td { border-bottom: none; }
+
+  /* SVG Chart Container */
+  .chart-container { 
+    background: white; border: 1px solid #e8e6ff; border-radius: 10px; 
+    padding: 24px; margin: 24px 0; text-align: center;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+  }
+  svg { max-width: 100%; height: auto; }
+
+  /* Pull Quotes / Highlights */
+  .highlight-quote {
+    font-size: 14pt; font-weight: 500; font-style: italic; color: #4f46e5;
+    text-align: center; margin: 30px 40px; padding: 20px;
+    background: #f8f7ff; border-radius: 8px; border: 1px solid #e8e6ff;
+    position: relative;
+  }
+  .highlight-quote::before {
+    content: "“"; position: absolute; top: -10px; left: 10px;
+    font-size: 40pt; color: rgba(79, 70, 229, 0.2); font-family: serif; line-height: 1;
+  }
 </style>
 </head>
 <body>
