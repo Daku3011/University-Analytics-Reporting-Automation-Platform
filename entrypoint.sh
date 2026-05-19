@@ -7,6 +7,10 @@ echo "--- SU Analytics: Starting up ---"
 echo "Running migrations..."
 python manage.py migrate --noinput
 
+# Seed college and demo data
+echo "Seeding colleges and demo data..."
+python manage.py seed_data
+
 # Create a default superuser if none exists
 # Credentials controlled by environment variables
 echo "Checking for superuser..."
