@@ -46,6 +46,8 @@ htmlcov/
 .pytest_cache/
 coverage.xml
 test*
+*.pdf
+docs/
 
 # ── WeasyPrint / Fonts cache ─────────────────────────────────
 fontconfig/
