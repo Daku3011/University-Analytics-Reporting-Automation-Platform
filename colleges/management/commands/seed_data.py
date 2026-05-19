@@ -3,6 +3,17 @@ from colleges.models import College
 from events.models import Event
 from analytics_app.models import MonthlyAnalytics, TopPost
 
+COLLEGES = [
+    {"code": "SCET",  "name": "Sarvajanik College of Engineering & Technology"},
+    {"code": "SRLIM", "name": "S. R. Luthra Institute of Management"},
+    {"code": "SRKI",  "name": "Shree Ramkrishna Institute of Computer Education & Applied Sciences"},
+    {"code": "SCCCA", "name": "Sarvajanik College of Commerce & Computer Applications"},
+    {"code": "BRCM",  "name": "B. R. C. M. College of Business Administration"},
+    {"code": "SCL",   "name": "Sarvajanik College of Law"},
+    {"code": "SCOPA", "name": "Shri Pankaj Kapadia Sarvajanik College of Performing Arts"},
+    {"code": "SCLA",  "name": "Sarvajanik College of Liberal Arts"},
+]
+
 EVENTS = [
     {"month": 1, "day": 6, "title": "New Year Posts", "category": "other"},
     {"month": 1, "day": 13, "title": "Bird Rescue Training Program | SU-Nature Club", "category": "workshop"},
@@ -57,9 +68,19 @@ class Command(BaseCommand):
     help = 'Seed demo data from January-March 2026 reports'
 
     def handle(self, *args, **options):
-        college, _ = College.objects.get_or_create(
-            code="SU", defaults={"name": "Sarvajanik University"}
-        )
+        # ── Seed all 8 colleges (idempotent) ──────────────────────
+        valid_codes = {c["code"] for c in COLLEGES}
+        created_colleges = []
+        for c in COLLEGES:
+            _, created = College.objects.get_or_create(code=c["code"], defaults={"name": c["name"]})
+            created_colleges.append(created)
+        # Remove any colleges that are no longer in the list (e.g. old placeholder "SU")
+        stale = College.objects.exclude(code__in=valid_codes)
+        stale_count = stale.count()
+        stale.delete()
+        self.stdout.write(f"Colleges: {sum(created_colleges)} created, {len(COLLEGES) - sum(created_colleges)} already exist, {stale_count} removed")
+
+        college = College.objects.get(code="SCET")
 
         for a in ANALYTICS_DATA:
             MonthlyAnalytics.objects.update_or_create(
@@ -92,4 +113,8 @@ class Command(BaseCommand):
                         likes=p["likes"], shares=p.get("shares", 0),
                     )
 
-        self.stdout.write(self.style.SUCCESS(f"Seed data loaded: {len(ANALYTICS_DATA)} months, {len(EVENTS)} events, {sum(len(v['instagram'])+len(v['facebook']) for v in TOP_POSTS.values())} top posts"))
+        self.stdout.write(self.style.SUCCESS(
+            f"Seed data loaded: {len(COLLEGES)} colleges, "
+            f"{len(ANALYTICS_DATA)} months, {len(EVENTS)} events, "
+            f"{sum(len(v['instagram'])+len(v['facebook']) for v in TOP_POSTS.values())} top posts"
+        ))

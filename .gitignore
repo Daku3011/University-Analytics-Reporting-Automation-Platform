@@ -48,6 +48,7 @@ coverage.xml
 test*
 *.pdf
 docs/
+AGENTS.md
 
 # ── WeasyPrint / Fonts cache ─────────────────────────────────
 fontconfig/
