@@ -2,6 +2,7 @@
 FROM python:3.10-slim
 
 # Install GTK3/Pango/Cairo (required by WeasyPrint for PDF generation)
+# plus Redis server (required by Celery for async tasks)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libglib2.0-0 \
     libpango-1.0-0 \
@@ -13,6 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     shared-mime-info \
     fonts-liberation \
     fonts-dejavu-core \
+    redis-server \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory

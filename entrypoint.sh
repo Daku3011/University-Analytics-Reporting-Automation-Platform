@@ -23,6 +23,20 @@ else:
     print(f'Superuser already exists: {username}')
 "
 
+# ── Start Redis (required by Celery for async tasks) ────────────
+echo "Starting Redis server..."
+redis-server --daemonize yes
+# Give Redis a moment to initialize
+sleep 1
+
+# ── Start Celery worker in background ──────────────────────────
+echo "Starting Celery worker..."
+celery -A su_analytics worker --loglevel=info --concurrency=1 &
+# Track PID so we can check on it later
+CELERY_PID=$!
+echo "Celery worker started (PID: $CELERY_PID)"
+
+# ── Start Gunicorn ─────────────────────────────────────────────
 echo "Starting Gunicorn server on port 7860..."
 exec gunicorn su_analytics.wsgi:application \
     --bind 0.0.0.0:7860 \
