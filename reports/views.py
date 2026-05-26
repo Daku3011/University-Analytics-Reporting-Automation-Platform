@@ -149,8 +149,9 @@ def generate_quarterly(request):
                     from google import genai
                     client = genai.Client(api_key=os.environ.get('GEMINI_API_KEY', ''))
 
-                    prompt = f"""You are an analytics reporting assistant for Sarvajanik University.
-Analyze the following social media quarterly data and write a professional narrative summary.
+                    prompt = f"""You are a brutally honest data analyst for Sarvajanik University. No sugar coating, no corporate fluff.
+
+Analyze the following quarterly social media data and write a direct, honest assessment.
 
 Quarter: Q{quarter} {year}
 Months covered: {', '.join(month_names)}
@@ -164,14 +165,27 @@ Top Instagram posts (views/likes/shares):
 Top Facebook posts (views/likes):
 {[{'views': p.views, 'likes': p.likes} for p in all_top_fb[:3]]}
 
-Write a structured professional quarterly summary with these sections:
-1. Quarter Overview — overall performance highlights
-2. Best Performing Month — which month and why
-3. Platform Comparison — Instagram vs Facebook performance
-4. Engagement Trends — follower growth patterns
-5. Recommendations — 3 actionable recommendations for next quarter
+Write a structured quarterly summary in clean HTML (use <h2>, <h3>, <p>, <ul>, <li>, <strong>) with these sections:
 
-Use clear professional language suitable for a university administration report."""
+<h2>1. Quarter Overview</h2>
+<p>One paragraph: the honest truth about how this quarter went. What worked. What didn't.</p>
+
+<h2>2. Best vs Worst Month</h2>
+<p>Which month was strongest, which was weakest, and why. Be specific with numbers.</p>
+
+<h2>3. Platform Comparison — Instagram vs Facebook</h2>
+<p>Which platform delivered and which underperformed. Compare views, reach, engagement. Tell the truth about where effort is wasted.</p>
+
+<h2>4. Engagement Trends</h2>
+<p>Is follower growth healthy or stagnant? Are reels getting views? Are graphics worth the effort?</p>
+
+<h2>5. What Must Change — Honest Recommendations</h2>
+<ul>
+<li>3-5 specific, actionable recommendations. Not generic. Example: "Instagram Reels views dropped X% — need minimum Y reels/month."</li>
+<li>Call out specific weaknesses. If something is working, say what to keep doing.</li>
+</ul>
+
+Output ONLY valid HTML. Use <strong> for emphasis."""
 
                     response = client.models.generate_content(
                         model=model_name,
@@ -405,4 +419,219 @@ def check_task_status(request, task_id):
 def preview_document_report(request, report_id):
     report = get_object_or_404(UploadedDocumentReport, id=report_id)
     return render(request, 'reports/preview_document_report.html', {'report': report})
+
+
+@login_required
+def compare_reports(request):
+    """
+    Compare two months side-by-side with AI-powered honest assessment.
+    GET shows the form. POST fetches data and runs Gemini comparison.
+    """
+    colleges = College.objects.all()
+    months = range(1, 13)
+
+    if request.method != 'POST':
+        return render(request, 'reports/compare_reports.html', {
+            'colleges': colleges,
+            'months': months,
+            'comparison_html': None,
+        })
+
+    college_id = request.POST.get('college')
+    month_a = int(request.POST['month_a'])
+    month_b = int(request.POST['month_b'])
+    year = int(request.POST.get('year', 2026))
+
+    college = get_object_or_404(College, id=college_id)
+
+    month_a_name = date(year, month_a, 1).strftime('%B')
+    month_b_name = date(year, month_b, 1).strftime('%B')
+
+    # Fetch data for both months
+    analytics_a = MonthlyAnalytics.objects.filter(college=college, month=month_a, year=year).first()
+    analytics_b = MonthlyAnalytics.objects.filter(college=college, month=month_b, year=year).first()
+
+    events_a = Event.objects.filter(college=college, date__month=month_a, date__year=year)
+    events_b = Event.objects.filter(college=college, date__month=month_b, date__year=year)
+
+    top_ig_a = TopPost.objects.filter(college=college, month=month_a, year=year, platform='instagram')[:5]
+    top_ig_b = TopPost.objects.filter(college=college, month=month_b, year=year, platform='instagram')[:5]
+    top_fb_a = TopPost.objects.filter(college=college, month=month_a, year=year, platform='facebook')[:5]
+    top_fb_b = TopPost.objects.filter(college=college, month=month_b, year=year, platform='facebook')[:5]
+
+    newspapers_a = NewspaperCoverage.objects.filter(college=college, month=month_a, year=year)
+    newspapers_b = NewspaperCoverage.objects.filter(college=college, month=month_b, year=year)
+
+    press_a = PressRelease.objects.filter(college=college, month=month_a, year=year)
+    press_b = PressRelease.objects.filter(college=college, month=month_b, year=year)
+
+    # Structure data for Gemini
+    def analytics_dict(a):
+        if not a:
+            return {'total_views': 0, 'total_reach': 0, 'followers_gained': 0,
+                    'instagram_views': 0, 'facebook_views': 0,
+                    'instagram_reach': 0, 'facebook_reach': 0,
+                    'reels_count': 0, 'graphics_count': 0, 'youtube_subscribers': 0}
+        return {
+            'total_views': a.total_views, 'total_reach': a.total_reach,
+            'followers_gained': a.followers_gained,
+            'instagram_views': a.instagram_views, 'facebook_views': a.facebook_views,
+            'instagram_reach': a.instagram_reach, 'facebook_reach': a.facebook_reach,
+            'reels_count': a.reels_count, 'graphics_count': a.graphics_count,
+            'youtube_subscribers': a.youtube_subscribers,
+        }
+
+    d_a = analytics_dict(analytics_a)
+    d_b = analytics_dict(analytics_b)
+
+    events_data_a = [{'title': e.title, 'category': e.get_category_display(), 'date': str(e.date)} for e in events_a]
+    events_data_b = [{'title': e.title, 'category': e.get_category_display(), 'date': str(e.date)} for e in events_b]
+
+    top_ig_data_a = [{'views': p.views, 'likes': p.likes, 'shares': p.shares} for p in top_ig_a]
+    top_ig_data_b = [{'views': p.views, 'likes': p.likes, 'shares': p.shares} for p in top_ig_b]
+    top_fb_data_a = [{'views': p.views, 'likes': p.likes} for p in top_fb_a]
+    top_fb_data_b = [{'views': p.views, 'likes': p.likes} for p in top_fb_b]
+
+    news_count_a = newspapers_a.count()
+    news_count_b = newspapers_b.count()
+    press_count_a = press_a.count()
+    press_count_b = press_b.count()
+
+    # ── Gemini Comparison ──
+    comparison_html = ""
+    gemini_config = getattr(settings, 'GEMINI_CONFIG', {})
+    model_name = gemini_config.get('MODEL', 'gemini-2.5-flash')
+    api_key = os.environ.get('GEMINI_API_KEY', '')
+
+    from django.core.cache import cache
+    cooldown_key = f"gemini_cooldown_{request.user.id}"
+    limit_key = f"gemini_limit_{request.user.id}_{date.today()}"
+    last_call = cache.get(cooldown_key)
+
+    if last_call:
+        comparison_html = "<div style='padding:16px;background:#fdf2e6;border:1px solid #f0d4b0;border-radius:8px;color:#7a4a1a;'><strong>⏳ Please wait 60 seconds</strong> before generating another AI analysis.</div>"
+    else:
+        daily_count = cache.get(limit_key, 0)
+        daily_limit = gemini_config.get('DAILY_LIMIT', 50)
+        if daily_count >= daily_limit:
+            comparison_html = f"<div style='padding:16px;background:#fbecea;border:1px solid #f0c8c5;border-radius:8px;color:#7a2a22;'><strong>Daily limit reached</strong> — {daily_limit} AI analyses used today.</div>"
+        else:
+            try:
+                from google import genai
+                client = genai.Client(api_key=api_key)
+
+                prompt = f"""You are a brutally honest data analyst for Sarvajanik University. No sugar coating. No corporate fluff. Just direct truth.
+
+Compare the following two months of social media analytics, events, and media coverage for {college.name}.
+
+MONTH A: {month_a_name} {year}
+{d_a}
+
+Events ({len(events_data_a)}):
+{events_data_a}
+
+Top Instagram posts:
+{top_ig_data_a}
+
+Top Facebook posts:
+{top_fb_data_a}
+
+Newspaper coverage: {news_count_a}
+Press releases: {press_count_a}
+
+
+MONTH B: {month_b_name} {year}
+{d_b}
+
+Events ({len(events_data_b)}):
+{events_data_b}
+
+Top Instagram posts:
+{top_ig_data_b}
+
+Top Facebook posts:
+{top_fb_data_b}
+
+Newspaper coverage: {news_count_b}
+Press releases: {press_count_b}
+
+
+Write a brutally honest month-over-month comparison in clean HTML. Use <h2>, <h3>, <p>, <ul>, <li>, <strong>, <table>, <tr>, <th>, <td> tags. Output ONLY valid HTML — no markdown.
+
+Structure:
+
+<h2>1. The Verdict — Which Month Was Better?</h2>
+<p>One direct sentence stating definitively which month performed better overall and why.</p>
+
+<h2>2. Numbers Don't Lie — Key Metrics Head-to-Head</h2>
+<p>A <table> comparing specific metrics side by side: total views, total reach, followers gained, reels count, graphics count. Include a column for % change. If the change is negative, say it explicitly in red.</p>
+
+<h2>3. Social Media — What Worked, What Tanked</h2>
+<p>Compare Instagram vs Facebook performance across both months. Which platform improved, which declined. Be specific about numbers.</p>
+<p>Compare top posts: was engagement up or down? Did content quality improve?</p>
+
+<h2>4. Events — Were We Active or Slacking?</h2>
+<p>Compare event counts and types. Which month had more events? Better variety? More impactful categories?</p>
+
+<h2>5. Media & Press Coverage</h2>
+<p>Compare newspaper coverage and press release output. Did visibility improve?</p>
+
+<h2>6. What Needs to Change — Honest Recommendations</h2>
+<ul>
+<li>3-5 specific, actionable recommendations. Not generic advice. Numbers-driven. Example: "Instagram views dropped from {d_a['instagram_views']} to {d_b['instagram_views']} — need to increase reel output from {d_a['reels_count']} to at least 8 per month."</li>
+<li>If a metric declined, say what must be done to recover it.</li>
+<li>If a metric improved, explain what to keep doing.</li>
+</ul>"""
+
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=prompt,
+                )
+                raw = response.text or ''
+
+                import re
+                # Fallback: convert markdown bold to HTML
+                raw = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', raw)
+                # Fallback: convert markdown to HTML if no HTML tags present
+                if '<h2>' not in raw and '<p>' not in raw:
+                    raw = markdown.markdown(raw, extensions=['extra'])
+                comparison_html = raw
+
+                # Update rate limit
+                cooldown_secs = gemini_config.get('COOLDOWN_SECONDS', 60)
+                cache.set(cooldown_key, True, cooldown_secs)
+                cache.set(limit_key, daily_count + 1, 86400)
+
+            except ImportError:
+                comparison_html = "<p style='color:#b91c1c;'>Install google-genai SDK: <code>pip install google-genai</code></p>"
+            except Exception as e:
+                comparison_html = f"<p style='color:#b91c1c;'>AI comparison unavailable: {str(e)}</p>"
+
+    return render(request, 'reports/compare_reports.html', {
+        'colleges': colleges,
+        'months': months,
+        'comparison_html': comparison_html,
+        'college': college,
+        'month_a_name': month_a_name,
+        'month_b_name': month_b_name,
+        'year': year,
+        'd_a': d_a,
+        'd_b': d_b,
+        'events_a': events_a,
+        'events_b': events_b,
+        'top_ig_a': top_ig_a,
+        'top_ig_b': top_ig_b,
+        'top_fb_a': top_fb_a,
+        'top_fb_b': top_fb_b,
+        'newspapers_a': newspapers_a,
+        'newspapers_b': newspapers_b,
+        'press_a': press_a,
+        'press_b': press_b,
+        'events_a_count': events_a.count(),
+        'events_b_count': events_b.count(),
+        'news_a_count': news_count_a,
+        'news_b_count': news_count_b,
+        'press_a_count': press_count_a,
+        'press_b_count': press_count_b,
+    })
 

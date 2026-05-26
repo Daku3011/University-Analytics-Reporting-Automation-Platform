@@ -17,10 +17,22 @@
             <i class="ph ph-file-arrow-down"></i> Download PDF
         </a>
         {% endif %}
-        {% if report.source_file %}
-        <a href="{{ report.source_file.url }}" class="btn btn-secondary" target="_blank" rel="noopener">
-            <i class="ph ph-file"></i> Original File
-        </a>
+        {% if report.source_file_1 %}
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <a href="{{ report.source_file_1.url }}" class="btn btn-sm btn-outline" target="_blank" rel="noopener">
+                <i class="ph ph-file"></i> Source 1
+            </a>
+            {% if report.source_file_2 %}
+            <a href="{{ report.source_file_2.url }}" class="btn btn-sm btn-outline" target="_blank" rel="noopener">
+                <i class="ph ph-file"></i> Source 2
+            </a>
+            {% endif %}
+            {% if report.source_file_3 %}
+            <a href="{{ report.source_file_3.url }}" class="btn btn-sm btn-outline" target="_blank" rel="noopener">
+                <i class="ph ph-file"></i> Source 3
+            </a>
+            {% endif %}
+        </div>
         {% endif %}
     </div>
 </div>
@@ -29,7 +41,7 @@
 <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
     <div style="display:flex;align-items:center;gap:7px;background:#f0f0ff;border:1px solid #c8c4f8;border-radius:20px;padding:5px 14px;font-size:12px;color:#5b52cc;font-weight:500;">
         <i class="ph ph-sparkle" style="font-size:14px;"></i>
-        Condensed by Gemini AI from {{ report.source_file.name|slice:"28:" }}
+        Condensed by Gemini AI from {{ report.uploaded_files_count }} uploaded file(s)
     </div>
 </div>
 

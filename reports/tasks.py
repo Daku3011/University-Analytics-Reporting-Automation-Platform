@@ -139,16 +139,17 @@ Please output a strict JSON object detailing:
         # Combine all extracted JSON into a single text block
         combined_json_text = "\n\n".join([f"--- Data Extract {i+1} ---\n{data}" for i, data in enumerate(extracted_data_list)])
 
-        self.update_state(state='PROGRESS', meta={'message': 'Generating final report...'})
+        self.update_state(state='PROGRESS', meta={'message': 'Generating final report with honest analysis...'})
         # ── Reduce Phase: Generate final HTML report from the consolidated JSON ──
-        prompt = f"""You are an expert data analyst and report designer for Sarvajanik University.
+        prompt = f"""You are a brutally honest data analyst for Sarvajanik University. Your job is to tell the truth — no sugar coating, no corporate fluff.
+
 The following JSON data represents the extracted metrics and activities for the months of {months_uploaded} {year}.
 
 RAW EXTRACTED DATA:
 {combined_json_text}
 
 Your task: Produce a highly visual, professional **{quarter_label} Quarterly Summary Report** in clean HTML.
-DO NOT JUST WRITE LONG TEXT. You must use data visualization (SVG), metric cards, and data tables to summarize the data.
+Use data visualization (SVG), metric cards, and data tables to summarize the data.
 
 You must exclusively output HTML using these specific CSS classes which are already defined:
 - `<div class="metric-grid">` containing `<div class="metric-card"><div class="metric-value">X</div><div class="metric-label">Y</div></div>`
@@ -158,26 +159,34 @@ You must exclusively output HTML using these specific CSS classes which are alre
 
 Structure your response exactly into these sections:
 
-<h2>1. Executive Overview</h2>
-- Start with a `<div class="highlight-quote">` highlighting the quarter's most impressive overarching achievement.
+<h2>1. Quarter Overview</h2>
+- Start with a `<div class="highlight-quote">` with a punchy, honest one-liner summarizing the quarter's reality.
 - Follow with a `<div class="metric-grid">` showing 3-4 top-level aggregate metrics for the quarter (e.g., Total Reach, Total Events, New Followers, Total PR).
 
-<h2>2. Social Media Performance</h2>
+<h2>2. Month-by-Month Comparison — Who Won and Who Lost</h2>
+- Compare each month head-to-head on: total views, reach, followers gained, events held.
+- Use an inline SVG bar chart comparing key metrics across the months. Use #4f46e5 and #7c3aed colors.
+- A `<table>` with monthly breakdown.
+- <strong>Call out specifically which month performed best and which performed worst.</strong> Say exactly why — be direct. If a month declined, say it.
+
+<h2>3. Social Media Performance — What Worked and What Didn't</h2>
 - Use metric cards for platform-specific stats (Instagram, Facebook, YouTube).
-- Create a beautiful **inline SVG bar chart** or **pie chart** comparing the reach, views, or follower growth across different platforms. Make the SVG clean, using #4f46e5 and #7c3aed colors, with clear text labels and axes. Set viewBox appropriately.
-- A styled `<table>` listing the Top 3-5 Performing Posts across the quarter (Date, Platform, Topic, Reach/Engagement).
+- SVG chart comparing reach/views across platforms.
+- A styled `<table>` listing the Top 3-5 Performing Posts across the quarter.
+- Add a <strong>blunt paragraph</strong>: which platform underperformed, what content type flopped, what engagement tells us.
 
-<h2>3. Events & Activities</h2>
+<h2>4. Events & Activities</h2>
 - A `<table>` listing the 5 most significant events (Date, Event Name, Attendance/Impact).
-- Provide a brief `<p>` analyzing the overall success and engagement of these events.
+- Analysis paragraph: were events well-attended? Were there enough events? Which categories dominated?
 
-<h2>4. Media & Press Coverage</h2>
+<h2>5. Media & Press Coverage</h2>
 - Metric cards for Number of Press Releases and Total Media Mentions.
-- A bulleted list `<ul>` of key newspapers, channels, or online portals that covered the university.
+- Bulleted list `<ul>` of key newspapers, channels, or online portals.
 
-<h2>5. Key Takeaways & Recommendations</h2>
+<h2>6. Honest Recommendations — What Must Change</h2>
 <ul>
-<li>3–5 actionable bullet points on what worked and what to improve next quarter based on the data.</li>
+<li>5–7 brutally honest, actionable recommendations. No generic advice. Specific: "Instagram Reels dropped 40% in March — need minimum 8 reels per month", "Events in February had highest engagement — replicate the Carnival format in Q2", etc.</li>
+<li>Call out specific weaknesses by name.</li>
 </ul>
 
 IMPORTANT RULES: 
@@ -186,6 +195,7 @@ IMPORTANT RULES:
 - Create professional, accurate SVG charts based on the real data in the documents. 
 - Use the exact CSS classes provided. Do not use inline styles unless necessary for the SVG drawing.
 - Extract actual numbers and names from the PDF reports. Ensure accurate consolidation across {len(saved_paths)} months.
+- BE HONEST. If something declined, say it declined. If something failed, say it failed. If something improved, acknowledge it.
 """
         # Send the consolidated text prompt to Gemini
         print(f"[upload_document_report] Generating final HTML report from consolidated data...")

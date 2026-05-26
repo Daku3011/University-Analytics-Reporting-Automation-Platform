@@ -25,8 +25,8 @@
 </div>
 {% endif %}
 
-<!-- ── Row 1: Three report generation cards ─────────────────────────────── -->
-<div class="grid grid-3" style="margin-bottom:28px;">
+<!-- ── Row 1: Four report generation cards ─────────────────────────────── -->
+<div class="grid grid-4" style="margin-bottom:28px;">
 
     <!-- Monthly Report -->
     <div class="card">
@@ -216,6 +216,65 @@
                 <button type="submit" class="btn" id="upload-btn"
                         style="width:100%;background:#5b52cc;color:#fff;border-color:#5b52cc;font-size:13.5px;">
                     <i class="ph ph-brain"></i> Generate AI Quarterly Summary
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- NEW: Compare Two Months -->
+    <div class="card" style="border:1.5px solid #f0a070;">
+        <div class="card-body">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+                <div style="width:36px;height:36px;border-radius:8px;background:var(--accent-3-light);display:flex;align-items:center;justify-content:center;">
+                    <i class="ph ph-chart-line-up" style="font-size:18px;color:var(--accent-3);"></i>
+                </div>
+                <div>
+                    <div style="font-size:14px;font-weight:600;color:var(--text-primary);">Compare Months</div>
+                    <div style="font-size:12px;color:var(--text-muted);">AI-powered honest month-over-month analysis</div>
+                </div>
+            </div>
+
+            <form method="post" action="{% url 'compare_reports' %}">
+                {% csrf_token %}
+                <div class="grid grid-2">
+                    <div class="form-group">
+                        <label class="form-label" for="id_college_comp">College</label>
+                        <select name="college" id="id_college_comp" class="form-control form-select">
+                            {% for c in colleges %}
+                            <option value="{{ c.id }}">{{ c.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="id_year_comp">Year</label>
+                        <input type="number" name="year" id="id_year_comp" class="form-control" value="2026" min="2020" max="2030">
+                    </div>
+                </div>
+                <div class="grid grid-2">
+                    <div class="form-group">
+                        <label class="form-label" for="id_month_a_comp">Month A (earlier)</label>
+                        <select name="month_a" id="id_month_a_comp" class="form-control form-select">
+                            {% for m in months %}
+                            <option value="{{ m }}" {% if m == 1 %}selected{% endif %}>{{ m }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="id_month_b_comp">Month B (later)</label>
+                        <select name="month_b" id="id_month_b_comp" class="form-control form-select">
+                            {% for m in months %}
+                            <option value="{{ m }}" {% if m == 2 %}selected{% endif %}>{{ m }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div style="background:var(--accent-3-light);border:1px solid #f0d4b0;border-radius:6px;padding:10px 12px;font-size:12px;color:#8a5020;margin-bottom:12px;display:flex;align-items:flex-start;gap:8px;">
+                    <i class="ph ph-robot" style="font-size:14px;flex-shrink:0;margin-top:1px;"></i>
+                    Gemini AI gives an honest, direct comparison — what improved, what declined, and what needs to change.
+                </div>
+                <button type="submit" class="btn" id="compare-btn"
+                        style="width:100%;background:#f0a070;color:#fff;border-color:#f0a070;font-size:13.5px;">
+                    <i class="ph ph-chart-line-up"></i> Compare Months
                 </button>
             </form>
         </div>
