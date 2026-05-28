@@ -3,94 +3,506 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 <style>
-@page { size: A4; margin: 0; }
-body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; color: #2d3748; margin: 0; padding: 0; }
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
 
-.cover { width: 210mm; height: 297mm; background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); position: relative; page-break-after: always; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-.cover::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(circle at 30% 20%, rgba(79,70,229,0.2) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgba(6,182,212,0.15) 0%, transparent 50%); }
-.cover .top-glow { position: absolute; top: 0; width: 100%; height: 6px; background: linear-gradient(90deg, #4f46e5, #06b6d4, #8b5cf6, #4f46e5); }
-.cover .brand { position: absolute; top: 40px; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,0.3); font-size: 14px; letter-spacing: 4px; text-transform: uppercase; }
-.cover .report-label { font-size: 13px; letter-spacing: 14px; color: rgba(255,255,255,0.4); margin-bottom: 25px; text-transform: uppercase; }
-.cover h1 { font-size: 52px; color: #fff; margin: 0; font-weight: 300; letter-spacing: 4px; }
-.cover h1 strong { font-weight: 700; color: #4f46e5; }
-.cover .q-label { font-size: 48px; color: #06b6d4; margin: 15px 0 5px; font-weight: 800; letter-spacing: 6px; }
-.cover .months-label { font-size: 20px; color: rgba(255,255,255,0.7); letter-spacing: 2px; }
-.cover .divider-line { width: 100px; height: 3px; background: linear-gradient(90deg, #4f46e5, #06b6d4); margin: 25px auto; }
-.cover .presented-by { font-size: 13px; color: rgba(255,255,255,0.5); letter-spacing: 2px; text-transform: uppercase; }
-.cover .footer-note { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); font-size: 11px; color: rgba(255,255,255,0.2); letter-spacing: 3px; }
+@page {
+    size: A4;
+    margin: 20mm 15mm 20mm 15mm;
+    @bottom-right {
+        content: "Page " counter(page) " of " counter(pages);
+        font-family: 'Outfit', sans-serif;
+        font-size: 8pt;
+        color: #94a3b8;
+        font-weight: 500;
+    }
+    @bottom-left {
+        content: "Sarvajanik University • Q{{ quarter }} {{ year }} Analytics Report";
+        font-family: 'Outfit', sans-serif;
+        font-size: 8pt;
+        color: #94a3b8;
+        font-weight: 500;
+    }
+}
+@page :first {
+    margin: 0;
+    @bottom-right { content: normal; }
+    @bottom-left { content: normal; }
+}
 
-.content { padding: 45px 55px 35px; page-break-after: always; }
-.content:last-child { page-break-after: avoid; }
+body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #334155;
+    margin: 0;
+    padding: 0;
+    -webkit-print-color-adjust: exact;
+}
 
-.section-header { display: flex; align-items: center; margin-bottom: 22px; }
-.section-header .num { width: 32px; height: 32px; background: #4f46e5; color: #fff; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; margin-right: 12px; flex-shrink: 0; }
-.section-header h2 { font-size: 20px; font-weight: 700; color: #0f172a; margin: 0; text-transform: uppercase; letter-spacing: 1px; }
-.section-header .line { flex: 1; height: 2px; background: linear-gradient(90deg, #4f46e5, transparent); margin-left: 15px; }
+/* ========== COVER PAGE ========== */
+.cover {
+    width: 210mm;
+    height: 297mm;
+    background: linear-gradient(135deg, #090d16 0%, #0f172a 50%, #1e1b4b 100%);
+    position: relative;
+    page-break-after: always;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+.cover::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: 
+        radial-gradient(circle at 20% 30%, rgba(79, 70, 229, 0.22) 0%, transparent 60%),
+        radial-gradient(circle at 80% 70%, rgba(6, 182, 212, 0.18) 0%, transparent 60%);
+    z-index: 1;
+}
+.cover .grid-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 24px 24px;
+    z-index: 2;
+}
+.cover .top-glow {
+    position: absolute;
+    top: 0;
+    width: 100%;
+    height: 8px;
+    background: linear-gradient(90deg, #4f46e5, #06b6d4, #8b5cf6, #4f46e5);
+    z-index: 3;
+}
+.cover .content-wrapper {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 40px;
+}
+.cover .brand {
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    margin-bottom: 25px;
+    font-family: 'Outfit', sans-serif;
+}
+.cover .report-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 12px;
+    color: #818cf8;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    font-family: 'Outfit', sans-serif;
+}
+.cover h1 {
+    font-size: 44px;
+    color: #ffffff;
+    margin: 0;
+    font-weight: 300;
+    letter-spacing: 3px;
+    line-height: 1.1;
+    font-family: 'Outfit', sans-serif;
+    text-transform: uppercase;
+}
+.cover h1 strong {
+    font-weight: 800;
+    color: #6366f1;
+}
+.cover .q-label {
+    font-size: 56px;
+    color: #06b6d4;
+    margin: 20px 0 10px;
+    font-weight: 800;
+    letter-spacing: 4px;
+    font-family: 'Outfit', sans-serif;
+}
+.cover .months-label {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.7);
+    letter-spacing: 2px;
+    font-weight: 400;
+    margin-bottom: 35px;
+}
+.cover .divider-line {
+    width: 80px;
+    height: 3px;
+    background: linear-gradient(90deg, #4f46e5, #06b6d4);
+    border-radius: 2px;
+    margin: 0 auto 35px;
+}
+.cover .presented-by {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-weight: 500;
+}
+.cover .footer-note {
+    position: absolute;
+    bottom: 40px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 9px;
+    color: rgba(255, 255, 255, 0.2);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    font-weight: 600;
+    z-index: 10;
+}
 
-.metrics-row { display: flex; gap: 16px; margin-bottom: 20px; }
-.metric-box { flex: 1; background: #f8fafc; border-radius: 12px; padding: 18px 15px; text-align: center; border: 1px solid #e2e8f0; }
-.metric-box .val { font-size: 26px; font-weight: 800; color: #0f172a; line-height: 1.2; }
-.metric-box .lbl { font-size: 10px; color: #718096; text-transform: uppercase; letter-spacing: 1px; margin-top: 3px; }
+/* ========== SECTIONS & METRICS ========== */
+.content {
+    page-break-after: always;
+    position: relative;
+    box-sizing: border-box;
+}
+.content:last-child {
+    page-break-after: avoid;
+}
 
-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-th, td { padding: 10px 14px; text-align: left; }
-thead th { background: #0f172a; color: #fff; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
-tbody td { border-bottom: 1px solid #e2e8f0; font-size: 13px; }
-tbody tr:nth-child(even) td { background: #f8fafc; }
-tbody tr td:first-child { font-weight: 600; }
+.section-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+.section-header .num {
+    width: 30px;
+    height: 30px;
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    color: #ffffff;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    margin-right: 12px;
+    flex-shrink: 0;
+    font-family: 'Outfit', sans-serif;
+}
+.section-header h2 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: 'Outfit', sans-serif;
+}
+.section-header .line {
+    flex: 1;
+    height: 2px;
+    background: linear-gradient(90deg, #e2e8f0, transparent);
+    margin-left: 15px;
+}
 
-.ai-summary { background: linear-gradient(135deg, #f0f4ff, #eef2ff); border: 1px solid #e0e7ff; border-radius: 12px; padding: 24px; margin: 15px 0; }
-.ai-summary p { line-height: 1.8; font-size: 13px; color: #334155; margin: 0 0 10px; }
-.ai-summary p:last-child { margin-bottom: 0; }
+.stat-row {
+    display: flex;
+    gap: 12px;
+    margin: 15px 0;
+}
+.stat-item {
+    flex: 1;
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+    border: 1px solid #e2e8f0;
+}
+.stat-item .stat-val {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f172a;
+    font-family: 'Outfit', sans-serif;
+    font-variant-numeric: tabular-nums;
+}
+.stat-item .stat-lbl {
+    font-size: 9px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 2px;
+    font-weight: 500;
+}
 
-.platform-bar-wrap { margin: 8px 0; }
-.platform-bar-wrap .label-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 3px; }
-.platform-bar-wrap .label-row .name { font-weight: 600; color: #2d3748; }
-.platform-bar-wrap .label-row .pct { color: #718096; }
-.platform-bar { height: 16px; background: #edf2f7; border-radius: 8px; overflow: hidden; }
-.platform-bar .fill { height: 100%; border-radius: 8px; }
+.metrics-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+.metric-box {
+    flex: 1;
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 16px 10px;
+    text-align: center;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.01);
+}
+.metric-box .val {
+    font-size: 22px;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.2;
+    font-family: 'Outfit', sans-serif;
+    font-variant-numeric: tabular-nums;
+}
+.metric-box .lbl {
+    font-size: 8.5px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 4px;
+    font-weight: 600;
+}
 
-.rank-table { width: 100%; border-collapse: collapse; margin: 12px 0; }
-.rank-table th { padding: 8px 14px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #718096; text-align: left; border-bottom: 2px solid #e2e8f0; }
-.rank-table td { padding: 10px 14px; border-bottom: 1px solid #edf2f7; font-size: 12px; }
-.rank-table .rank { font-weight: 800; color: #4f46e5; font-size: 14px; width: 30px; }
-.rank-table .rank.gold { color: #d97706; }
-.rank-table .rank.silver { color: #718096; }
-.rank-table .rank.bronze { color: #cd7f32; }
-.rank-table .metric-val { font-weight: 700; text-align: center; }
+/* ========== TABLES ========== */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0;
+}
+th, td {
+    padding: 8px 12px;
+    text-align: left;
+}
+thead th {
+    background: #0f172a;
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: 'Outfit', sans-serif;
+}
+tbody td {
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 12.5px;
+    color: #334155;
+    font-variant-numeric: tabular-nums;
+}
+tbody tr:nth-child(even) td {
+    background: #f8fafc;
+}
+tbody tr td:first-child {
+    font-weight: 600;
+    color: #0f172a;
+}
 
-.stat-row { display: flex; gap: 12px; margin: 15px 0; }
-.stat-item { flex: 1; background: #f8fafc; border-radius: 10px; padding: 15px; text-align: center; border: 1px solid #e2e8f0; }
-.stat-item .stat-val { font-size: 20px; font-weight: 700; color: #0f172a; }
-.stat-item .stat-lbl { font-size: 10px; color: #718096; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+/* ========== AI SUMMARY CALLOUT ========== */
+.ai-summary {
+    background: linear-gradient(180deg, #f8fafc 0%, #fafbff 100%);
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid #4f46e5;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 15px 0;
+    position: relative;
+}
+.ai-summary-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #4f46e5;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    font-family: 'Outfit', sans-serif;
+}
+.ai-summary p {
+    line-height: 1.7;
+    font-size: 12.5px;
+    color: #334155;
+    margin: 0 0 10px;
+}
+.ai-summary p:last-child {
+    margin-bottom: 0;
+}
 
-.insight-bar { display: flex; gap: 15px; margin: 15px 0; }
-.insight-bar .bar-item { flex: 1; border-radius: 10px; padding: 16px; color: #fff; }
-.insight-bar .bar-item.ig { background: linear-gradient(135deg, #e1306c, #c13584); }
-.insight-bar .bar-item.fb { background: linear-gradient(135deg, #1877f2, #0d65d9); }
-.insight-bar .bar-item .big-num { font-size: 28px; font-weight: 800; }
-.insight-bar .bar-item .label { font-size: 11px; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+/* ========== DATA VISUALIZATIONS ========== */
+.platform-bar-wrap {
+    margin: 10px 0;
+}
+.platform-bar-wrap .label-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11.5px;
+    margin-bottom: 4px;
+}
+.platform-bar-wrap .label-row .name {
+    font-weight: 600;
+    color: #0f172a;
+}
+.platform-bar-wrap .label-row .pct {
+    color: #64748b;
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+}
+.platform-bar {
+    height: 8px;
+    background: #f1f5f9;
+    border-radius: 9999px;
+    overflow: hidden;
+}
+.platform-bar .fill {
+    height: 100%;
+    border-radius: 9999px;
+}
 
-.month-section { margin: 20px 0; page-break-inside: avoid; }
-.month-section h3 { font-size: 16px; color: #4f46e5; margin: 0 0 8px; padding-bottom: 5px; border-bottom: 2px solid #e0e7ff; }
+.change-positive {
+    display: inline-block;
+    padding: 2px 8px;
+    background-color: #ecfdf5;
+    color: #059669;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 11px;
+}
+.change-negative {
+    display: inline-block;
+    padding: 2px 8px;
+    background-color: #fef2f2;
+    color: #dc2626;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 11px;
+}
 
-.page-footer { text-align: center; padding: 20px 0 0; border-top: 1px solid #e2e8f0; margin-top: 25px; }
-.page-footer p { margin: 2px 0; font-size: 10px; color: #a0aec0; letter-spacing: 1px; }
+.rank-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+}
+.rank-table th {
+    padding: 8px 12px;
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #64748b;
+    text-align: left;
+    border-bottom: 2px solid #e2e8f0;
+    font-family: 'Outfit', sans-serif;
+}
+.rank-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+}
+.rank-table .rank {
+    font-weight: 800;
+    font-size: 12px;
+    width: 45px;
+    font-family: 'Outfit', sans-serif;
+}
+.rank-table .rank span {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    text-align: center;
+}
+.rank-table .rank.gold span {
+    background-color: #fef9c3;
+    color: #854d0e;
+}
+.rank-table .rank.silver span {
+    background-color: #f1f5f9;
+    color: #475569;
+}
+.rank-table .rank.bronze span {
+    background-color: #ffedd5;
+    color: #9a3412;
+}
+.rank-table .metric-val {
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.insight-bar {
+    display: flex;
+    gap: 16px;
+    margin: 15px 0;
+}
+.insight-bar .bar-item {
+    flex: 1;
+    border-radius: 12px;
+    padding: 20px 16px;
+    color: #ffffff;
+    position: relative;
+    overflow: hidden;
+}
+.insight-bar .bar-item::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(circle at 10% 10%, rgba(255,255,255,0.15) 0%, transparent 60%);
+}
+.insight-bar .bar-item.ig {
+    background: linear-gradient(135deg, #833ab4 0%, #fd1d1d 50%, #fcb045 100%);
+}
+.insight-bar .bar-item.fb {
+    background: linear-gradient(135deg, #1877f2 0%, #3b5998 100%);
+}
+.insight-bar .bar-item .big-num {
+    font-size: 24px;
+    font-weight: 800;
+    font-family: 'Outfit', sans-serif;
+    font-variant-numeric: tabular-nums;
+}
+.insight-bar .bar-item .label {
+    font-size: 10px;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 5px;
+    font-weight: 600;
+}
+
+.page-footer {
+    text-align: center;
+    padding-top: 15px;
+    border-top: 1px solid #e2e8f0;
+    margin-top: 20px;
+}
+.page-footer p {
+    margin: 2px 0;
+    font-size: 9px;
+    color: #94a3b8;
+    letter-spacing: 1px;
+    font-weight: 500;
+}
 </style>
 </head>
 <body>
 
 <!-- ========== COVER PAGE ========== -->
 <div class="cover">
+    <div class="grid-overlay"></div>
     <div class="top-glow"></div>
-    <div class="brand">Sarvajanik University</div>
-    <div class="report-label">Quarterly Report</div>
-    <h1>QUARTERLY <strong>REPORT</strong></h1>
-    <div class="q-label">Q{{ quarter }} {{ year }}</div>
-    <div class="months-label">{{ month_names|join:" — " }}</div>
-    <div class="divider-line"></div>
-    <div class="presented-by">Presented By Analytics Team</div>
+    <div class="content-wrapper">
+        <div class="brand">Sarvajanik University</div>
+        <div class="report-label">Quarterly Analytics Brief</div>
+        <h1>QUARTERLY <strong>REPORT</strong></h1>
+        <div class="q-label">Q{{ quarter }} {{ year }}</div>
+        <div class="months-label">{{ month_names|join:" — " }}</div>
+        <div class="divider-line"></div>
+        <div class="presented-by">Presented By Analytics Team</div>
+    </div>
     <div class="footer-note">MEDIA MANAGEMENT BY PRIMEX MEDIA SERVICES</div>
 </div>
 
@@ -103,10 +515,11 @@ tbody tr td:first-child { font-weight: 600; }
     </div>
 
     <div class="ai-summary">
+        <div class="ai-summary-title">✨ Gemini Analytics Synthesis</div>
         {% if ai_summary %}
         {{ ai_summary|safe }}
         {% else %}
-        <p style="text-align:center; color:#a0aec0;">AI summary not available. Set <strong>GEMINI_API_KEY</strong> environment variable to enable AI-powered summaries.</p>
+        <p style="text-align:center; color:#94a3b8; font-size:12px; padding:10px 0;">✨ AI-powered Executive Summary not available. Configure the <strong>GEMINI_API_KEY</strong> environment variable to enable intelligence synthesis.</p>
         {% endif %}
     </div>
 
@@ -161,10 +574,191 @@ tbody tr td:first-child { font-weight: 600; }
     </div>
 </div>
 
-<!-- ========== PAGE 3: PLATFORM PERFORMANCE ========== -->
+<!-- ========== PAGE 3: YEAR-OVER-YEAR COMPARISON ========== -->
 <div class="content">
     <div class="section-header">
-        <div class="num" style="background:#d97706;">3</div>
+        <div class="num" style="background:#7c3aed;">3</div>
+        <h2>Year-over-Year Comparison</h2>
+        <div class="line"></div>
+    </div>
+
+    <p style="font-size:13px; color:#64748b; margin:0 0 15px;">Q{{ quarter }} {{ year }} vs Q{{ quarter }} {{ prev_year }} — how does this quarter stack up against the same quarter last year?</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Metric</th>
+                <th style="text-align:center;">Q{{ quarter }} {{ prev_year }}</th>
+                <th style="text-align:center;">Q{{ quarter }} {{ year }}</th>
+                <th style="text-align:center;">Change</th>
+                <th style="text-align:center;">% Change</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr style="background:#f1f5f9;">
+                <td colspan="5" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#475569;padding:6px 12px;">Social Media — Reach &amp; Views</td>
+            </tr>
+            {% with row=comparison|get_item:"total_views" %}
+            <tr>
+                <td>Total Views</td>
+                <td style="text-align:center;">{{ row.previous|floatformat:"0" }}</td>
+                <td style="text-align:center;">{{ row.current|floatformat:"0" }}</td>
+                <td style="text-align:center;">{% if row.diff >= 0 %}<span class="change-positive">+{{ row.diff|floatformat:"0" }}</span>{% else %}<span class="change-negative">{{ row.diff|floatformat:"0" }}</span>{% endif %}</td>
+                <td style="text-align:center;">{% if row.pct is not None %}{% if row.pct >= 0 %}<span class="change-positive">+{{ row.pct|floatformat:"1" }}%</span>{% else %}<span class="change-negative">{{ row.pct|floatformat:"1" }}%</span>{% endif %}{% else %}<span style="color:#94a3b8;">N/A</span>{% endif %}</td>
+            </tr>
+            {% endwith %}
+            {% with row=comparison|get_item:"total_reach" %}
+            <tr>
+                <td>Total Reach</td>
+                <td style="text-align:center;">{{ row.previous|floatformat:"0" }}</td>
+                <td style="text-align:center;">{{ row.current|floatformat:"0" }}</td>
+                <td style="text-align:center;">{% if row.diff >= 0 %}<span class="change-positive">+{{ row.diff|floatformat:"0" }}</span>{% else %}<span class="change-negative">{{ row.diff|floatformat:"0" }}</span>{% endif %}</td>
+                <td style="text-align:center;">{% if row.pct is not None %}{% if row.pct >= 0 %}<span class="change-positive">+{{ row.pct|floatformat:"1" }}%</span>{% else %}<span class="change-negative">{{ row.pct|floatformat:"1" }}%</span>{% endif %}{% else %}<span style="color:#94a3b8;">N/A</span>{% endif %}</td>
+            </tr>
+            {% endwith %}
+            {% with row=comparison|get_item:"instagram_views" %}
+            <tr>
+                <td>Instagram Views</td>
+                <td style="text-align:center;">{{ row.previous|floatformat:"0" }}</td>
+                <td style="text-align:center;">{{ row.current|floatformat:"0" }}</td>
+                <td style="text-align:center;">{% if row.diff >= 0 %}<span class="change-positive">+{{ row.diff|floatformat:"0" }}</span>{% else %}<span class="change-negative">{{ row.diff|floatformat:"0" }}</span>{% endif %}</td>
+                <td style="text-align:center;">{% if row.pct is not None %}{% if row.pct >= 0 %}<span class="change-positive">+{{ row.pct|floatformat:"1" }}%</span>{% else %}<span class="change-negative">{{ row.pct|floatformat:"1" }}%</span>{% endif %}{% else %}<span style="color:#94a3b8;">N/A</span>{% endif %}</td>
+            </tr>
+            {% endwith %}
+            {% with row=comparison|get_item:"facebook_views" %}
+            <tr>
+                <td>Facebook Views</td>
+                <td style="text-align:center;">{{ row.previous|floatformat:"0" }}</td>
+                <td style="text-align:center;">{{ row.current|floatformat:"0" }}</td>
+                <td style="text-align:center;">{% if row.diff >= 0 %}<span class="change-positive">+{{ row.diff|floatformat:"0" }}</span>{% else %}<span class="change-negative">{{ row.diff|floatformat:"0" }}</span>{% endif %}</td>
+                <td style="text-align:center;">{% if row.pct is not None %}{% if row.pct >= 0 %}<span class="change-positive">+{{ row.pct|floatformat:"1" }}%</span>{% else %}<span class="change-negative">{{ row.pct|floatformat:"1" }}%</span>{% endif %}{% else %}<span style="color:#94a3b8;">N/A</span>{% endif %}</td>
+            </tr>
+            {% endwith %}
+            {% with row=comparison|get_item:"instagram_reach" %}
+            <tr>
+                <td>Instagram Reach</td>
+                <td style="text-align:center;">{{ row.previous|floatformat:"0" }}</td>
+                <td style="text-align:center;">{{ row.current|floatformat:"0" }}</td>
+                <td style="text-align:center;">{% if row.diff >= 0 %}<span class="change-positive">+{{ row.diff|floatformat:"0" }}</span>{% else %}<span class="change-negative">{{ row.diff|floatformat:"0" }}</span>{% endif %}</td>
+                <td style="text-align:center;">{% if row.pct is not None %}{% if row.pct >= 0 %}<span class="change-positive">+{{ row.pct|floatformat:"1" }}%</span>{% else %}<span class="change-negative">{{ row.pct|floatformat:"1" }}%</span>{% endif %}{% else %}<span style="color:#94a3b8;">N/A</span>{% endif %}</td>
+            </tr>
+            {% endwith %}
+            {% with row=comparison|get_item:"facebook_reach" %}
+            <tr>
+                <td>Facebook Reach</td>
+                <td style="text-align:center;">{{ row.previous|floatformat:"0" }}</td>
+                <td style="text-align:center;">{{ row.current|floatformat:"0" }}</td>
+                <td style="text-align:center;">{% if row.diff >= 0 %}<span class="change-positive">+{{ row.diff|floatformat:"0" }}</span>{% else %}<span class="change-negative">{{ row.diff|floatformat:"0" }}</span>{% endif %}</td>
+                <td style="text-align:center;">{% if row.pct is not None %}{% if row.pct >= 0 %}<span class="change-positive">+{{ row.pct|floatformat:"1" }}%</span>{% else %}<span class="change-negative">{{ row.pct|floatformat:"1" }}%</span>{% endif %}{% else %}<span style="color:#94a3b8;">N/A</span>{% endif %}</td>
+            </tr>
+            {% endwith %}
+            <tr style="background:#f1f5f9;">
+                <td colspan="5" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#475569;padding:6px 12px;">Social Media — Growth &amp; Content</td>
+            </tr>
+            {% with row=comparison|get_item:"followers_gained" %}
+            <tr>
+                <td>Followers Gained</td>
+                <td style="text-align:center;">{{ row.previous|floatformat:"0" }}</td>
+                <td style="text-align:center;">{{ row.current|floatformat:"0" }}</td>
+                <td style="text-align:center;">{% if row.diff >= 0 %}<span class="change-positive">+{{ row.diff|floatformat:"0" }}</span>{% else %}<span class="change-negative">{{ row.diff|floatformat:"0" }}</span>{% endif %}</td>
+                <td style="text-align:center;">{% if row.pct is not None %}{% if row.pct >= 0 %}<span class="change-positive">+{{ row.pct|floatformat:"1" }}%</span>{% else %}<span class="change-negative">{{ row.pct|floatformat:"1" }}%</span>{% endif %}{% else %}<span style="color:#94a3b8;">N/A</span>{% endif %}</td>
+            </tr>
+            {% endwith %}
+            {% with row=comparison|get_item:"youtube_subscribers" %}
+            <tr>
+                <td>YouTube Subscribers</td>
+                <td style="text-align:center;">{{ row.previous|floatformat:"0" }}</td>
+                <td style="text-align:center;">{{ row.current|floatformat:"0" }}</td>
+                <td style="text-align:center;">{% if row.diff >= 0 %}<span class="change-positive">+{{ row.diff|floatformat:"0" }}</span>{% else %}<span class="change-negative">{{ row.diff|floatformat:"0" }}</span>{% endif %}</td>
+                <td style="text-align:center;">{% if row.pct is not None %}{% if row.pct >= 0 %}<span class="change-positive">+{{ row.pct|floatformat:"1" }}%</span>{% else %}<span class="change-negative">{{ row.pct|floatformat:"1" }}%</span>{% endif %}{% else %}<span style="color:#94a3b8;">N/A</span>{% endif %}</td>
+            </tr>
+            {% endwith %}
+            {% with row=comparison|get_item:"reels_count" %}
+            <tr>
+                <td>Reels Created</td>
+                <td style="text-align:center;">{{ row.previous|floatformat:"0" }}</td>
+                <td style="text-align:center;">{{ row.current|floatformat:"0" }}</td>
+                <td style="text-align:center;">{% if row.diff >= 0 %}<span class="change-positive">+{{ row.diff|floatformat:"0" }}</span>{% else %}<span class="change-negative">{{ row.diff|floatformat:"0" }}</span>{% endif %}</td>
+                <td style="text-align:center;">{% if row.pct is not None %}{% if row.pct >= 0 %}<span class="change-positive">+{{ row.pct|floatformat:"1" }}%</span>{% else %}<span class="change-negative">{{ row.pct|floatformat:"1" }}%</span>{% endif %}{% else %}<span style="color:#94a3b8;">N/A</span>{% endif %}</td>
+            </tr>
+            {% endwith %}
+            {% with row=comparison|get_item:"graphics_count" %}
+            <tr>
+                <td>Graphics Created</td>
+                <td style="text-align:center;">{{ row.previous|floatformat:"0" }}</td>
+                <td style="text-align:center;">{{ row.current|floatformat:"0" }}</td>
+                <td style="text-align:center;">{% if row.diff >= 0 %}<span class="change-positive">+{{ row.diff|floatformat:"0" }}</span>{% else %}<span class="change-negative">{{ row.diff|floatformat:"0" }}</span>{% endif %}</td>
+                <td style="text-align:center;">{% if row.pct is not None %}{% if row.pct >= 0 %}<span class="change-positive">+{{ row.pct|floatformat:"1" }}%</span>{% else %}<span class="change-negative">{{ row.pct|floatformat:"1" }}%</span>{% endif %}{% else %}<span style="color:#94a3b8;">N/A</span>{% endif %}</td>
+            </tr>
+            {% endwith %}
+            <tr style="background:#f1f5f9;">
+                <td colspan="5" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#475569;padding:6px 12px;">Events, Media &amp; Press Activity</td>
+            </tr>
+            {% with row=comparison|get_item:"events_count" %}
+            <tr>
+                <td>Events Conducted</td>
+                <td style="text-align:center;">{{ row.previous|floatformat:"0" }}</td>
+                <td style="text-align:center;">{{ row.current|floatformat:"0" }}</td>
+                <td style="text-align:center;">{% if row.diff >= 0 %}<span class="change-positive">+{{ row.diff|floatformat:"0" }}</span>{% else %}<span class="change-negative">{{ row.diff|floatformat:"0" }}</span>{% endif %}</td>
+                <td style="text-align:center;">{% if row.pct is not None %}{% if row.pct >= 0 %}<span class="change-positive">+{{ row.pct|floatformat:"1" }}%</span>{% else %}<span class="change-negative">{{ row.pct|floatformat:"1" }}%</span>{% endif %}{% else %}<span style="color:#94a3b8;">—</span>{% endif %}</td>
+            </tr>
+            {% endwith %}
+            {% with row=comparison|get_item:"newspapers_count" %}
+            <tr>
+                <td>Newspaper Coverage</td>
+                <td style="text-align:center;">{{ row.previous|floatformat:"0" }}</td>
+                <td style="text-align:center;">{{ row.current|floatformat:"0" }}</td>
+                <td style="text-align:center;">{% if row.diff >= 0 %}<span class="change-positive">+{{ row.diff|floatformat:"0" }}</span>{% else %}<span class="change-negative">{{ row.diff|floatformat:"0" }}</span>{% endif %}</td>
+                <td style="text-align:center;">{% if row.pct is not None %}{% if row.pct >= 0 %}<span class="change-positive">+{{ row.pct|floatformat:"1" }}%</span>{% else %}<span class="change-negative">{{ row.pct|floatformat:"1" }}%</span>{% endif %}{% else %}<span style="color:#94a3b8;">—</span>{% endif %}</td>
+            </tr>
+            {% endwith %}
+            {% with row=comparison|get_item:"press_releases_count" %}
+            <tr>
+                <td>Press Releases</td>
+                <td style="text-align:center;">{{ row.previous|floatformat:"0" }}</td>
+                <td style="text-align:center;">{{ row.current|floatformat:"0" }}</td>
+                <td style="text-align:center;">{% if row.diff >= 0 %}<span class="change-positive">+{{ row.diff|floatformat:"0" }}</span>{% else %}<span class="change-negative">{{ row.diff|floatformat:"0" }}</span>{% endif %}</td>
+                <td style="text-align:center;">{% if row.pct is not None %}{% if row.pct >= 0 %}<span class="change-positive">+{{ row.pct|floatformat:"1" }}%</span>{% else %}<span class="change-negative">{{ row.pct|floatformat:"1" }}%</span>{% endif %}{% else %}<span style="color:#94a3b8;">—</span>{% endif %}</td>
+            </tr>
+            {% endwith %}
+        </tbody>
+    </table>
+
+    <div style="margin-top:20px;">
+        <h4 style="font-size:13px; color:#718096; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px;">Monthly Comparison — {{ year }} vs {{ prev_year }}</h4>
+        {% for m in month_names %}
+        {% with curr_m=analytics_by_month|get_item:m prev_m=prev_analytics_by_month|get_item:m %}
+        {% if prev_m %}
+        {% with curr_views=curr_m|get_item:"total_views" prev_views=prev_m|get_item:"total_views" %}
+        <div class="platform-bar-wrap">
+            <div class="label-row">
+                <span class="name">{{ m }} — {{ year }}</span>
+                <span class="pct">{{ curr_views|floatformat:"0" }} views</span>
+            </div>
+            <div class="platform-bar">
+                <div class="fill" style="width: {{ curr_views|pct:max_monthly_val }}%; background: linear-gradient(90deg, #4f46e5, #06b6d4);"></div>
+            </div>
+        </div>
+        <div class="platform-bar-wrap" style="margin-bottom:15px;">
+            <div class="label-row">
+                <span class="name">{{ m }} — {{ prev_year }}</span>
+                <span class="pct">{{ prev_views|floatformat:"0" }} views</span>
+            </div>
+            <div class="platform-bar">
+                <div class="fill" style="width: {{ prev_views|pct:max_monthly_val }}%; background: linear-gradient(90deg, #94a3b8, #cbd5e1);"></div>
+            </div>
+        </div>
+        {% endwith %}
+        {% endif %}
+        {% endwith %}
+        {% endfor %}
+    </div>
+</div>
+
+<!-- ========== PAGE 4: PLATFORM PERFORMANCE ========== -->
+<div class="content">
+    <div class="section-header">
+        <div class="num" style="background:#d97706;">4</div>
         <h2>Platform Performance</h2>
         <div class="line"></div>
     </div>
@@ -209,10 +803,10 @@ tbody tr td:first-child { font-weight: 600; }
     </table>
 </div>
 
-<!-- ========== PAGE 4: TOP PERFORMING CONTENT ========== -->
+<!-- ========== PAGE 5: TOP PERFORMING CONTENT ========== -->
 <div class="content">
     <div class="section-header">
-        <div class="num" style="background:#059669;">4</div>
+        <div class="num" style="background:#059669;">5</div>
         <h2>Top Performing Content</h2>
         <div class="line"></div>
     </div>
@@ -225,7 +819,9 @@ tbody tr td:first-child { font-weight: 600; }
         <tbody>
             {% for post in all_top_ig %}
             <tr>
-                <td class="rank {% if forloop.counter == 1 %}gold{% elif forloop.counter == 2 %}silver{% elif forloop.counter == 3 %}bronze{% endif %}">#{{ forloop.counter }}</td>
+                <td class="rank {% if forloop.counter == 1 %}gold{% elif forloop.counter == 2 %}silver{% elif forloop.counter == 3 %}bronze{% endif %}">
+                    <span>#{{ forloop.counter }}</span>
+                </td>
                 <td class="metric-val">{{ post.views|floatformat:"0" }}</td>
                 <td class="metric-val">{{ post.likes|floatformat:"0" }}</td>
                 <td class="metric-val">{{ post.shares|floatformat:"0" }}</td>
@@ -244,7 +840,9 @@ tbody tr td:first-child { font-weight: 600; }
         <tbody>
             {% for post in all_top_fb %}
             <tr>
-                <td class="rank {% if forloop.counter == 1 %}gold{% elif forloop.counter == 2 %}silver{% elif forloop.counter == 3 %}bronze{% endif %}">#{{ forloop.counter }}</td>
+                <td class="rank {% if forloop.counter == 1 %}gold{% elif forloop.counter == 2 %}silver{% elif forloop.counter == 3 %}bronze{% endif %}">
+                    <span>#{{ forloop.counter }}</span>
+                </td>
                 <td class="metric-val">{{ post.views|floatformat:"0" }}</td>
                 <td class="metric-val">{{ post.likes|floatformat:"0" }}</td>
             </tr>
