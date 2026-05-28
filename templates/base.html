@@ -349,8 +349,11 @@
             font-weight: 500;
             cursor: pointer;
             border: 1px solid transparent;
-            transition: all 0.15s;
+            transition: background-color 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s, box-shadow 0.15s, transform 0.1s;
             text-decoration: none;
+        }
+        .btn:active {
+            transform: scale(0.98);
         }
         .btn-primary {
             background: var(--accent);
@@ -393,26 +396,45 @@
         .alert-warning { background: var(--warning-light); color: var(--warning); border: 1px solid #f0d4b0; }
         .alert-info { background: var(--accent-light); color: var(--accent-dark); border: 1px solid #d5cefc; }
 
-        /* Session timeout toast */
+        /* Session timeout toast (Premium Glassmorphism Design) */
         .toast-session {
             position: fixed;
             bottom: 24px;
             right: 24px;
-            background: var(--warning-light);
-            border: 1px solid #f0d4b0;
+            background: rgba(253, 242, 230, 0.85);
+            backdrop-filter: blur(12px) saturate(160%);
+            -webkit-backdrop-filter: blur(12px) saturate(160%);
+            border: 1px solid rgba(201, 122, 47, 0.2);
             color: var(--warning);
-            padding: 14px 18px;
-            border-radius: var(--radius);
+            padding: 16px 20px;
+            border-radius: var(--radius-lg);
             font-size: 13.5px;
-            font-weight: 500;
+            font-weight: 600;
             display: none;
             align-items: center;
-            gap: 10px;
-            box-shadow: var(--shadow-lg);
+            gap: 12px;
+            box-shadow: 0 16px 40px rgba(201, 122, 47, 0.12), var(--shadow-lg);
             z-index: 999;
-            max-width: 320px;
+            max-width: 340px;
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+            transform: translateY(20px);
+            opacity: 0;
         }
-        .toast-session.show { display: flex; }
+        .toast-session.show {
+            display: flex;
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* ── Typography & Focus Accessibility Helpers ──────────────── */
+        .tabular-nums {
+            font-variant-numeric: tabular-nums;
+            font-feature-settings: "tnum";
+        }
+        *:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 2px var(--accent-light), 0 0 0 4px var(--accent);
+        }
 
         /* ── Badges ───────────────────────────────────────────────── */
         .badge {
