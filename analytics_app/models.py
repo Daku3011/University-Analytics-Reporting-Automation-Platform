@@ -26,7 +26,12 @@ class MonthlyAnalytics(models.Model):
     graphics_count = models.IntegerField(default=0)
 
     class Meta:
-        unique_together = ['college', 'month', 'year']
+        constraints = [
+            models.UniqueConstraint(fields=['college', 'month', 'year'], name='unique_monthly_analytics')
+        ]
+        indexes = [
+            models.Index(fields=['year', 'month'], name='idx_analytics_year_month'),
+        ]
         verbose_name_plural = 'Monthly Analytics'
 
     def __str__(self):
@@ -49,6 +54,10 @@ class TopPost(models.Model):
 
     class Meta:
         ordering = ['-views']
+        indexes = [
+            models.Index(fields=['college', 'month', 'year', 'platform'], name='idx_toppost_lookup'),
+            models.Index(fields=['year', 'month'], name='idx_toppost_year_month'),
+        ]
 
     def __str__(self):
         return f"Top {self.platform} post - {self.views} views"

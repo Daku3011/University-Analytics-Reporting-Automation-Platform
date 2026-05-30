@@ -15,6 +15,14 @@ class MonthlyReport(models.Model):
     generated_text = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['college', 'month', 'year'], name='unique_monthly_report')
+        ]
+        indexes = [
+            models.Index(fields=['year', 'month'], name='idx_monthlyreport_year_month'),
+        ]
+
     def __str__(self):
         return f"{self.college.code} - {self.month}/{self.year}"
 
@@ -35,8 +43,14 @@ class QuarterlyReport(models.Model):
         return f"Q{self.quarter} {self.year} Report"
 
 class NewspaperCoverage(models.Model):
+    MONTH_CHOICES = [
+        (1, 'January'), (2, 'February'), (3, 'March'),
+        (4, 'April'), (5, 'May'), (6, 'June'),
+        (7, 'July'), (8, 'August'), (9, 'September'),
+        (10, 'October'), (11, 'November'), (12, 'December'),
+    ]
     college = models.ForeignKey(College, on_delete=models.CASCADE, related_name='newspaper_coverage')
-    month = models.IntegerField()
+    month = models.IntegerField(choices=MONTH_CHOICES)
     year = models.IntegerField(default=2026)
     publication = models.CharField(max_length=255)
     date = models.DateField()
@@ -48,31 +62,60 @@ class NewspaperCoverage(models.Model):
     class Meta:
         verbose_name_plural = 'Newspaper Coverage'
         ordering = ['-date']
+        indexes = [
+            models.Index(fields=['college', 'month', 'year'], name='idx_newspaper_col_month_year'),
+            models.Index(fields=['year', 'month'], name='idx_newspaper_year_month'),
+        ]
 
     def __str__(self):
         return f"{self.publication} - {self.date}"
 
 class ChannelCoverage(models.Model):
+    MONTH_CHOICES = [
+        (1, 'January'), (2, 'February'), (3, 'March'),
+        (4, 'April'), (5, 'May'), (6, 'June'),
+        (7, 'July'), (8, 'August'), (9, 'September'),
+        (10, 'October'), (11, 'November'), (12, 'December'),
+    ]
     college = models.ForeignKey(College, on_delete=models.CASCADE, related_name='channel_coverage')
-    month = models.IntegerField()
+    month = models.IntegerField(choices=MONTH_CHOICES)
     year = models.IntegerField(default=2026)
     channel_name = models.CharField(max_length=255)
     platform = models.CharField(max_length=50, blank=True)
     edition = models.CharField(max_length=100, blank=True)
     link = models.URLField(blank=True)
 
+    class Meta:
+        ordering = ['-year', '-month']
+        indexes = [
+            models.Index(fields=['college', 'month', 'year'], name='idx_channel_col_month_year'),
+        ]
+
     def __str__(self):
         return f"{self.channel_name} ({self.platform})"
 
 class PressRelease(models.Model):
+    MONTH_CHOICES = [
+        (1, 'January'), (2, 'February'), (3, 'March'),
+        (4, 'April'), (5, 'May'), (6, 'June'),
+        (7, 'July'), (8, 'August'), (9, 'September'),
+        (10, 'October'), (11, 'November'), (12, 'December'),
+    ]
     college = models.ForeignKey(College, on_delete=models.CASCADE, related_name='press_releases')
-    month = models.IntegerField()
+    month = models.IntegerField(choices=MONTH_CHOICES)
     year = models.IntegerField(default=2026)
     title = models.CharField(max_length=500)
     content = models.TextField()
     date_submitted = models.DateField()
     placements = models.IntegerField(default=0)
     potential_reach = models.CharField(max_length=50, blank=True)
+
+    class Meta:
+        ordering = ['-year', '-month']
+        indexes = [
+            models.Index(fields=['college', 'month', 'year'], name='idx_pr_col_month_year'),
+            models.Index(fields=['year', 'month'], name='idx_pressrelease_year_month'),
+        ]
 
     def __str__(self):
         return self.title[:100]
@@ -133,6 +176,9 @@ class UploadedDocumentReport(models.Model):
         ordering = ['-created_at']
         verbose_name = 'Uploaded Document Report'
         verbose_name_plural = 'Uploaded Document Reports'
+        indexes = [
+            models.Index(fields=['year', 'quarter'], name='idx_uploadeddoc_year_quarter'),
+        ]
 
     def __str__(self):
         return f"{self.title} — Q{self.quarter} {self.year}"

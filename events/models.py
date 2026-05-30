@@ -26,6 +26,9 @@ class Event(models.Model):
 
     class Meta:
         ordering = ['-date']
+        indexes = [
+            models.Index(fields=['college', 'date'], name='idx_event_college_date'),
+        ]
 
     def __str__(self):
         return f"{self.title} ({self.college.code})"
