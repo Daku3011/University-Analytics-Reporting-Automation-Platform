@@ -112,12 +112,22 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 250 * 1024 * 1024   # 250 MB total request body
 FILE_UPLOAD_MAX_MEMORY_SIZE = 1 * 1024 * 1024     # >1 MB → write to temp disk file
 
 # ── Database ──────────────────────────────────────────────────────────────────
+import dj_database_url
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default='sqlite:///' + str(BASE_DIR / 'db.sqlite3'),
+        conn_max_age=0,
+    )
 }
+# SQLite (for local dev without PostgreSQL):
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+
 
 # ── Password Validation ───────────────────────────────────────────────────────
 AUTH_PASSWORD_VALIDATORS = [

@@ -29,3 +29,7 @@ pypdf==5.3.0              # Used to split large PDFs before sending to Gemini AP
 # ── Background Tasks ─────────────────────────────────────────
 celery==5.6.3
 redis==7.4.0
+
+# ── Database Drivers ─────────────────────────────────────────
+psycopg2-binary==2.9.12   # PostgreSQL driver for Django
+dj_database_url           # Parse DATABASE_URL from .env for Django settings
