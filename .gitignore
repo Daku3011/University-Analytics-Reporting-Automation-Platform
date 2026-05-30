@@ -49,6 +49,8 @@ test*
 *.pdf
 docs/
 AGENTS.md
+POSTGRESQL.md
+data.json
 
 # ── WeasyPrint / Fonts cache ─────────────────────────────────
 fontconfig/
