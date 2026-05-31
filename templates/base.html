@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SU Analytics — {% block title %}Dashboard{% endblock %}</title>
     <meta name="description" content="Sarvajanik University Analytics Reporting Platform">
+    {% load static %}
+    <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
 
     <!-- Fonts: DM Sans (body) + DM Mono (numbers) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -542,6 +544,10 @@
             <a class="nav-link {% if request.resolver_match.url_name == 'add_analytics' %}active{% endif %}"
                href="{% url 'add_analytics' %}">
                 <i class="ph ph-chart-line-up"></i> Add Analytics
+            </a>
+            <a class="nav-link {% if request.resolver_match.url_name == 'extract_from_pdf' %}active{% endif %}"
+               href="{% url 'extract_from_pdf' %}">
+                <i class="ph ph-robot"></i> Extract from PDF
             </a>
 
             <span class="sidebar-section-label">Reports</span>
