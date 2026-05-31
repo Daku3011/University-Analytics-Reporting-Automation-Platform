@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% block title %}Preview Extracted Data{% endblock %}
+{% block topbar_title %}Preview Extracted Data{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Review Extracted Data</h1>
+        <p>Gemini AI analyzed the PDF and found the following data for <strong>{{ college.name }}</strong> — {{ data.month }}/{{ data.year }}</p>
+    </div>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+
+    <!-- Analytics Section -->
+    {% if data.analytics %}
+    <div class="card" style="margin-bottom:20px;">
+        <div class="card-body">
+            <div class="section-title" style="margin-bottom:14px;">
+                <i class="ph ph-chart-bar" style="margin-right:4px;"></i> Social Media Analytics
+            </div>
+            <div class="grid grid-4">
+                <div class="stat-card" style="border-left-color:var(--accent);padding:14px;">
+                    <div class="stat-label">Instagram Views</div>
+                    <div class="stat-number" style="font-size:20px;">{{ data.analytics.instagram_views|default:"0" }}</div>
+                </div>
+                <div class="stat-card teal" style="padding:14px;">
+                    <div class="stat-label">Facebook Views</div>
+                    <div class="stat-number" style="font-size:20px;">{{ data.analytics.facebook_views|default:"0" }}</div>
+                </div>
+                <div class="stat-card amber" style="padding:14px;">
+                    <div class="stat-label">Total Views</div>
+                    <div class="stat-number" style="font-size:20px;">{{ data.analytics.total_views|default:"0" }}</div>
+                </div>
+                <div class="stat-card green" style="padding:14px;">
+                    <div class="stat-label">Followers Gained</div>
+                    <div class="stat-number" style="font-size:20px;">{{ data.analytics.followers_gained|default:"0" }}</div>
+                </div>
+            </div>
+            <div class="grid grid-4" style="margin-top:12px;">
+                <div style="padding:10px 14px;background:var(--surface-alt);border-radius:var(--radius-sm);">
+                    <span style="font-size:11px;color:var(--text-muted);">Instagram Reach</span>
+                    <div style="font-family:var(--font-mono);font-size:16px;font-weight:500;">{{ data.analytics.instagram_reach|default:"0" }}</div>
+                </div>
+                <div style="padding:10px 14px;background:var(--surface-alt);border-radius:var(--radius-sm);">
+                    <span style="font-size:11px;color:var(--text-muted);">Facebook Reach</span>
+                    <div style="font-family:var(--font-mono);font-size:16px;font-weight:500;">{{ data.analytics.facebook_reach|default:"0" }}</div>
+                </div>
+                <div style="padding:10px 14px;background:var(--surface-alt);border-radius:var(--radius-sm);">
+                    <span style="font-size:11px;color:var(--text-muted);">Reels Published</span>
+                    <div style="font-family:var(--font-mono);font-size:16px;font-weight:500;">{{ data.analytics.reels_count|default:"0" }}</div>
+                </div>
+                <div style="padding:10px 14px;background:var(--surface-alt);border-radius:var(--radius-sm);">
+                    <span style="font-size:11px;color:var(--text-muted);">Graphics Published</span>
+                    <div style="font-family:var(--font-mono);font-size:16px;font-weight:500;">{{ data.analytics.graphics_count|default:"0" }}</div>
+                </div>
+            </div>
+            <div style="display:flex;gap:16px;margin-top:12px;font-size:12px;color:var(--text-muted);">
+                <span>Instagram Followers: <strong>{{ data.analytics.instagram_followers|default:"0" }}</strong></span>
+                <span>Facebook Followers: <strong>{{ data.analytics.facebook_followers|default:"0" }}</strong></span>
+                <span>YouTube Subscribers: <strong>{{ data.analytics.youtube_subscribers|default:"0" }}</strong></span>
+                <span>Total Reach: <strong>{{ data.analytics.total_reach|default:"0" }}</strong></span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Events Section -->
+    <div class="card" style="margin-bottom:20px;">
+        <div class="card-body">
+            <div class="section-title" style="margin-bottom:14px;">
+                <i class="ph ph-calendar-check" style="margin-right:4px;"></i> Events Found ({{ data.events|length }})
+            </div>
+            {% if data.events %}
+            <table class="table-clean">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Category</th>
+                        <th>Date</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ev in data.events %}
+                    <tr>
+                        <td><strong>{{ ev.title }}</strong></td>
+                        <td><span class="badge badge-purple">{{ ev.category|default:"other" }}</span></td>
+                        <td>{{ ev.date }}</td>
+                        <td style="font-size:12px;color:var(--text-muted);max-width:250px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ ev.description|truncatechars:60 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">
+                <i class="ph ph-calendar-blank" style="font-size:24px;display:block;margin-bottom:6px;opacity:0.4;"></i>
+                No events found in the PDF
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Top Posts Section -->
+    <div class="card" style="margin-bottom:24px;">
+        <div class="card-body">
+            <div class="section-title" style="margin-bottom:14px;">
+                <i class="ph ph-trophy" style="margin-right:4px;"></i> Top Posts Found ({{ data.top_posts|length }})
+            </div>
+            {% if data.top_posts %}
+            <table class="table-clean">
+                <thead>
+                    <tr>
+                        <th>Platform</th>
+                        <th>Caption</th>
+                        <th>Views</th>
+                        <th>Likes</th>
+                        <th>Shares</th>
+                        <th>Link</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for post in data.top_posts %}
+                    <tr>
+                        <td>
+                            {% if post.platform == 'instagram' %}
+                            <span style="color:#e1306c;"><i class="ph ph-instagram-logo"></i> Instagram</span>
+                            {% else %}
+                            <span style="color:#1877f2;"><i class="ph ph-facebook-logo"></i> Facebook</span>
+                            {% endif %}
+                        </td>
+                        <td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ post.caption|truncatechars:40 }}</td>
+                        <td>{{ post.views|default:"0" }}</td>
+                        <td>{{ post.likes|default:"0" }}</td>
+                        <td>{{ post.shares|default:"0" }}</td>
+                        <td>
+                            {% if post.post_link %}
+                            <a href="{{ post.post_link }}" target="_blank" rel="noopener" style="font-size:12px;">View <i class="ph ph-external-link"></i></a>
+                            {% else %}
+                            <span style="color:var(--text-muted);font-size:12px;">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">
+                <i class="ph ph-image" style="font-size:24px;display:block;margin-bottom:6px;opacity:0.4;"></i>
+                No top posts found in the PDF
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div style="display:flex;gap:10px;">
+        <button type="submit" class="btn btn-success" style="padding:11px 24px;font-size:14px;">
+            <i class="ph ph-check-circle"></i> Accept &amp; Save All Data
+        </button>
+        <a href="{% url 'extract_from_pdf' %}" class="btn btn-secondary">
+            <i class="ph ph-arrow-counter-clockwise"></i> Cancel &amp; Try Again
+        </a>
+    </div>
+    <p style="font-size:12px;color:var(--text-muted);margin-top:8px;">
+        <i class="ph ph-info"></i>
+        Review the extracted data above. Click "Accept & Save" to add all events, analytics, and top posts to the database. Click "Cancel" to discard and try a different PDF.
+    </p>
+</form>
+{% endblock %}

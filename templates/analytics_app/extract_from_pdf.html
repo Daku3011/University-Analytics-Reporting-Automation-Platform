@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+{% block title %}Extract from PDF{% endblock %}
+{% block topbar_title %}Extract from PDF{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>AI-Powered Data Extraction</h1>
+        <p>Upload a PDF to automatically extract events, social media analytics, and top posts using Gemini AI</p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data" id="extractForm">
+            {% csrf_token %}
+
+            <div class="section-title" style="margin-bottom:10px;">
+                <i class="ph ph-calendar" style="margin-right:4px;"></i> Target Period
+            </div>
+            <div class="grid grid-3" style="margin-bottom:24px;">
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label" for="id_college">College</label>
+                    <select name="college" id="id_college" class="form-control form-select">
+                        {% for c in colleges %}
+                        <option value="{{ c.id }}">{{ c.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label" for="id_month">Month</label>
+                    <select name="month" id="id_month" class="form-control form-select">
+                        {% for num, name in months %}
+                        <option value="{{ num }}">{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label" for="id_year">Year</label>
+                    <input type="number" name="year" id="id_year" class="form-control" value="2026" min="2020" max="2030">
+                </div>
+            </div>
+
+            <hr style="border:none;border-top:1px solid var(--border-light);margin-bottom:24px;">
+
+            <div class="section-title" style="margin-bottom:10px;">
+                <i class="ph ph-file-pdf" style="margin-right:4px;"></i> PDF Upload
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="id_pdf_file">Select PDF File</label>
+                <input type="file" name="pdf_file" id="id_pdf_file" class="form-control" accept=".pdf" required>
+                <p style="font-size:12px;color:var(--text-muted);margin-top:6px;display:flex;align-items:center;gap:5px;">
+                    <i class="ph ph-info"></i>
+                    Upload a PDF containing social media reports, event details, or analytics data. Gemini AI will extract structured data automatically.
+                </p>
+            </div>
+
+            <div style="display:flex;gap:10px;">
+                <button type="submit" class="btn btn-primary" id="extractBtn">
+                    <i class="ph ph-robot"></i> <span id="btnText">Extract Data with AI</span>
+                </button>
+                <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+                    <i class="ph ph-x"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Progress Overlay -->
+<div id="progressOverlay" class="progress-overlay" style="display:none;">
+    <div class="progress-card">
+        <div class="progress-icon">
+            <i class="ph ph-robot"></i>
+        </div>
+        <div class="progress-title">AI Extraction in Progress</div>
+        <div class="progress-status" id="progressStatus">Uploading PDF...</div>
+        <div class="progress-bar-track">
+            <div class="progress-bar-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-percent" id="progressPercent">0%</div>
+        <div class="progress-hint">Please don't close this page. Large PDFs may take a minute.</div>
+    </div>
+</div>
+
+<style>
+.progress-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(30, 28, 25, 0.55);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+.progress-card {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    padding: 36px 40px;
+    width: 380px;
+    text-align: center;
+    box-shadow: 0 24px 48px rgba(0,0,0,0.15);
+}
+.progress-icon {
+    width: 52px; height: 52px;
+    background: var(--accent-light);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px;
+    font-size: 24px;
+    color: var(--accent);
+    animation: pulse-icon 1.4s ease-in-out infinite;
+}
+@keyframes pulse-icon {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.08); opacity: 0.7; }
+}
+.progress-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+}
+.progress-status {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 18px;
+    min-height: 20px;
+}
+.progress-bar-track {
+    height: 6px;
+    background: var(--border-light);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+.progress-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--accent), #a59aff);
+    border-radius: 3px;
+    transition: width 0.4s ease;
+}
+.progress-percent {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+}
+.progress-hint {
+    font-size: 12px;
+    color: var(--text-muted);
+    opacity: 0.7;
+}
+</style>
+
+<script>
+document.getElementById('extractForm').addEventListener('submit', function(e) {
+    var fileInput = document.getElementById('id_pdf_file');
+    if (!fileInput.files.length) return;
+
+    var overlay = document.getElementById('progressOverlay');
+    var fill = document.getElementById('progressFill');
+    var status = document.getElementById('progressStatus');
+    var percent = document.getElementById('progressPercent');
+    var btn = document.getElementById('extractBtn');
+    var btnText = document.getElementById('btnText');
+
+    btn.disabled = true;
+    btn.style.opacity = '0.6';
+    btnText.textContent = 'Processing...';
+    overlay.style.display = 'flex';
+
+    var stages = [
+        { pct: 15, label: 'Uploading PDF...' },
+        { pct: 35, label: 'Connecting to Gemini AI...' },
+        { pct: 55, label: 'Processing with Gemini AI...' },
+        { pct: 75, label: 'Extracting structured data...' },
+        { pct: 90, label: 'Finalizing extraction...' },
+    ];
+
+    var i = 0;
+    function advance() {
+        if (i < stages.length) {
+            var s = stages[i];
+            fill.style.width = s.pct + '%';
+            status.textContent = s.label;
+            percent.textContent = s.pct + '%';
+            i++;
+            var delay = i === 1 ? 800 : 2000 + Math.random() * 1500;
+            setTimeout(advance, delay);
+        }
+    }
+    advance();
+});
+</script>
+{% endblock %}

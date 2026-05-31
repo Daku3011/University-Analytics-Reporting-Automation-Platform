@@ -120,6 +120,72 @@
                 </div>
             </div>
 
+            <!-- Top Posts -->
+            <hr style="border:none;border-top:1px solid var(--border-light);margin-bottom:24px;">
+            <div class="section-title">
+                <i class="ph ph-trophy" style="margin-right:4px;"></i> Top Posts (Optional)
+            </div>
+
+            <div style="margin-bottom:20px;">
+                <div style="font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:10px;">
+                    <i class="ph ph-instagram-logo" style="color:#e1306c;"></i> Instagram Top Posts
+                </div>
+                {% for i in '12' %}
+                <div class="grid grid-4" style="margin-bottom:12px;padding:10px;background:var(--surface-alt);border-radius:var(--radius-sm);">
+                    <div class="form-group" style="margin-bottom:0;grid-column:1/-1;">
+                        <label class="form-label" style="font-size:11px;">Post {{ i }} Caption</label>
+                        <input type="text" name="top_ig_{{ i }}_caption" class="form-control" placeholder="Post caption" style="font-size:13px;">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label class="form-label" style="font-size:11px;">Views</label>
+                        <input type="number" name="top_ig_{{ i }}_views" class="form-control" value="0" min="0" style="font-size:13px;">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label class="form-label" style="font-size:11px;">Likes</label>
+                        <input type="number" name="top_ig_{{ i }}_likes" class="form-control" value="0" min="0" style="font-size:13px;">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label class="form-label" style="font-size:11px;">Shares</label>
+                        <input type="number" name="top_ig_{{ i }}_shares" class="form-control" value="0" min="0" style="font-size:13px;">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label class="form-label" style="font-size:11px;">Post Link</label>
+                        <input type="url" name="top_ig_{{ i }}_link" class="form-control" placeholder="https://instagram.com/p/..." style="font-size:13px;">
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div style="margin-bottom:28px;">
+                <div style="font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:10px;">
+                    <i class="ph ph-facebook-logo" style="color:#1877f2;"></i> Facebook Top Posts
+                </div>
+                {% for i in '12' %}
+                <div class="grid grid-4" style="margin-bottom:12px;padding:10px;background:var(--surface-alt);border-radius:var(--radius-sm);">
+                    <div class="form-group" style="margin-bottom:0;grid-column:1/-1;">
+                        <label class="form-label" style="font-size:11px;">Post {{ i }} Caption</label>
+                        <input type="text" name="top_fb_{{ i }}_caption" class="form-control" placeholder="Post caption" style="font-size:13px;">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label class="form-label" style="font-size:11px;">Views</label>
+                        <input type="number" name="top_fb_{{ i }}_views" class="form-control" value="0" min="0" style="font-size:13px;">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label class="form-label" style="font-size:11px;">Likes</label>
+                        <input type="number" name="top_fb_{{ i }}_likes" class="form-control" value="0" min="0" style="font-size:13px;">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label class="form-label" style="font-size:11px;">Shares</label>
+                        <input type="number" name="top_fb_{{ i }}_shares" class="form-control" value="0" min="0" style="font-size:13px;">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label class="form-label" style="font-size:11px;">Post Link</label>
+                        <input type="url" name="top_fb_{{ i }}_link" class="form-control" placeholder="https://facebook.com/..." style="font-size:13px;">
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
             <div style="display:flex;gap:10px;">
                 <button type="submit" class="btn btn-primary">
                     <i class="ph ph-floppy-disk"></i> Save Analytics

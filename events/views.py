@@ -15,9 +15,11 @@ def add_event(request):
             college = request.user.profile.college
         else:
             college = College.objects.get(id=college_id) if college_id else College.objects.first()
+        social_media_link = request.POST.get('social_media_link', '')
         event = Event.objects.create(
             college=college, title=title, description=description,
-            category=category, date=date
+            category=category, date=date,
+            social_media_link=social_media_link
         )
         for f in request.FILES.getlist('media'):
             Media.objects.create(event=event, file=f)
