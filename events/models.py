@@ -22,6 +22,7 @@ class Event(models.Model):
     is_carousel = models.BooleanField(default=False)
     is_reel = models.BooleanField(default=False)
     is_news = models.BooleanField(default=False)
+    social_media_link = models.URLField(blank=True, verbose_name="Social Media Account Link")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

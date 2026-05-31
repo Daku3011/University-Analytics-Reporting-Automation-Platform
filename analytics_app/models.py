@@ -50,6 +50,7 @@ class TopPost(models.Model):
     views = models.IntegerField(default=0)
     likes = models.IntegerField(default=0)
     shares = models.IntegerField(default=0)
+    post_link = models.URLField(blank=True, verbose_name="Post Link")
     screenshot = models.ImageField(upload_to='top_posts/', blank=True, null=True)
 
     class Meta:
