@@ -91,17 +91,25 @@ Please output a strict JSON object detailing:
 - "takeaways": array of bullet points."""
                 
                 try:
+                    from google.genai import types as genai_types
                     resp = client.models.generate_content(
                         model=model_name,
-                        contents=uploaded_gfiles + [map_prompt]
+                        contents=uploaded_gfiles + [map_prompt],
+                        config=genai_types.GenerateContentConfig(
+                            http_options={'timeout': 300000}
+                        )
                     )
                 except Exception as map_exc:
                     if 'INVALID_ARGUMENT' in str(map_exc) or '400' in str(map_exc):
                         print(f"[upload_document_report] {model_name} failed with INVALID_ARGUMENT for {fpath.name}. Retrying with gemini-2.5-pro...")
                         try:
+                            from google.genai import types as genai_types
                             resp = client.models.generate_content(
                                 model="gemini-2.5-pro",
-                                contents=uploaded_gfiles + [map_prompt]
+                                contents=uploaded_gfiles + [map_prompt],
+                                config=genai_types.GenerateContentConfig(
+                                    http_options={'timeout': 300000}
+                                )
                             )
                         except Exception as inner_exc:
                             print(f"[upload_document_report] Fallback to gemini-2.5-pro also failed: {inner_exc}")
@@ -200,9 +208,13 @@ IMPORTANT RULES:
         # Send the consolidated text prompt to Gemini
         print(f"[upload_document_report] Generating final HTML report from consolidated data...")
         
+        from google.genai import types as genai_types
         response = client.models.generate_content(
             model=model_name,
             contents=prompt,
+            config=genai_types.GenerateContentConfig(
+                http_options={'timeout': 300000}
+            )
         )
 
         raw = response.text or ''
