@@ -25,7 +25,7 @@ Phase 4 ██████░░░░ In Progress 🔧  Multi-college managemen
 Phase 5 ░░░░░░░░░░ Planned    📋  Charts, exports & notifications
 ```
 
-**Current Version:** `v0.4-alpha` · **Stack:** Django 5.2 · SQLite · WeasyPrint · Gemini AI
+**Current Version:** `v2.4.1-beta` · **Stack:** Django 5.2 · SQLite · WeasyPrint · Gemini AI
 
 ---
 
