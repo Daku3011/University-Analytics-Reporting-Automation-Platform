@@ -1,272 +1,285 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>{{ title }} — Q{{ quarter }} {{ year }}</title>
-  <style>
-    @page { size: A4; margin: 0; }
+<meta charset="UTF-8">
+<title>{{ title }} — Q{{ quarter }} {{ year }}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&display=swap" rel="stylesheet">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&display=swap');
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+@page {
+    size: A4;
+    margin: 20mm 15mm 20mm 15mm;
+    @bottom-right {
+        content: "Page " counter(page) " of " counter(pages);
+        font-family: 'Outfit', sans-serif;
+        font-size: 8pt;
+        color: #94a3b8;
+        font-weight: 500;
+    }
+    @bottom-left {
+        content: "Sarvajanik University • {{ title }}";
+        font-family: 'Outfit', sans-serif;
+        font-size: 8pt;
+        color: #94a3b8;
+        font-weight: 500;
+    }
+}
+@page :first {
+    margin: 0;
+    @bottom-right { content: normal; }
+    @bottom-left { content: normal; }
+}
 
-    body {
-      font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-      font-size: 13pt;
-      color: #1a1a2e;
-      background: #fff;
-      line-height: 1.65;
-    }
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* ── COVER PAGE ── */
-    .cover {
-      width: 210mm; height: 297mm;
-      background: linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #0f172a 100%);
-      position: relative;
-      page-break-after: always;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      overflow: hidden;
-    }
-    .cover::before {
-      content: '';
-      position: absolute;
-      top: -50%; left: -50%;
-      width: 200%; height: 200%;
-      background:
-        radial-gradient(ellipse at 30% 20%, rgba(79,70,229,0.15) 0%, transparent 50%),
-        radial-gradient(ellipse at 70% 80%, rgba(6,182,212,0.1) 0%, transparent 50%),
-        radial-gradient(ellipse at 50% 50%, rgba(139,92,246,0.05) 0%, transparent 50%);
-    }
-    .cover .top-bar {
-      position: absolute; top: 0; width: 100%; height: 6px;
-      background: linear-gradient(90deg, #4f46e5, #7c3aed, #06b6d4, #4f46e5);
-    }
-    .cover .brand-section {
-      position: absolute; top: 40px; left: 0; right: 0;
-      display: flex; align-items: center; justify-content: center; gap: 16px;
-    }
-    .cover .brand-logo {
-      width: 48px; height: 48px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .cover .brand-logo svg { width: 32px; height: 32px; }
-    .cover .brand-text { text-align: left; }
-    .cover .brand-text .uni-name {
-      font-size: 16px; font-weight: 700; color: #fff; letter-spacing: 1px;
-    }
-    .cover .brand-text .uni-tagline {
-      font-size: 10px; color: rgba(255,255,255,0.4); letter-spacing: 2px; text-transform: uppercase;
-    }
-    .cover .report-type {
-      font-size: 13px; letter-spacing: 12px; color: rgba(255,255,255,0.4);
-      margin-bottom: 20px; text-transform: uppercase; position: relative; z-index: 1;
-    }
-    .cover h1 {
-      font-size: 48px; color: #fff; margin: 0; letter-spacing: 4px;
-      font-weight: 300; position: relative; z-index: 1;
-    }
-    .cover h1 strong { font-weight: 700; color: #7c3aed; }
-    .cover .q-label {
-      font-size: 42px; color: #06b6d4; margin: 10px 0 5px;
-      font-weight: 800; letter-spacing: 6px; position: relative; z-index: 1;
-    }
-    .cover .months-label {
-      font-size: 18px; color: rgba(255,255,255,0.7);
-      letter-spacing: 2px; position: relative; z-index: 1;
-    }
-    .cover .divider {
-      width: 80px; height: 3px;
-      background: linear-gradient(90deg, #4f46e5, #06b6d4);
-      margin: 25px auto; border-radius: 2px; position: relative; z-index: 1;
-    }
-    .cover .meta-line {
-      font-size: 12px; color: rgba(255,255,255,0.5);
-      letter-spacing: 2px; text-transform: uppercase; position: relative; z-index: 1;
-    }
-    .cover .footer-line {
-      position: absolute; bottom: 40px; left: 0; right: 0;
-      font-size: 10px; color: rgba(255,255,255,0.2); letter-spacing: 3px;
-    }
+body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #334155;
+    background: #ffffff;
+    line-height: 1.7;
+    font-size: 11.5pt;
+    -webkit-print-color-adjust: exact;
+}
 
-    /* ── CONTENT PAGES ── */
-    .content { padding: 40px 50px; page-break-after: always; }
-    .content:last-child { page-break-after: avoid; }
+/* ========== COVER PAGE ========== */
+.cover {
+    width: 210mm;
+    height: 297mm;
+    background: linear-gradient(135deg, #090d16 0%, #0f172a 50%, #1e1b4b 100%);
+    position: relative;
+    page-break-after: always;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    overflow: hidden;
+}
+.cover::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: 
+        radial-gradient(circle at 15% 20%, rgba(79, 70, 229, 0.25) 0%, transparent 60%),
+        radial-gradient(circle at 85% 80%, rgba(6, 182, 212, 0.2) 0%, transparent 60%);
+    z-index: 1;
+}
+.cover .grid-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 24px 24px;
+    z-index: 2;
+}
+.cover .top-glow {
+    position: absolute;
+    top: 0;
+    width: 100%;
+    height: 8px;
+    background: linear-gradient(90deg, #4f46e5, #06b6d4, #8b5cf6, #4f46e5);
+    z-index: 3;
+}
+.cover .content-wrapper {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 40px;
+}
+.cover .brand {
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    font-family: 'Outfit', sans-serif;
+}
+.cover .cover-logo {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 20px;
+}
+.cover .report-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 12px;
+    color: #818cf8;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    font-family: 'Outfit', sans-serif;
+}
+.cover h1 {
+    font-size: 44px;
+    color: #ffffff;
+    margin: 0;
+    font-weight: 300;
+    letter-spacing: 3px;
+    line-height: 1.1;
+    font-family: 'Outfit', sans-serif;
+    text-transform: uppercase;
+}
+.cover h1 strong {
+    font-weight: 800;
+    color: #6366f1;
+}
+.cover .q-label {
+    font-size: 56px;
+    color: #06b6d4;
+    margin: 20px 0 10px;
+    font-weight: 800;
+    letter-spacing: 4px;
+    font-family: 'Outfit', sans-serif;
+}
+.cover .months-label {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.7);
+    letter-spacing: 2px;
+    font-weight: 500;
+    margin-bottom: 35px;
+    font-family: 'Outfit', sans-serif;
+}
+.cover .divider-line {
+    width: 80px;
+    height: 3px;
+    background: linear-gradient(90deg, #4f46e5, #06b6d4);
+    border-radius: 2px;
+    margin: 0 auto 35px;
+}
+.cover .presented-by {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 500;
+}
+.cover .footer-note {
+    position: absolute;
+    bottom: 40px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 9px;
+    color: rgba(255, 255, 255, 0.2);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    font-weight: 600;
+    z-index: 10;
+}
 
-    .page-header-brand {
-      display: flex; align-items: center; gap: 12px;
-      margin-bottom: 24px; padding-bottom: 14px;
-      border-bottom: 2px solid #e8e6ff;
-    }
-    .page-header-brand .header-logo {
-      width: 36px; height: 36px;
-      background: #f0f0ff; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-    }
-    .page-header-brand .header-logo svg { width: 22px; height: 22px; }
-    .page-header-brand .header-text { flex: 1; }
-    .page-header-brand .header-text .h-uni {
-      font-size: 11pt; font-weight: 700; color: #4f46e5;
-    }
-    .page-header-brand .header-text .h-title {
-      font-size: 9pt; color: #6c757d;
-    }
-    .page-header-brand .header-page {
-      font-size: 9pt; color: #6c757d;
-    }
+/* ========== CONTENT PAGES & SECTIONS ========== */
+.content {
+    page-break-after: always;
+    position: relative;
+    box-sizing: border-box;
+}
+.content:last-child {
+    page-break-after: avoid;
+}
 
-    .ai-badge {
-      background: #f0f0ff; border: 1px solid #c8c4f8;
-      border-radius: 6px; padding: 8px 14px;
-      font-size: 10pt; color: #5b52cc;
-      margin-bottom: 24px; display: inline-block;
-    }
+.ai-badge {
+    background: linear-gradient(135deg, #f8fafc 0%, #fafbff 100%);
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid #4f46e5;
+    border-radius: 8px;
+    padding: 12px 18px;
+    font-size: 10.5pt;
+    color: #4f46e5;
+    font-weight: 600;
+    margin-bottom: 25px;
+    display: inline-block;
+    font-family: 'Outfit', sans-serif;
+}
 
-    h2 {
-      font-size: 15pt; font-weight: 700; color: #4f46e5;
-      margin: 28px 0 10px; padding-bottom: 6px;
-      border-bottom: 2px solid #e8e6ff;
-    }
-    h3 {
-      font-size: 13pt; font-weight: 600; color: #1a1a2e;
-      margin: 18px 0 8px;
-    }
-    p { margin-bottom: 12px; color: #2d2d4e; }
-    ul, ol { margin: 10px 0 14px 22px; }
-    li { margin-bottom: 6px; color: #2d2d4e; }
-    strong { color: #1a1a2e; }
+/* Style AI Generated elements inside summary */
+.content h2 {
+    font-size: 16pt;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 28px 0 14px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid #f1f5f9;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-family: 'Outfit', sans-serif;
+}
+.content h3 {
+    font-size: 13pt;
+    font-weight: 600;
+    color: #1e1b4b;
+    margin: 20px 0 10px;
+    font-family: 'Outfit', sans-serif;
+}
+.content p {
+    margin-bottom: 14px;
+    color: #334155;
+    line-height: 1.75;
+}
+.content ul, .content ol {
+    margin: 12px 0 18px 24px;
+}
+.content li {
+    margin-bottom: 8px;
+    color: #334155;
+    line-height: 1.7;
+}
+.content strong {
+    color: #0f172a;
+    font-weight: 700;
+}
 
-    .section-box {
-      background: #f8f7ff; border-left: 4px solid #4f46e5;
-      border-radius: 0 6px 6px 0; padding: 16px 20px; margin: 12px 0;
-    }
+.section-box {
+    background: #f8fafc;
+    border-left: 4px solid #4f46e5;
+    border-radius: 0 8px 8px 0;
+    padding: 18px 22px;
+    margin: 18px 0;
+}
 
-    .footer {
-      margin-top: 40px; padding: 20px 50px;
-      background: #f5f5f5; border-top: 1px solid #e0e0e0;
-      font-size: 10pt; color: #888;
-      display: flex; justify-content: space-between;
-    }
-
-    /* Metric Cards */
-    .metric-grid {
-      display: flex; flex-wrap: wrap; gap: 15px; margin: 20px 0;
-    }
-    .metric-card {
-      background: #fdfcff; border: 1px solid #e9ecef;
-      border-radius: 8px; padding: 16px 20px;
-      flex: 1; min-width: 160px; text-align: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-      border-top: 4px solid #4f46e5;
-    }
-    .metric-value {
-      font-size: 26pt; font-weight: 700; color: #1a1a2e;
-      margin-bottom: 4px; line-height: 1.1;
-    }
-    .metric-label {
-      font-size: 10pt; color: #6c757d;
-      text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;
-    }
-
-    /* Data Tables */
-    table {
-      width: 100%; border-collapse: collapse;
-      margin: 24px 0; font-size: 11pt;
-      border-radius: 8px; overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-    }
-    thead { background: #4f46e5; }
-    th { color: white; padding: 12px 16px; text-align: left; font-weight: 600; }
-    td {
-      padding: 12px 16px; border-bottom: 1px solid #eee; color: #2d2d4e;
-    }
-    tr:nth-child(even) td { background: #faf9ff; }
-    tr:last-child td { border-bottom: none; }
-
-    /* SVG Chart Container */
-    .chart-container {
-      background: white; border: 1px solid #e8e6ff;
-      border-radius: 10px; padding: 24px;
-      margin: 24px 0; text-align: center;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.04);
-    }
-    svg { max-width: 100%; height: auto; }
-
-    /* Pull Quotes */
-    .highlight-quote {
-      font-size: 14pt; font-weight: 500; font-style: italic;
-      color: #4f46e5; text-align: center;
-      margin: 30px 40px; padding: 20px;
-      background: #f8f7ff; border-radius: 8px;
-      border: 1px solid #e8e6ff; position: relative;
-    }
-    .highlight-quote::before {
-      content: "\201C";
-      position: absolute; top: -10px; left: 10px;
-      font-size: 40pt; color: rgba(79,70,229,0.2);
-      font-family: serif; line-height: 1;
-    }
-  </style>
+.footer {
+    text-align: center;
+    padding-top: 15px;
+    border-top: 1px solid #e2e8f0;
+    margin-top: 40px;
+}
+.footer p {
+    margin: 2px 0;
+    font-size: 9px;
+    color: #94a3b8;
+    letter-spacing: 1px;
+    font-weight: 500;
+}
+</style>
 </head>
 <body>
 
-  <!-- ===== COVER ===== -->
-  <div class="cover">
-    <div class="top-bar"></div>
-    <div class="brand-section">
-      <div class="brand-logo">
-        <svg viewBox="0 0 40 40" fill="none">
-          <rect x="4" y="8" width="32" height="24" rx="3" stroke="rgba(255,255,255,0.6)" stroke-width="1.5" fill="none"/>
-          <path d="M10 14h20v2H10zm0 4h14v2H10zm0 4h18v2H10z" fill="rgba(255,255,255,0.4)"/>
-          <circle cx="30" cy="26" r="3" fill="rgba(79,70,229,0.6)"/>
-        </svg>
-      </div>
-      <div class="brand-text">
-        <div class="uni-name">SARVAJANIK UNIVERSITY</div>
-        <div class="uni-tagline">University Analytics Platform</div>
-      </div>
+<!-- ========== COVER PAGE ========== -->
+<div class="cover">
+    <div class="grid-overlay"></div>
+    <div class="top-glow"></div>
+    <div class="content-wrapper">
+        <div class="brand">Sarvajanik University</div>
+        <div class="report-label">Condensed Executive Summary</div>
+        <h1>QUARTERLY <strong>BRIEF</strong></h1>
+        <div class="q-label">Q{{ quarter }} {{ year }}</div>
+        <div class="months-label">{{ quarter_label }}</div>
+        <div class="divider-line"></div>
+        <div class="presented-by">Consolidated via Gemini AI • Prepared by: {{ uploaded_by }}</div>
     </div>
-    <div class="report-type">Condensed Summary</div>
-    <h1>QUARTERLY <strong>REPORT</strong></h1>
-    <div class="q-label">Q{{ quarter }} {{ year }}</div>
-    <div class="months-label">{{ quarter_label }}</div>
-    <div class="divider"></div>
-    <div class="meta-line">Prepared by: {{ uploaded_by }}</div>
-    <div class="footer-line">SU ANALYTICS · SARVAJANIK UNIVERSITY</div>
-  </div>
+</div>
 
-  <!-- ===== CONTENT ===== -->
-  <div class="content">
-    <div class="page-header-brand">
-      <div class="header-logo">
-        <svg viewBox="0 0 40 40" fill="none">
-          <rect x="4" y="8" width="32" height="24" rx="3" stroke="#4f46e5" stroke-width="1.5" fill="none"/>
-          <path d="M10 14h20v2H10zm0 4h14v2H10zm0 4h18v2H10z" fill="#4f46e5" opacity="0.4"/>
-          <circle cx="30" cy="26" r="3" fill="#4f46e5" opacity="0.6"/>
-        </svg>
-      </div>
-      <div class="header-text">
-        <div class="h-uni">Sarvajanik University</div>
-        <div class="h-title">{{ title }} — Q{{ quarter }} {{ year }}</div>
-      </div>
-      <div class="header-page">AI-Condensed</div>
-    </div>
-
+<!-- ========== PAGE 1: CONTENT ========== -->
+<div class="content">
     <div class="ai-badge">
-      ✦ This summary was generated by Gemini AI from {{ months_covered }}
+        ✦ This intelligence brief was synthesized by Gemini AI from {{ months_covered }}
     </div>
 
     {{ ai_summary|safe }}
-  </div>
-
-  <div class="footer">
-    <span>Sarvajanik University — Internal Use Only</span>
-    <span>Generated via SU Analytics Platform · AI-Condensed</span>
-  </div>
+</div>
 
 </body>
 </html>

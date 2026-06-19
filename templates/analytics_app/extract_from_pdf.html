@@ -6,7 +6,7 @@
 <div class="page-header">
     <div>
         <h1>AI-Powered Data Extraction</h1>
-        <p>Upload a PDF to automatically extract events, social media analytics, and top posts using Gemini AI</p>
+        <p>Upload a PDF — Gemini AI will automatically detect the college, month, and data from the document</p>
     </div>
 </div>
 
@@ -16,42 +16,14 @@
             {% csrf_token %}
 
             <div class="section-title" style="margin-bottom:10px;">
-                <i class="ph ph-calendar" style="margin-right:4px;"></i> Target Period
-            </div>
-            <div class="grid grid-3" style="margin-bottom:24px;">
-                <div class="form-group" style="margin-bottom:0;">
-                    <label class="form-label" for="id_college">College</label>
-                    <select name="college" id="id_college" class="form-control form-select">
-                        {% for c in colleges %}
-                        <option value="{{ c.id }}">{{ c.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="form-group" style="margin-bottom:0;">
-                    <label class="form-label" for="id_month">Month</label>
-                    <select name="month" id="id_month" class="form-control form-select">
-                        {% for num, name in months %}
-                        <option value="{{ num }}">{{ name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="form-group" style="margin-bottom:0;">
-                    <label class="form-label" for="id_year">Year</label>
-                    <input type="number" name="year" id="id_year" class="form-control" value="2026" min="2020" max="2030">
-                </div>
-            </div>
-
-            <hr style="border:none;border-top:1px solid var(--border-light);margin-bottom:24px;">
-
-            <div class="section-title" style="margin-bottom:10px;">
-                <i class="ph ph-file-pdf" style="margin-right:4px;"></i> PDF Upload
+                <i class="ph ph-file-pdf" style="margin-right:4px;"></i> Upload PDF
             </div>
             <div class="form-group">
                 <label class="form-label" for="id_pdf_file">Select PDF File</label>
                 <input type="file" name="pdf_file" id="id_pdf_file" class="form-control" accept=".pdf" required>
                 <p style="font-size:12px;color:var(--text-muted);margin-top:6px;display:flex;align-items:center;gap:5px;">
                     <i class="ph ph-info"></i>
-                    Upload a PDF containing social media reports, event details, or analytics data. Gemini AI will extract structured data automatically.
+                    Upload a PDF containing social media reports, event details, or analytics data. Gemini AI will detect the college, month, and all data automatically.
                 </p>
             </div>
 

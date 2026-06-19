@@ -5,9 +5,9 @@
 <meta charset="UTF-8">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&display=swap" rel="stylesheet">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&display=swap');
 
 @page {
     size: A4;
@@ -61,8 +61,8 @@ body {
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
     background: 
-        radial-gradient(circle at 20% 30%, rgba(79, 70, 229, 0.22) 0%, transparent 60%),
-        radial-gradient(circle at 80% 70%, rgba(6, 182, 212, 0.18) 0%, transparent 60%);
+        radial-gradient(circle at 15% 20%, rgba(79, 70, 229, 0.25) 0%, transparent 60%),
+        radial-gradient(circle at 85% 80%, rgba(6, 182, 212, 0.2) 0%, transparent 60%);
     z-index: 1;
 }
 .cover .grid-overlay {
@@ -94,8 +94,13 @@ body {
     font-weight: 600;
     letter-spacing: 6px;
     text-transform: uppercase;
-    margin-bottom: 25px;
+    margin-bottom: 10px;
     font-family: 'Outfit', sans-serif;
+}
+.cover .cover-logo {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 20px;
 }
 .cover .report-label {
     font-size: 11px;
@@ -132,8 +137,9 @@ body {
     font-size: 16px;
     color: rgba(255, 255, 255, 0.7);
     letter-spacing: 2px;
-    font-weight: 400;
+    font-weight: 500;
     margin-bottom: 35px;
+    font-family: 'Outfit', sans-serif;
 }
 .cover .divider-line {
     width: 80px;
@@ -163,7 +169,7 @@ body {
     z-index: 10;
 }
 
-/* ========== SECTIONS & METRICS ========== */
+/* ========== CONTENT PAGES & SECTIONS ========== */
 .content {
     page-break-after: always;
     position: relative;
@@ -209,6 +215,7 @@ body {
     margin-left: 15px;
 }
 
+/* ========== STATS & METRICS ========== */
 .stat-row {
     display: flex;
     gap: 12px;
@@ -496,6 +503,7 @@ tbody tr td:first-child {
     <div class="top-glow"></div>
     <div class="content-wrapper">
         <div class="brand">Sarvajanik University</div>
+        <img src="data:image/png;base64,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" alt="Sarvajanik University Logo" class="cover-logo">
         <div class="report-label">Quarterly Analytics Brief</div>
         <h1>QUARTERLY <strong>REPORT</strong></h1>
         <div class="q-label">Q{{ quarter }} {{ year }}</div>

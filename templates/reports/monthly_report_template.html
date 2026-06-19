@@ -3,135 +3,520 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&display=swap" rel="stylesheet">
 <style>
-@page { size: A4; margin: 0; }
-@page :first { margin: 0; }
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&display=swap');
 
-body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; color: #2d3748; margin: 0; padding: 0; }
+@page {
+    size: A4;
+    margin: 20mm 15mm 20mm 15mm;
+    @bottom-right {
+        content: "Page " counter(page) " of " counter(pages);
+        font-family: 'Outfit', sans-serif;
+        font-size: 8pt;
+        color: #94a3b8;
+        font-weight: 500;
+    }
+    @bottom-left {
+        content: "Sarvajanik University • {{ month_name }} {{ year }} Analytics Report";
+        font-family: 'Outfit', sans-serif;
+        font-size: 8pt;
+        color: #94a3b8;
+        font-weight: 500;
+    }
+}
+@page :first {
+    margin: 0;
+    @bottom-right { content: normal; }
+    @bottom-left { content: normal; }
+}
+
+body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #334155;
+    margin: 0;
+    padding: 0;
+    -webkit-print-color-adjust: exact;
+}
 
 /* ===== COVER PAGE ===== */
-.cover { width: 210mm; height: 297mm; background: linear-gradient(135deg, #1a1f36 0%, #2d3748 50%, #1a1f36 100%); position: relative; page-break-after: always; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-.cover::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(circle at 20% 30%, rgba(79,70,229,0.15) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(6,182,212,0.1) 0%, transparent 50%); }
-.cover .top-line { position: absolute; top: 0; width: 100%; height: 6px; background: linear-gradient(90deg, #4f46e5, #06b6d4, #4f46e5); }
-.cover .brand { position: absolute; top: 40px; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,0.3); font-size: 14px; letter-spacing: 4px; text-transform: uppercase; }
-.cover .report-label { font-size: 14px; letter-spacing: 12px; color: rgba(255,255,255,0.5); margin-bottom: 30px; text-transform: uppercase; }
-.cover h1 { font-size: 56px; color: #fff; margin: 0; letter-spacing: 6px; font-weight: 300; }
-.cover h1 strong { font-weight: 700; color: #4f46e5; }
-.cover .month-year { font-size: 42px; color: #06b6d4; margin: 15px 0 30px; font-weight: 700; letter-spacing: 4px; }
-.cover .divider-line { width: 80px; height: 3px; background: #4f46e5; margin: 20px auto; }
-.cover .presented-by { font-size: 14px; color: rgba(255,255,255,0.6); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
-.cover .college-name { font-size: 24px; color: #fff; letter-spacing: 1px; }
-.cover .footer-note { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); font-size: 11px; color: rgba(255,255,255,0.2); letter-spacing: 3px; }
+.cover {
+    width: 210mm;
+    height: 297mm;
+    background: linear-gradient(135deg, #090d16 0%, #0f172a 50%, #1e1b4b 100%);
+    position: relative;
+    page-break-after: always;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+.cover::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: 
+        radial-gradient(circle at 15% 20%, rgba(79, 70, 229, 0.25) 0%, transparent 60%),
+        radial-gradient(circle at 85% 80%, rgba(6, 182, 212, 0.2) 0%, transparent 60%);
+    z-index: 1;
+}
+.cover .grid-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 24px 24px;
+    z-index: 2;
+}
+.cover .top-glow {
+    position: absolute;
+    top: 0;
+    width: 100%;
+    height: 8px;
+    background: linear-gradient(90deg, #4f46e5, #06b6d4, #8b5cf6, #4f46e5);
+    z-index: 3;
+}
+.cover .content-wrapper {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 40px;
+}
+.cover .brand {
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    font-family: 'Outfit', sans-serif;
+}
+.cover .cover-logo {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 20px;
+}
+.cover .report-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 12px;
+    color: #818cf8;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    font-family: 'Outfit', sans-serif;
+}
+.cover h1 {
+    font-size: 44px;
+    color: #ffffff;
+    margin: 0;
+    font-weight: 300;
+    letter-spacing: 3px;
+    line-height: 1.1;
+    font-family: 'Outfit', sans-serif;
+    text-transform: uppercase;
+}
+.cover h1 strong {
+    font-weight: 800;
+    color: #6366f1;
+}
+.cover .month-year {
+    font-size: 56px;
+    color: #06b6d4;
+    margin: 20px 0 10px;
+    font-weight: 800;
+    letter-spacing: 4px;
+    font-family: 'Outfit', sans-serif;
+}
+.cover .divider-line {
+    width: 80px;
+    height: 3px;
+    background: linear-gradient(90deg, #4f46e5, #06b6d4);
+    border-radius: 2px;
+    margin: 0 auto 35px;
+}
+.cover .presented-by {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+.cover .college-name {
+    font-size: 24px;
+    color: #ffffff;
+    letter-spacing: 1px;
+    font-weight: 600;
+    font-family: 'Playfair Display', serif;
+}
+.cover .footer-note {
+    position: absolute;
+    bottom: 40px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 9px;
+    color: rgba(255, 255, 255, 0.2);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    font-weight: 600;
+    z-index: 10;
+}
 
 /* ===== CONTENT PAGES ===== */
-.content { padding: 50px 55px 40px; page-break-after: always; }
-.content:last-child { page-break-after: avoid; }
+.content {
+    page-break-after: always;
+    position: relative;
+    box-sizing: border-box;
+}
+.content:last-child {
+    page-break-after: avoid;
+}
 
-.section-header { display: flex; align-items: center; margin-bottom: 25px; }
-.section-header .num { width: 36px; height: 36px; background: #4f46e5; color: #fff; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; margin-right: 12px; flex-shrink: 0; }
-.section-header h2 { font-size: 22px; font-weight: 700; color: #1a1f36; margin: 0; text-transform: uppercase; letter-spacing: 1px; }
-.section-header .line { flex: 1; height: 2px; background: linear-gradient(90deg, #4f46e5, transparent); margin-left: 15px; }
+.section-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+.section-header .num {
+    width: 30px;
+    height: 30px;
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    color: #ffffff;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    margin-right: 12px;
+    flex-shrink: 0;
+    font-family: 'Outfit', sans-serif;
+}
+.section-header h2 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: 'Outfit', sans-serif;
+}
+.section-header .line {
+    flex: 1;
+    height: 2px;
+    background: linear-gradient(90deg, #e2e8f0, transparent);
+    margin-left: 15px;
+}
 
 /* ===== METRICS ===== */
-.metrics-row { display: flex; gap: 18px; margin-bottom: 25px; }
-.metric-box { flex: 1; background: #f8fafc; border-radius: 12px; padding: 20px 18px; text-align: center; border: 1px solid #e2e8f0; }
-.metric-box .val { font-size: 28px; font-weight: 800; color: #1a1f36; line-height: 1.2; }
-.metric-box .val.ig { color: #e1306c; }
-.metric-box .val.fb { color: #1877f2; }
-.metric-box .val.yt { color: #ff0000; }
+.metrics-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+.metric-box {
+    flex: 1;
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 16px 10px;
+    text-align: center;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.01);
+}
+.metric-box .val {
+    font-size: 24px;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.2;
+    font-family: 'Outfit', sans-serif;
+    font-variant-numeric: tabular-nums;
+}
+.metric-box .val.ig { color: #d946ef; }
+.metric-box .val.fb { color: #3b82f6; }
+.metric-box .val.yt { color: #ef4444; }
 .metric-box .val.total { color: #4f46e5; }
-.metric-box .lbl { font-size: 11px; color: #718096; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
-.metric-box .sub { font-size: 10px; color: #a0aec0; margin-top: 2px; }
+.metric-box .lbl {
+    font-size: 8.5px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 5px;
+    font-weight: 600;
+}
+.metric-box .sub {
+    font-size: 8px;
+    color: #94a3b8;
+    margin-top: 2px;
+}
 
 /* ===== PLATFORM BAR ===== */
-.platform-bar-wrap { margin: 8px 0; }
-.platform-bar-wrap .label-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
-.platform-bar-wrap .label-row .name { font-weight: 600; color: #2d3748; }
-.platform-bar-wrap .label-row .pct { color: #718096; }
-.platform-bar { height: 18px; background: #edf2f7; border-radius: 10px; overflow: hidden; }
-.platform-bar .fill { height: 100%; border-radius: 10px; transition: width 0.3s; }
+.platform-bar-wrap {
+    margin: 10px 0;
+}
+.platform-bar-wrap .label-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11.5px;
+    margin-bottom: 4px;
+}
+.platform-bar-wrap .label-row .name {
+    font-weight: 600;
+    color: #0f172a;
+}
+.platform-bar-wrap .label-row .pct {
+    color: #64748b;
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+}
+.platform-bar {
+    height: 8px;
+    background: #f1f5f9;
+    border-radius: 9999px;
+    overflow: hidden;
+}
+.platform-bar .fill {
+    height: 100%;
+    border-radius: 9999px;
+}
 
 /* ===== EVENTS ===== */
-.event-card { border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px 18px; margin-bottom: 10px; page-break-inside: avoid; }
-.event-card .event-header { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
-.event-card .event-cat { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; padding: 2px 8px; border-radius: 4px; font-weight: 600; }
-.event-card .event-cat.workshop { background: #ebf4ff; color: #3182ce; }
-.event-card .event-cat.festival { background: #fef3c7; color: #d97706; }
-.event-card .event-cat.achievement { background: #d1fae5; color: #059669; }
-.event-card .event-cat.conference { background: #ede9fe; color: #7c3aed; }
-.event-card .event-cat.academic { background: #fce7f3; color: #db2777; }
-.event-card .event-cat.guest_lecture { background: #f0fdf4; color: #16a34a; }
-.event-card .event-cat.cultural { background: #fff1f2; color: #e11d48; }
-.event-card .event-cat.placement { background: #e0f2fe; color: #0284c7; }
-.event-card .event-cat.other { background: #f8fafc; color: #64748b; }
-.event-card .event-title { font-size: 14px; font-weight: 600; color: #1a1f36; margin: 0; }
-.event-card .event-date { font-size: 12px; color: #a0aec0; margin-left: auto; white-space: nowrap; }
+.stat-row {
+    display: flex;
+    gap: 12px;
+    margin: 15px 0;
+}
+.stat-item {
+    flex: 1;
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+    border: 1px solid #e2e8f0;
+}
+.stat-item .stat-val {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f172a;
+    font-family: 'Outfit', sans-serif;
+    font-variant-numeric: tabular-nums;
+}
+.stat-item .stat-lbl {
+    font-size: 9px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 2px;
+    font-weight: 500;
+}
 
-/* ===== TOP POSTS ===== */
-.rank-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-.rank-table th { padding: 10px 14px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #718096; text-align: left; border-bottom: 2px solid #e2e8f0; }
-.rank-table td { padding: 12px 14px; border-bottom: 1px solid #edf2f7; font-size: 13px; }
-.rank-table tr:last-child td { border-bottom: none; }
-.rank-table .rank { font-weight: 800; color: #4f46e5; font-size: 16px; width: 30px; }
-.rank-table .rank.gold { color: #d97706; }
-.rank-table .rank.silver { color: #718096; }
-.rank-table .rank.bronze { color: #cd7f32; }
-.rank-table .metric-val { font-weight: 700; color: #1a1f36; text-align: center; }
-.rank-table .platform-badge { display: inline-block; padding: 2px 10px; border-radius: 4px; font-size: 10px; font-weight: 600; }
-.rank-table .platform-badge.ig { background: #fce4ec; color: #e1306c; }
-.rank-table .platform-badge.fb { background: #e3f2fd; color: #1877f2; }
+.event-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    page-break-inside: avoid;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.01);
+}
+.event-card .event-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+.event-card .event-cat {
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+}
+.event-card .event-cat.workshop { background: #dbeafe; color: #1e40af; }
+.event-card .event-cat.festival { background: #fef3c7; color: #92400e; }
+.event-card .event-cat.achievement { background: #d1fae5; color: #065f46; }
+.event-card .event-cat.conference { background: #f3e8ff; color: #6b21a8; }
+.event-card .event-cat.academic { background: #fce7f3; color: #9d174d; }
+.event-card .event-cat.guest_lecture { background: #ecfdf5; color: #065f46; }
+.event-card .event-cat.cultural { background: #ffe4e6; color: #9f1239; }
+.event-card .event-cat.placement { background: #e0f2fe; color: #075985; }
+.event-card .event-cat.other { background: #f1f5f9; color: #334155; }
+.event-card .event-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #0f172a;
+    margin: 0;
+    line-height: 1.4;
+}
+.event-card .event-date {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-left: auto;
+    white-space: nowrap;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 500;
+}
 
-/* ===== STAT ROW ===== */
-.stat-row { display: flex; gap: 15px; margin: 20px 0; }
-.stat-item { flex: 1; background: #f8fafc; border-radius: 10px; padding: 18px; border: 1px solid #e2e8f0; }
-.stat-item .stat-val { font-size: 22px; font-weight: 700; color: #1a1f36; }
-.stat-item .stat-lbl { font-size: 11px; color: #718096; text-transform: uppercase; letter-spacing: 1px; margin-top: 3px; }
-
-/* ===== NEWSPAPER TABLE ===== */
-.news-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-.news-table th { background: #1a1f36; color: #fff; padding: 10px 14px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; text-align: left; }
-.news-table td { padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-size: 12px; }
-.news-table tr:nth-child(even) td { background: #f8fafc; }
-
-/* ===== SVG CHART CONTAINER ===== */
-.chart-wrap { margin: 20px 0; text-align: center; }
-
-/* ===== COVERAGE CARD ===== */
-.coverage-grid { display: flex; flex-wrap: wrap; gap: 8px; margin: 15px 0; }
-.coverage-chip { padding: 6px 14px; background: #f0f4ff; border: 1px solid #e0e7ff; border-radius: 20px; font-size: 11px; color: #4338ca; }
-
-/* ===== PRESS RELEASE ===== */
-.press-card { border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px; margin-bottom: 12px; page-break-inside: avoid; }
-.press-card h4 { margin: 0 0 6px; font-size: 15px; color: #1a1f36; }
-.press-card .press-meta { font-size: 11px; color: #718096; margin-bottom: 8px; }
-.press-card .press-meta span { margin-right: 15px; }
-.press-card p { font-size: 12px; line-height: 1.6; color: #4a5568; margin: 0; }
-
-/* ===== FOOTER ===== */
-.page-footer { text-align: center; padding: 25px 0 0; border-top: 1px solid #e2e8f0; margin-top: 30px; }
-.page-footer p { margin: 3px 0; font-size: 10px; color: #a0aec0; letter-spacing: 1px; }
+/* ===== TABLES ===== */
+.rank-table, .news-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0;
+}
+.rank-table th, .news-table th {
+    padding: 8px 12px;
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #64748b;
+    text-align: left;
+    border-bottom: 2px solid #e2e8f0;
+    font-family: 'Outfit', sans-serif;
+}
+.news-table th {
+    background: #0f172a;
+    color: #ffffff;
+    border-bottom: none;
+    font-size: 10px;
+}
+.rank-table td, .news-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 12.5px;
+    color: #334155;
+}
+.news-table tr:nth-child(even) td {
+    background: #f8fafc;
+}
+.rank-table tr:last-child td {
+    border-bottom: none;
+}
+.rank-table .rank {
+    font-weight: 800;
+    font-size: 12px;
+    width: 45px;
+    font-family: 'Outfit', sans-serif;
+}
+.rank-table .rank.gold { color: #854d0e; }
+.rank-table .rank.silver { color: #475569; }
+.rank-table .rank.bronze { color: #9a3412; }
+.rank-table .metric-val {
+    font-weight: 600;
+    color: #0f172a;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+.rank-table .platform-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 8.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.rank-table .platform-badge.ig { background: #fdf2f8; color: #db2777; }
+.rank-table .platform-badge.fb { background: #eff6ff; color: #2563eb; }
 
 /* ===== PLATFORM INSIGHTS ===== */
-.insight-grid { display: flex; gap: 18px; margin: 20px 0; }
-.insight-card { flex: 1; border-radius: 12px; padding: 22px; color: #fff; }
-.insight-card.ig-card { background: linear-gradient(135deg, #e1306c, #c13584); }
-.insight-card.fb-card { background: linear-gradient(135deg, #1877f2, #0d65d9); }
-.insight-card .insight-val { font-size: 32px; font-weight: 800; }
-.insight-card .insight-lbl { font-size: 12px; opacity: 0.8; margin-top: 2px; text-transform: uppercase; letter-spacing: 1px; }
+.insight-grid {
+    display: flex;
+    gap: 16px;
+    margin: 15px 0;
+}
+.insight-card {
+    flex: 1;
+    border-radius: 12px;
+    padding: 20px 16px;
+    color: #ffffff;
+    position: relative;
+    overflow: hidden;
+}
+.insight-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(circle at 10% 10%, rgba(255,255,255,0.15) 0%, transparent 60%);
+}
+.insight-card.ig-card {
+    background: linear-gradient(135deg, #833ab4 0%, #fd1d1d 50%, #fcb045 100%);
+}
+.insight-card.fb-card {
+    background: linear-gradient(135deg, #1877f2 0%, #3b5998 100%);
+}
+.insight-card .insight-val {
+    font-size: 24px;
+    font-weight: 800;
+    font-family: 'Outfit', sans-serif;
+    font-variant-numeric: tabular-nums;
+}
+.insight-card .insight-lbl {
+    font-size: 10px;
+    opacity: 0.9;
+    margin-top: 5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
+/* ===== PRESS RELEASE ===== */
+.press-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    page-break-inside: avoid;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.01);
+}
+.press-card h4 {
+    margin: 0 0 6px;
+    font-size: 14px;
+    color: #0f172a;
+    font-weight: 700;
+}
+.press-card .press-meta {
+    font-size: 10px;
+    color: #64748b;
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+.press-card .press-meta span {
+    margin-right: 15px;
+}
+.press-card p {
+    font-size: 12px;
+    line-height: 1.6;
+    color: #334155;
+    margin: 0;
+}
 </style>
 </head>
 <body>
 
 <!-- ========== COVER PAGE ========== -->
 <div class="cover">
-    <div class="top-line"></div>
-    <div class="brand">Sarvajanik University</div>
-    <div class="report-label">Monthly Report</div>
-    <h1>MONTHLY <strong>REPORT</strong></h1>
-    <div class="month-year">{{ month_name|upper }} {{ year }}</div>
-    <div class="divider-line"></div>
-    <div class="presented-by">Presented By</div>
-    <div class="college-name">{{ college.name }}</div>
+    <div class="grid-overlay"></div>
+    <div class="top-glow"></div>
+    <div class="content-wrapper">
+        <div class="brand">Sarvajanik University</div>
+        <img src="data:image/png;base64,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" alt="Sarvajanik University Logo" class="cover-logo">
+        <div class="report-label">Monthly Analytics Brief</div>
+        <h1>MONTHLY <strong>REPORT</strong></h1>
+        <div class="month-year">{{ month_name|upper }} {{ year }}</div>
+        <div class="divider-line"></div>
+        <div class="presented-by">Presented By</div>
+        <div class="college-name">{{ college.name }}</div>
+    </div>
+    <div class="footer-note">SU ANALYTICS · SARVAJANIK UNIVERSITY</div>
 </div>
 
 <!-- ========== PAGE 1: OVERVIEW ========== -->
@@ -165,7 +550,7 @@ body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; color: #2d3
         </div>
     </div>
 
-    <div class="section-header" style="margin-top:30px;">
+    <div class="section-header" style="margin-top:35px;">
         <div class="num" style="background:#06b6d4;">2</div>
         <h2>Platform Performance</h2>
         <div class="line"></div>
@@ -175,19 +560,17 @@ body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; color: #2d3
         <div class="insight-card ig-card">
             <div class="insight-val">{{ analytics.instagram_views|default:"0"|floatformat:"0" }}</div>
             <div class="insight-lbl">Instagram Views</div>
-            <div style="margin-top:12px; font-size:14px; opacity:0.9;">{{ analytics.instagram_reach|default:"0"|floatformat:"0" }} Reach</div>
-            <div style="font-size:14px; opacity:0.9;">{{ analytics.instagram_followers|default:"0"|floatformat:"0" }} Followers</div>
+            <div style="margin-top:10px; font-size:11.5px; opacity:0.9; font-weight:500;">{{ analytics.instagram_reach|default:"0"|floatformat:"0" }} Reach &bull; {{ analytics.instagram_followers|default:"0"|floatformat:"0" }} Followers</div>
         </div>
         <div class="insight-card fb-card">
             <div class="insight-val">{{ analytics.facebook_views|default:"0"|floatformat:"0" }}</div>
             <div class="insight-lbl">Facebook Views</div>
-            <div style="margin-top:12px; font-size:14px; opacity:0.9;">{{ analytics.facebook_reach|default:"0"|floatformat:"0" }} Reach</div>
-            <div style="font-size:14px; opacity:0.9;">{{ analytics.facebook_followers|default:"0"|floatformat:"0" }} Followers</div>
+            <div style="margin-top:10px; font-size:11.5px; opacity:0.9; font-weight:500;">{{ analytics.facebook_reach|default:"0"|floatformat:"0" }} Reach &bull; {{ analytics.facebook_followers|default:"0"|floatformat:"0" }} Followers</div>
         </div>
     </div>
 
-    <div style="margin:20px 0;">
-        <h4 style="font-size:14px; color:#718096; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px;">Views Distribution</h4>
+    <div style="margin-top:25px;">
+        <h4 style="font-size:11px; color:#64748b; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px; font-weight:600; font-family:'Outfit', sans-serif;">Views Distribution</h4>
         {% with total=analytics.total_views|default:1 ig=analytics.instagram_views|default:0 fb=analytics.facebook_views|default:0 %}
         {% if total > 0 %}
         <div class="platform-bar-wrap">
@@ -196,16 +579,16 @@ body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; color: #2d3
                 <span class="pct">{{ ig|floatformat:"0" }} views</span>
             </div>
             <div class="platform-bar">
-                <div class="fill" style="width: {{ ig|pct:total }}%; background: linear-gradient(90deg, #e1306c, #c13584);"></div>
+                <div class="fill" style="width: {{ ig|pct:total }}%; background: linear-gradient(90deg, #833ab4, #fd1d1d);"></div>
             </div>
         </div>
-        <div class="platform-bar-wrap">
+        <div class="platform-bar-wrap" style="margin-top:12px;">
             <div class="label-row">
                 <span class="name">Facebook</span>
                 <span class="pct">{{ fb|floatformat:"0" }} views</span>
             </div>
             <div class="platform-bar">
-                <div class="fill" style="width: {{ fb|pct:total }}%; background: linear-gradient(90deg, #1877f2, #0d65d9);"></div>
+                <div class="fill" style="width: {{ fb|pct:total }}%; background: linear-gradient(90deg, #1877f2, #3b5998);"></div>
             </div>
         </div>
         {% endif %}
@@ -226,19 +609,21 @@ body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; color: #2d3
         <div class="stat-item"><div class="stat-val">{{ events|length }}</div><div class="stat-lbl">This Month</div></div>
     </div>
 
-    {% for event in events %}
-    <div class="event-card">
-        <div class="event-header">
-            <span class="event-cat {{ event.category }}">{{ event.get_category_display }}</span>
-            <div class="event-date">{{ event.date|date:"d M" }}</div>
+    <div style="margin-top:15px;">
+        {% for event in events %}
+        <div class="event-card">
+            <div class="event-header">
+                <span class="event-cat {{ event.category }}">{{ event.get_category_display }}</span>
+                <div class="event-date">{{ event.date|date:"d M Y" }}</div>
+            </div>
+            <div class="event-title">{{ event.title }}</div>
         </div>
-        <div class="event-title">{{ event.title }}</div>
+        {% empty %}
+        <div style="text-align:center; padding:60px 0; color:#94a3b8;">
+            <p style="font-size:14px; font-weight:500;">No events recorded for {{ month_name }} {{ year }}.</p>
+        </div>
+        {% endfor %}
     </div>
-    {% empty %}
-    <div style="text-align:center; padding:40px; color:#a0aec0;">
-        <p style="font-size:16px;">No events recorded for {{ month_name }}.</p>
-    </div>
-    {% endfor %}
 </div>
 
 <!-- ========== PAGE 3: TOP PERFORMING POSTS ========== -->
@@ -249,45 +634,45 @@ body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; color: #2d3
         <div class="line"></div>
     </div>
 
-    <h4 style="font-size:14px; color:#e1306c; margin:15px 0 10px; display:flex; align-items:center; gap:8px;">
-        <span>📸</span> Instagram
+    <h4 style="font-size:12px; color:#c026d3; margin:15px 0 10px; display:flex; align-items:center; gap:8px; font-family:'Outfit', sans-serif; text-transform:uppercase; letter-spacing:1px; font-weight:700;">
+        <span>📸</span> Instagram Features
     </h4>
     <table class="rank-table">
         <thead>
-            <tr><th>Rank</th><th>Views</th><th>Likes</th><th>Shares</th><th>Caption</th></tr>
+            <tr><th style="width:60px;">Rank</th><th style="text-align:center; width:90px;">Views</th><th style="text-align:center; width:90px;">Likes</th><th style="text-align:center; width:90px;">Shares</th><th>Caption Preview</th></tr>
         </thead>
         <tbody>
             {% for post in top_ig %}
             <tr>
-                <td class="rank {% if forloop.counter == 1 %}gold{% elif forloop.counter == 2 %}silver{% elif forloop.counter == 3 %}bronze{% endif %}">#{{ forloop.counter }}</td>
+                <td class="rank gold">#{{ forloop.counter }}</td>
                 <td class="metric-val">{{ post.views|floatformat:"0" }}</td>
                 <td class="metric-val">{{ post.likes|floatformat:"0" }}</td>
                 <td class="metric-val">{{ post.shares|floatformat:"0" }}</td>
-                <td style="font-size:12px; color:#718096;">{{ post.caption|default:"—"|truncatechars:40 }}</td>
+                <td style="font-size:12px; color:#64748b; font-weight:500;">{{ post.caption|default:"—"|truncatechars:50 }}</td>
             </tr>
             {% empty %}
-            <tr><td colspan="5" style="text-align:center; color:#a0aec0; padding:20px;">No top Instagram posts data.</td></tr>
+            <tr><td colspan="5" style="text-align:center; color:#94a3b8; padding:20px; font-size:12px;">No top Instagram posts recorded.</td></tr>
             {% endfor %}
         </tbody>
     </table>
 
-    <h4 style="font-size:14px; color:#1877f2; margin:25px 0 10px; display:flex; align-items:center; gap:8px;">
-        <span>📘</span> Facebook
+    <h4 style="font-size:12px; color:#2563eb; margin:25px 0 10px; display:flex; align-items:center; gap:8px; font-family:'Outfit', sans-serif; text-transform:uppercase; letter-spacing:1px; font-weight:700;">
+        <span>📘</span> Facebook Features
     </h4>
     <table class="rank-table">
         <thead>
-            <tr><th>Rank</th><th>Views</th><th>Likes</th><th>Caption</th></tr>
+            <tr><th style="width:60px;">Rank</th><th style="text-align:center; width:90px;">Views</th><th style="text-align:center; width:90px;">Likes</th><th>Caption Preview</th></tr>
         </thead>
         <tbody>
             {% for post in top_fb %}
             <tr>
-                <td class="rank {% if forloop.counter == 1 %}gold{% elif forloop.counter == 2 %}silver{% elif forloop.counter == 3 %}bronze{% endif %}">#{{ forloop.counter }}</td>
+                <td class="rank gold">#{{ forloop.counter }}</td>
                 <td class="metric-val">{{ post.views|floatformat:"0" }}</td>
                 <td class="metric-val">{{ post.likes|floatformat:"0" }}</td>
-                <td style="font-size:12px; color:#718096;">{{ post.caption|default:"—"|truncatechars:40 }}</td>
+                <td style="font-size:12px; color:#64748b; font-weight:500;">{{ post.caption|default:"—"|truncatechars:50 }}</td>
             </tr>
             {% empty %}
-            <tr><td colspan="4" style="text-align:center; color:#a0aec0; padding:20px;">No top Facebook posts data.</td></tr>
+            <tr><td colspan="4" style="text-align:center; color:#94a3b8; padding:20px; font-size:12px;">No top Facebook posts recorded.</td></tr>
             {% endfor %}
         </tbody>
     </table>
@@ -303,10 +688,10 @@ body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; color: #2d3
     </div>
 
     {% if newspapers %}
-    <h4 style="font-size:14px; color:#1a1f36; margin:0 0 12px;">📰 Newspaper Coverage</h4>
+    <h4 style="font-size:12px; color:#0f172a; margin:0 0 12px; font-family:'Outfit', sans-serif; text-transform:uppercase; letter-spacing:1px; font-weight:700;">📰 Newspaper Placement Highlights</h4>
     <table class="news-table">
         <thead>
-            <tr><th>Publication</th><th>Date</th><th>Edition</th><th>Page</th><th>Headline</th></tr>
+            <tr><th>Publication</th><th style="width:110px;">Date</th><th style="width:110px;">Edition</th><th style="width:80px;">Page</th><th>Headline / Coverage Topic</th></tr>
         </thead>
         <tbody>
             {% for n in newspapers %}
@@ -315,7 +700,7 @@ body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; color: #2d3
                 <td>{{ n.date|date:"d M Y" }}</td>
                 <td>{{ n.edition|default:"—" }}</td>
                 <td>{{ n.page|default:"—" }}</td>
-                <td>{{ n.headline|truncatechars:45|default:"—" }}</td>
+                <td style="color:#64748b; font-weight:500;">{{ n.headline|truncatechars:50|default:"—" }}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -323,25 +708,21 @@ body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; color: #2d3
     {% endif %}
 
     {% if press_releases %}
-    <h4 style="font-size:14px; color:#1a1f36; margin:25px 0 12px;">📄 Press Releases</h4>
+    <h4 style="font-size:12px; color:#0f172a; margin:25px 0 12px; font-family:'Outfit', sans-serif; text-transform:uppercase; letter-spacing:1px; font-weight:700;">📄 Submitted Press Releases</h4>
     {% for pr in press_releases %}
     <div class="press-card">
         <h4>{{ pr.title }}</h4>
         <div class="press-meta">
             <span>📅 {{ pr.date_submitted|date:"d M Y" }}</span>
             <span>📊 {{ pr.placements }} Placements</span>
-            <span>👥 Reach: {{ pr.potential_reach|default:"—" }}</span>
+            <span>👥 Potential Reach: {{ pr.potential_reach|default:"—" }}</span>
         </div>
         {% if pr.content %}
-        <p>{{ pr.content|truncatechars:350 }}</p>
+        <p>{{ pr.content|truncatechars:300 }}</p>
         {% endif %}
     </div>
     {% endfor %}
     {% endif %}
-
-    <div class="page-footer">
-        <p>Generated by SU Analytics Platform | {{ month_name }} {{ year }}</p>
-    </div>
 </div>
 {% endif %}
 

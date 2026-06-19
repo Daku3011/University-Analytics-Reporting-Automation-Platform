@@ -6,12 +6,53 @@
 <div class="page-header">
     <div>
         <h1>Review Extracted Data</h1>
-        <p>Gemini AI analyzed the PDF and found the following data for <strong>{{ college.name }}</strong> — {{ data.month }}/{{ data.year }}</p>
+        <p>Gemini AI analyzed the PDF. Verify the details below before saving.</p>
     </div>
 </div>
 
 <form method="post">
     {% csrf_token %}
+
+    <!-- College & Period Override -->
+    <div class="card" style="margin-bottom:20px;">
+        <div class="card-body">
+            <div class="section-title" style="margin-bottom:14px;">
+                <i class="ph ph-building" style="margin-right:4px;"></i> Detected College &amp; Period
+            </div>
+            <div class="grid grid-3">
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label" for="id_college">College</label>
+                    <select name="college" id="id_college" class="form-control form-select">
+                        {% for c in colleges %}
+                        <option value="{{ c.id }}" {% if college and c.id == college.id %}selected{% endif %}>{{ c.name }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if college %}
+                    <p style="font-size:12px;color:var(--accent-2);margin-top:4px;display:flex;align-items:center;gap:4px;">
+                        <i class="ph ph-check-circle"></i> Detected: {{ college.name }}
+                    </p>
+                    {% else %}
+                    <p style="font-size:12px;color:var(--warning);margin-top:4px;display:flex;align-items:center;gap:4px;">
+                        <i class="ph ph-warning"></i> Could not auto-detect — please select manually
+                    </p>
+                    {% endif %}
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label" for="id_month">Month</label>
+                    <select name="month" id="id_month" class="form-control form-select">
+                        <option value="0" {% if not data.month %}selected{% endif %}>— Auto-detect —</option>
+                        {% for num, name in months %}
+                        <option value="{{ num }}" {% if data.month == num %}selected{% endif %}>{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label" for="id_year">Year</label>
+                    <input type="number" name="year" id="id_year" class="form-control" value="{% if data.year %}{{ data.year }}{% else %}{{ current_year }}{% endif %}" min="2020" max="2035">
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Analytics Section -->
     {% if data.analytics %}

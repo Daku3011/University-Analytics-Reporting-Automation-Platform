@@ -2,94 +2,259 @@
 {% block title %}Reports{% endblock %}
 {% block topbar_title %}Reports{% endblock %}
 
+{% block extra_css %}
+<style>
+/* ── Report Dashboard Premium Styles ── */
+.report-hero {
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%);
+    border-radius: var(--radius-lg);
+    padding: 32px 36px;
+    margin-bottom: 28px;
+    position: relative;
+    overflow: hidden;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.report-hero .hero-content { position: relative; z-index: 2; }
+.report-hero h1 {
+    font-size: 22px; font-weight: 700; margin-bottom: 4px; letter-spacing: -0.02em;
+    color: var(--text-primary);
+    -webkit-user-select: none;
+    user-select: none;
+}
+.report-hero .hero-sub {
+    font-size: 13.5px; color: var(--text-secondary); margin: 0; font-weight: 500;
+    -webkit-user-select: none;
+    user-select: none;
+}
+.report-hero .hero-stats {
+    display: flex; gap: 28px; margin-top: 18px;
+    -webkit-user-select: none;
+    user-select: none;
+}
+.report-hero .hero-stat {
+    display: flex; flex-direction: column; gap: 2px;
+    -webkit-user-select: none;
+    user-select: none;
+}
+.report-hero .hero-stat .num {
+    font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums;
+    color: var(--accent-dark);
+}
+.report-hero .hero-stat .lbl {
+    font-size: 11px; color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 0.06em; font-weight: 600;
+}
+.report-hero .hero-content *,
+.report-hero .hero-stats * {
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* Card enhancements */
+.gen-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.2s, border-color 0.2s;
+    overflow: hidden;
+}
+.gen-card:hover {
+    box-shadow: var(--shadow);
+    border-color: #d5cefc;
+}
+.gen-card .card-top {
+    padding: 20px 20px 0;
+    display: flex; align-items: center; gap: 12px;
+}
+.gen-card .card-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 19px; flex-shrink: 0;
+}
+.gen-card .card-icon.purple { background: var(--accent-light); color: var(--accent); }
+.gen-card .card-icon.teal   { background: var(--accent-2-light); color: var(--accent-2); }
+.gen-card .card-icon.indigo { background: #eef2ff; color: #4f46e5; }
+.gen-card .card-icon.amber  { background: var(--accent-3-light); color: var(--accent-3); }
+.gen-card .card-title { font-size: 14.5px; font-weight: 600; color: var(--text-primary); }
+.gen-card .card-desc  { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+.gen-card .card-form  { padding: 16px 20px 20px; }
+
+.gen-card .ai-hint {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 10px 14px; border-radius: 8px;
+    font-size: 12px; margin-bottom: 14px; line-height: 1.5;
+}
+.gen-card .ai-hint.teal   { background: var(--accent-2-light); color: #3d7a6a; border: 1px solid #b8e0d5; }
+.gen-card .ai-hint.indigo { background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe; }
+.gen-card .ai-hint.amber  { background: var(--accent-3-light); color: #8a5020; border: 1px solid #f0d4b0; }
+
+/* Upload zones */
+.upload-zone {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; border: 1.5px dashed #c7d2fe;
+    border-radius: 8px; cursor: pointer;
+    background: #fafaff; transition: all 0.2s;
+}
+.upload-zone:hover { border-color: #818cf8; background: #f5f3ff; }
+.upload-zone.filled { border-color: #818cf8; border-style: solid; background: #f5f3ff; }
+.upload-zone.error { border-color: #f87171; border-style: solid; background: #fef2f2; }
+.upload-zone .uz-icon {
+    width: 28px; height: 28px; border-radius: 6px;
+    background: #eef2ff; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; font-size: 14px; color: #4f46e5;
+}
+.upload-zone .uz-name { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+.upload-zone .uz-hint { font-size: 11.5px; color: var(--text-muted); }
+
+/* History panels */
+.history-panel {
+    border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--surface); box-shadow: var(--shadow-sm);
+    overflow: hidden;
+}
+.history-panel .hp-header {
+    padding: 16px 20px; border-bottom: 1px solid var(--border-light);
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 600; color: var(--text-secondary);
+}
+.history-panel .hp-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 20px; border-bottom: 1px solid var(--border-light);
+    transition: background 0.15s;
+}
+.history-panel .hp-item:last-child { border-bottom: none; }
+.history-panel .hp-item:hover { background: var(--surface-alt); }
+.history-panel .hp-item .hp-title {
+    font-size: 13px; font-weight: 500; color: var(--text-primary);
+}
+.history-panel .hp-item .hp-meta {
+    font-size: 11.5px; color: var(--text-muted); margin-top: 1px;
+    display: flex; align-items: center; gap: 6px;
+}
+.history-panel .hp-empty {
+    padding: 32px 20px; text-align: center; color: var(--text-muted); font-size: 13px;
+}
+.history-panel .hp-empty i { font-size: 28px; display: block; margin-bottom: 8px; opacity: 0.3; }
+
+/* Progress bars */
+.progress-wrap { display: none; margin-top: 14px; }
+.progress-track {
+    width: 100%; height: 6px; background: #e2e8f0;
+    border-radius: 9999px; overflow: hidden;
+}
+.progress-fill {
+    height: 100%; border-radius: 9999px;
+    transition: width 0.5s ease;
+    animation: barPulse 2s infinite;
+}
+.progress-msg {
+    font-size: 12px; font-weight: 500; text-align: center; margin-top: 6px;
+}
+.btn-loading {
+    pointer-events: none; opacity: 0.7;
+}
+
+/* Messages */
+.messages-wrap { margin-bottom: 16px; }
+
+/* Upload area layout */
+.upload-files-wrap {
+    display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;
+}
+
+@keyframes barPulse { 0%,100%{opacity:.8} 50%{opacity:1} }
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="page-header">
-    <div>
+<section class="report-hero" ondblclick="return false;">
+    <div class="hero-content">
         <h1>Report Generation</h1>
-        <p>Generate monthly and quarterly PDF reports for colleges</p>
+        <p class="hero-sub">Generate monthly and quarterly PDF reports with AI-powered analytics summaries</p>
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <span class="num">{{ monthly_reports|length }}</span>
+                <span class="lbl">Monthly Reports</span>
+            </div>
+            <div class="hero-stat">
+                <span class="num">{{ quarterly_reports|length }}</span>
+                <span class="lbl">Quarterly Reports</span>
+            </div>
+            <div class="hero-stat">
+                <span class="num">{{ doc_reports|length }}</span>
+                <span class="lbl">AI Condensed</span>
+            </div>
+        </div>
     </div>
-</div>
+</section>
 
 {% if messages %}
-<div style="margin-bottom:16px;">
+<div class="messages-wrap">
   {% for msg in messages %}
-  <div style="padding:12px 16px;border-radius:8px;font-size:13.5px;margin-bottom:8px;display:flex;align-items:flex-start;gap:10px;
-              {% if msg.tags == 'error' %}background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;
-              {% elif msg.tags == 'success' %}background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;
-              {% else %}background:#fffbeb;border:1px solid #fde68a;color:#92400e;{% endif %}">
-    <i class="ph {% if msg.tags == 'error' %}ph-warning-circle{% else %}ph-check-circle{% endif %}"
-       style="font-size:16px;flex-shrink:0;margin-top:1px;"></i>
-    <span>{{ msg }}</span>
+  <div class="alert alert-{{ msg.tags|default:'info' }}">
+    <i class="ph {% if msg.tags == 'error' %}ph-warning-circle{% else %}ph-check-circle{% endif %}"></i>
+    {{ msg }}
   </div>
   {% endfor %}
 </div>
 {% endif %}
 
-<!-- ── Row 1: Four report generation cards ─────────────────────────────── -->
 <div class="grid grid-4" style="margin-bottom:28px;">
 
-    <!-- Monthly Report -->
-    <div class="card">
-        <div class="card-body">
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
-                <div style="width:36px;height:36px;border-radius:8px;background:var(--accent-light);display:flex;align-items:center;justify-content:center;">
-                    <i class="ph ph-file-pdf" style="font-size:18px;color:var(--accent);"></i>
-                </div>
-                <div>
-                    <div style="font-size:14px;font-weight:600;color:var(--text-primary);">Monthly Report</div>
-                    <div style="font-size:12px;color:var(--text-muted);">Per college, per month</div>
-                </div>
+    <div class="gen-card">
+        <div class="card-top">
+            <div class="card-icon purple"><i class="ph ph-file-pdf"></i></div>
+            <div>
+                <div class="card-title">Monthly Report</div>
+                <div class="card-desc">Per college, per month</div>
             </div>
-
-            <form method="post" action="{% url 'generate_monthly' %}">
+        </div>
+        <div class="card-form">
+            <form method="post" action="{% url 'generate_monthly' %}" class="report-form">
                 {% csrf_token %}
                 <div class="form-group">
                     <label class="form-label" for="id_college_m">College</label>
-                    <select name="college" id="id_college_m" class="form-control form-select">
-                        {% for c in colleges %}
-                        <option value="{{ c.id }}">{{ c.name }}</option>
-                        {% endfor %}
+                    <select name="college" id="id_college_m" class="form-control form-select" required>
+                        {% for c in colleges %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
                     </select>
                 </div>
                 <div class="grid grid-2">
                     <div class="form-group">
                         <label class="form-label" for="id_month_m">Month</label>
-                        <select name="month" id="id_month_m" class="form-control form-select">
-                            {% for m in months %}
-                            <option value="{{ m }}">{{ m }}</option>
-                            {% endfor %}
+                        <select name="month" id="id_month_m" class="form-control form-select" required>
+                            {% for m in months %}<option value="{{ m }}">{{ m }}</option>{% endfor %}
                         </select>
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="id_year_m">Year</label>
-                        <input type="number" name="year" id="id_year_m" class="form-control" value="2026" min="2020" max="2030">
+                        <input type="number" name="year" id="id_year_m" class="form-control" value="2026" min="2020" max="2030" required>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary" style="width:100%;">
+                <button type="submit" class="btn btn-primary btn-full">
                     <i class="ph ph-file-arrow-down"></i> Generate Monthly Report
                 </button>
             </form>
         </div>
     </div>
 
-    <!-- Quarterly Report (existing AI feature) -->
-    <div class="card">
-        <div class="card-body">
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
-                <div style="width:36px;height:36px;border-radius:8px;background:var(--accent-2-light);display:flex;align-items:center;justify-content:center;">
-                    <i class="ph ph-sparkle" style="font-size:18px;color:var(--accent-2);"></i>
-                </div>
-                <div>
-                    <div style="font-size:14px;font-weight:600;color:var(--text-primary);">Quarterly Report</div>
-                    <div style="font-size:12px;color:var(--text-muted);">AI summary from analytics data</div>
-                </div>
+    <div class="gen-card">
+        <div class="card-top">
+            <div class="card-icon teal"><i class="ph ph-sparkle"></i></div>
+            <div>
+                <div class="card-title">Quarterly Report</div>
+                <div class="card-desc">AI summary from analytics data</div>
             </div>
-
+        </div>
+        <div class="card-form">
             <form method="post" action="{% url 'generate_quarterly' %}" id="quarterly-report-form">
                 {% csrf_token %}
                 <div class="form-group">
                     <label class="form-label" for="id_quarter">Quarter</label>
-                    <select name="quarter" id="id_quarter" class="form-control form-select">
+                    <select name="quarter" id="id_quarter" class="form-control form-select" required>
                         <option value="1">Q1 — January to March</option>
                         <option value="2">Q2 — April to June</option>
                         <option value="3">Q3 — July to September</option>
@@ -98,51 +263,42 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="id_year_q">Year</label>
-                    <input type="number" name="year" id="id_year_q" class="form-control" value="2026" min="2020" max="2030">
+                    <input type="number" name="year" id="id_year_q" class="form-control" value="2026" min="2020" max="2030" required>
                 </div>
-                <div style="background:var(--accent-2-light);border:1px solid #b8e0d5;border-radius:6px;padding:10px 12px;font-size:12.5px;color:#3d7a6a;margin-bottom:14px;display:flex;align-items:flex-start;gap:8px;">
+                <div class="ai-hint teal">
                     <i class="ph ph-robot" style="font-size:15px;flex-shrink:0;margin-top:1px;"></i>
                     Gemini AI generates a narrative summary from your analytics data. Rate limit: 1/60s, 50/day.
                 </div>
-                <button type="submit" class="btn btn-success" id="quarterly-btn" style="width:100%;">
+                <button type="submit" class="btn btn-success btn-full" id="quarterly-btn">
                     <i class="ph ph-sparkle"></i> Generate Quarterly Report
                 </button>
-
-                <!-- Quarterly Report Progress Bar -->
-                <div id="quarterly-progress-container" style="display:none;margin-top:15px;">
-                    <div class="progress-bar-container" style="width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin-bottom: 8px;">
-                        <div id="quarterly-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #10b981, #34d399); transition: width 0.5s ease; animation: pulse 2s infinite;"></div>
-                    </div>
-                    <div id="quarterly-status-message" style="color: #047857; font-weight: 500; font-size: 12px; text-align: center;">Initializing…</div>
+                <div class="progress-wrap" id="quarterly-progress-container">
+                    <div class="progress-track"><div id="quarterly-progress-bar" class="progress-fill" style="width:0%;background:linear-gradient(90deg,#10b981,#34d399);"></div></div>
+                    <div class="progress-msg" id="quarterly-status-message" style="color:#047857;">Initializing…</div>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- NEW: Upload 3 Monthly Reports → AI Condenses -->
-    <div class="card" style="border:1.5px solid #c8c4f8;">
-        <div class="card-body">
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
-                <div style="width:36px;height:36px;border-radius:8px;background:#f0f0ff;display:flex;align-items:center;justify-content:center;">
-                    <i class="ph ph-brain" style="font-size:18px;color:#5b52cc;"></i>
-                </div>
-                <div>
-                    <div style="font-size:14px;font-weight:600;color:var(--text-primary);">Upload & Condense</div>
-                    <div style="font-size:12px;color:var(--text-muted);">3 monthly PDFs → AI quarterly summary</div>
-                </div>
+    <div class="gen-card" style="border-color:#c7d2fe;">
+        <div class="card-top">
+            <div class="card-icon indigo"><i class="ph ph-brain"></i></div>
+            <div>
+                <div class="card-title">Upload &amp; Condense</div>
+                <div class="card-desc">3 monthly PDFs → AI quarterly summary</div>
             </div>
-
+        </div>
+        <div class="card-form">
             <form method="post" action="{% url 'upload_document_report' %}" enctype="multipart/form-data" id="doc-upload-form">
                 {% csrf_token %}
                 <div class="form-group">
                     <label class="form-label" for="id_doc_title">Report Title</label>
-                    <input type="text" name="doc_title" id="id_doc_title" class="form-control"
-                           placeholder="e.g. Q1 2026 Activity Summary" maxlength="300">
+                    <input type="text" name="doc_title" id="id_doc_title" class="form-control" placeholder="e.g. Q1 2026 Activity Summary" maxlength="300">
                 </div>
                 <div class="grid grid-2">
                     <div class="form-group">
                         <label class="form-label" for="id_doc_quarter">Quarter</label>
-                        <select name="doc_quarter" id="id_doc_quarter" class="form-control form-select" onchange="updateMonthLabels()">
+                        <select name="doc_quarter" id="id_doc_quarter" class="form-control form-select" required>
                             <option value="1">Q1 (Jan–Mar)</option>
                             <option value="2">Q2 (Apr–Jun)</option>
                             <option value="3">Q3 (Jul–Sep)</option>
@@ -151,359 +307,246 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="id_doc_year">Year</label>
-                        <input type="number" name="doc_year" id="id_doc_year" class="form-control" value="2026" min="2020" max="2030">
+                        <input type="number" name="doc_year" id="id_doc_year" class="form-control" value="2026" min="2020" max="2030" required>
                     </div>
                 </div>
+                <div class="upload-files-wrap">
+                    <label for="id_sf1" class="upload-zone">
+                        <div class="uz-icon"><i class="ph ph-file-pdf"></i></div>
+                        <div style="flex:1;min-width:0;">
+                            <div class="uz-name" id="label-m1">Month 1 (January)</div>
+                            <div class="uz-hint" id="fname-1">Click to select PDF</div>
+                        </div>
+                        <i class="ph ph-upload-simple" style="font-size:16px;color:#818cf8;flex-shrink:0;"></i>
+                    </label>
+                    <input type="file" name="source_file_1" id="id_sf1" accept=".pdf" required hidden>
 
-                <!-- Three month upload zones -->
-                <div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase;">
-                    Upload Monthly Reports (PDF only, up to 70 MB each)
+                    <label for="id_sf2" class="upload-zone">
+                        <div class="uz-icon"><i class="ph ph-file-pdf"></i></div>
+                        <div style="flex:1;min-width:0;">
+                            <div class="uz-name" id="label-m2">Month 2 (February)</div>
+                            <div class="uz-hint" id="fname-2">Click to select PDF</div>
+                        </div>
+                        <i class="ph ph-upload-simple" style="font-size:16px;color:#818cf8;flex-shrink:0;"></i>
+                    </label>
+                    <input type="file" name="source_file_2" id="id_sf2" accept=".pdf" hidden>
+
+                    <label for="id_sf3" class="upload-zone">
+                        <div class="uz-icon"><i class="ph ph-file-pdf"></i></div>
+                        <div style="flex:1;min-width:0;">
+                            <div class="uz-name" id="label-m3">Month 3 (March)</div>
+                            <div class="uz-hint" id="fname-3">Click to select PDF</div>
+                        </div>
+                        <i class="ph ph-upload-simple" style="font-size:16px;color:#818cf8;flex-shrink:0;"></i>
+                    </label>
+                    <input type="file" name="source_file_3" id="id_sf3" accept=".pdf" hidden>
                 </div>
-                <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">
-                    <!-- Month 1 -->
-                    <label for="id_sf1" class="month-upload-zone" style="display:flex;align-items:center;gap:10px;padding:10px 12px;
-                           border:1.5px dashed #c8c4f8;border-radius:8px;cursor:pointer;background:#fafaff;transition:border-color .2s;">
-                        <div style="width:28px;height:28px;border-radius:6px;background:#f0f0ff;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                            <i class="ph ph-file-pdf" style="font-size:15px;color:#5b52cc;"></i>
-                        </div>
-                        <div style="flex:1;min-width:0;">
-                            <div style="font-size:13px;font-weight:500;color:var(--text-primary);" id="label-m1">Month 1 (January)</div>
-                            <div style="font-size:11.5px;color:var(--text-muted);" id="fname-1">Click to select PDF</div>
-                        </div>
-                        <i class="ph ph-upload-simple" style="font-size:16px;color:#5b52cc;flex-shrink:0;"></i>
-                    </label>
-                    <input type="file" name="source_file_1" id="id_sf1" accept=".pdf" required
-                           style="display:none;" onchange="showFile(this,'fname-1')">
-
-                    <!-- Month 2 -->
-                    <label for="id_sf2" class="month-upload-zone" style="display:flex;align-items:center;gap:10px;padding:10px 12px;
-                           border:1.5px dashed #c8c4f8;border-radius:8px;cursor:pointer;background:#fafaff;transition:border-color .2s;">
-                        <div style="width:28px;height:28px;border-radius:6px;background:#f0f0ff;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                            <i class="ph ph-file-pdf" style="font-size:15px;color:#5b52cc;"></i>
-                        </div>
-                        <div style="flex:1;min-width:0;">
-                            <div style="font-size:13px;font-weight:500;color:var(--text-primary);" id="label-m2">Month 2 (February)</div>
-                            <div style="font-size:11.5px;color:var(--text-muted);" id="fname-2">Click to select PDF</div>
-                        </div>
-                        <i class="ph ph-upload-simple" style="font-size:16px;color:#5b52cc;flex-shrink:0;"></i>
-                    </label>
-                    <input type="file" name="source_file_2" id="id_sf2" accept=".pdf"
-                           style="display:none;" onchange="showFile(this,'fname-2')">
-
-                    <!-- Month 3 -->
-                    <label for="id_sf3" class="month-upload-zone" style="display:flex;align-items:center;gap:10px;padding:10px 12px;
-                           border:1.5px dashed #c8c4f8;border-radius:8px;cursor:pointer;background:#fafaff;transition:border-color .2s;">
-                        <div style="width:28px;height:28px;border-radius:6px;background:#f0f0ff;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                            <i class="ph ph-file-pdf" style="font-size:15px;color:#5b52cc;"></i>
-                        </div>
-                        <div style="flex:1;min-width:0;">
-                            <div style="font-size:13px;font-weight:500;color:var(--text-primary);" id="label-m3">Month 3 (March)</div>
-                            <div style="font-size:11.5px;color:var(--text-muted);" id="fname-3">Click to select PDF</div>
-                        </div>
-                        <i class="ph ph-upload-simple" style="font-size:16px;color:#5b52cc;flex-shrink:0;"></i>
-                    </label>
-                    <input type="file" name="source_file_3" id="id_sf3" accept=".pdf"
-                           style="display:none;" onchange="showFile(this,'fname-3')">
-                </div>
-
-                <div style="background:#f0f0ff;border:1px solid #c8c4f8;border-radius:6px;padding:10px 12px;
-                            font-size:12px;color:#5b52cc;margin-bottom:12px;display:flex;align-items:flex-start;gap:8px;">
+                <div class="ai-hint indigo">
                     <i class="ph ph-info" style="font-size:14px;flex-shrink:0;margin-top:1px;"></i>
-                    Gemini Files API handles PDFs up to 70 MB each natively.
-                    Processing 3 large files may take 2–5 minutes — please wait.
+                    Gemini Files API handles PDFs up to 70 MB each natively. Processing 3 large files may take 2–5 minutes.
                 </div>
-
-                <button type="submit" class="btn" id="upload-btn"
-                        style="width:100%;background:#5b52cc;color:#fff;border-color:#5b52cc;font-size:13.5px;">
+                <button type="submit" class="btn btn-full" id="upload-btn" style="background:#4f46e5;color:#fff;border-color:#4f46e5;">
                     <i class="ph ph-brain"></i> Generate AI Quarterly Summary
                 </button>
             </form>
         </div>
     </div>
 
-    <!-- NEW: Compare Two Months -->
-    <div class="card" style="border:1.5px solid #f0a070;">
-        <div class="card-body">
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
-                <div style="width:36px;height:36px;border-radius:8px;background:var(--accent-3-light);display:flex;align-items:center;justify-content:center;">
-                    <i class="ph ph-chart-line-up" style="font-size:18px;color:var(--accent-3);"></i>
-                </div>
-                <div>
-                    <div style="font-size:14px;font-weight:600;color:var(--text-primary);">Compare Months</div>
-                    <div style="font-size:12px;color:var(--text-muted);">AI-powered honest month-over-month analysis</div>
-                </div>
+    <div class="gen-card" style="border-color:#fed7aa;">
+        <div class="card-top">
+            <div class="card-icon amber"><i class="ph ph-chart-line-up"></i></div>
+            <div>
+                <div class="card-title">Compare Months</div>
+                <div class="card-desc">AI-powered month-over-month analysis</div>
             </div>
-
+        </div>
+        <div class="card-form">
             <form method="post" action="{% url 'compare_reports' %}" id="compare-form">
                 {% csrf_token %}
                 <div class="grid grid-2">
                     <div class="form-group">
                         <label class="form-label" for="id_college_comp">College</label>
-                        <select name="college" id="id_college_comp" class="form-control form-select">
-                            {% for c in colleges %}
-                            <option value="{{ c.id }}">{{ c.name }}</option>
-                            {% endfor %}
+                        <select name="college" id="id_college_comp" class="form-control form-select" required>
+                            {% for c in colleges %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
                         </select>
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="id_year_comp">Year</label>
-                        <input type="number" name="year" id="id_year_comp" class="form-control" value="2026" min="2020" max="2030">
+                        <input type="number" name="year" id="id_year_comp" class="form-control" value="2026" min="2020" max="2030" required>
                     </div>
                 </div>
                 <div class="grid grid-2">
                     <div class="form-group">
                         <label class="form-label" for="id_month_a_comp">Month A (earlier)</label>
-                        <select name="month_a" id="id_month_a_comp" class="form-control form-select">
-                            {% for m in months %}
-                            <option value="{{ m }}" {% if m == 1 %}selected{% endif %}>{{ m }}</option>
-                            {% endfor %}
+                        <select name="month_a" id="id_month_a_comp" class="form-control form-select" required>
+                            {% for m in months %}<option value="{{ m }}" {% if m == 1 %}selected{% endif %}>{{ m }}</option>{% endfor %}
                         </select>
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="id_month_b_comp">Month B (later)</label>
-                        <select name="month_b" id="id_month_b_comp" class="form-control form-select">
-                            {% for m in months %}
-                            <option value="{{ m }}" {% if m == 2 %}selected{% endif %}>{{ m }}</option>
-                            {% endfor %}
+                        <select name="month_b" id="id_month_b_comp" class="form-control form-select" required>
+                            {% for m in months %}<option value="{{ m }}" {% if m == 2 %}selected{% endif %}>{{ m }}</option>{% endfor %}
                         </select>
                     </div>
                 </div>
-                <div style="background:var(--accent-3-light);border:1px solid #f0d4b0;border-radius:6px;padding:10px 12px;font-size:12px;color:#8a5020;margin-bottom:12px;display:flex;align-items:flex-start;gap:8px;">
+                <div class="ai-hint amber">
                     <i class="ph ph-robot" style="font-size:14px;flex-shrink:0;margin-top:1px;"></i>
                     Gemini AI gives an honest, direct comparison — what improved, what declined, and what needs to change.
                 </div>
-                <button type="submit" class="btn" id="compare-btn"
-                        style="width:100%;background:#f0a070;color:#fff;border-color:#f0a070;font-size:13.5px;">
+                <button type="submit" class="btn btn-full" id="compare-btn" style="background:var(--accent-3);color:#fff;border-color:var(--accent-3);">
                     <i class="ph ph-chart-line-up"></i> Compare Months
                 </button>
-
-                <!-- Compare Months Progress Bar -->
-                <div id="compare-progress-container" style="display:none;margin-top:15px;">
-                    <div class="progress-bar-container" style="width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin-bottom: 8px;">
-                        <div id="compare-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #f0a070, #f5b895); transition: width 0.5s ease; animation: pulse 2s infinite;"></div>
-                    </div>
-                    <div id="compare-status-message" style="color: #8a5020; font-weight: 500; font-size: 12px; text-align: center;">Initializing…</div>
+                <div class="progress-wrap" id="compare-progress-container">
+                    <div class="progress-track"><div id="compare-progress-bar" class="progress-fill" style="width:0%;background:linear-gradient(90deg,#f0a070,#f5b895);"></div></div>
+                    <div class="progress-msg" id="compare-status-message" style="color:#8a5020;">Initializing…</div>
                 </div>
             </form>
         </div>
     </div>
-
 </div>
 
-
-
-<!-- ── Row 2: History tables ────────────────────────────────────────────── -->
 <div class="grid grid-3">
-
-    <!-- Monthly History -->
-    <div class="card">
-        <div class="card-header" style="padding:18px 20px 0;font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px;">
+    <div class="history-panel">
+        <div class="hp-header">
             <i class="ph ph-clock-counter-clockwise" style="color:var(--accent);font-size:15px;"></i>
             Monthly Reports
         </div>
-        <div class="card-body" style="padding:12px 0 0;">
-            {% for r in monthly_reports %}
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 20px;border-bottom:1px solid var(--border-light);">
-                <div>
-                    <div style="font-size:13px;font-weight:500;color:var(--text-primary);">
-                        {{ r.college.code }} — {{ r.get_month_display }} {{ r.year }}
-                    </div>
-                    <div style="font-size:11.5px;color:var(--text-muted);">{{ r.created_at|date:"d M Y" }}</div>
-                </div>
-                <a href="{{ r.pdf_file.url }}" class="btn btn-sm btn-outline" target="_blank" rel="noopener" aria-label="Download monthly report for {{ r.college.code }} {{ r.get_month_display }} {{ r.year }}">
-                    <i class="ph ph-arrow-square-out"></i>
-                </a>
+        {% for r in monthly_reports %}
+        <div class="hp-item">
+            <div>
+                <div class="hp-title">{{ r.college.code }} — {{ r.get_month_display }} {{ r.year }}</div>
+                <div class="hp-meta">{{ r.created_at|date:"d M Y" }}</div>
             </div>
-            {% empty %}
-            <div style="padding:28px 20px;text-align:center;color:var(--text-muted);font-size:13px;">
-                <i class="ph ph-file-x" style="font-size:26px;display:block;margin-bottom:8px;opacity:0.4;"></i>
-                No monthly reports yet
-            </div>
-            {% endfor %}
+            <a href="{{ r.pdf_file.url }}" class="btn btn-sm btn-outline" target="_blank" rel="noopener" aria-label="Download {{ r.college.code }} monthly report">
+                <i class="ph ph-arrow-square-out"></i>
+            </a>
         </div>
+        {% empty %}
+        <div class="hp-empty"><i class="ph ph-file-x"></i>No monthly reports yet</div>
+        {% endfor %}
     </div>
 
-    <!-- Quarterly History -->
-    <div class="card">
-        <div class="card-header" style="padding:18px 20px 0;font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px;">
+    <div class="history-panel">
+        <div class="hp-header">
             <i class="ph ph-clock-counter-clockwise" style="color:var(--accent-2);font-size:15px;"></i>
             Quarterly Reports
         </div>
-        <div class="card-body" style="padding:12px 0 0;">
-            {% for r in quarterly_reports %}
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 20px;border-bottom:1px solid var(--border-light);">
-                <div>
-                    <div style="font-size:13px;font-weight:500;color:var(--text-primary);">Q{{ r.quarter }} {{ r.year }}</div>
-                    <div style="font-size:11.5px;color:var(--text-muted);">
-                        <span class="badge badge-teal">AI Summary</span>
-                    </div>
-                </div>
-                <a href="{% url 'preview_quarterly' r.id %}" class="btn btn-sm btn-outline"
-                   style="border-color:var(--accent-2);color:var(--accent-2);" aria-label="Preview quarterly report for Q{{ r.quarter }} {{ r.year }}">
-                    <i class="ph ph-arrow-square-out"></i>
-                </a>
+        {% for r in quarterly_reports %}
+        <div class="hp-item">
+            <div>
+                <div class="hp-title">Q{{ r.quarter }} {{ r.year }}</div>
+                <div class="hp-meta"><span class="badge badge-teal">AI Summary</span></div>
             </div>
-            {% empty %}
-            <div style="padding:28px 20px;text-align:center;color:var(--text-muted);font-size:13px;">
-                <i class="ph ph-file-x" style="font-size:26px;display:block;margin-bottom:8px;opacity:0.4;"></i>
-                No quarterly reports yet
-            </div>
-            {% endfor %}
+            <a href="{% url 'preview_quarterly' r.id %}" class="btn btn-sm btn-outline" style="border-color:var(--accent-2);color:var(--accent-2);" aria-label="Preview Q{{ r.quarter }} {{ r.year }} quarterly report">
+                <i class="ph ph-arrow-square-out"></i>
+            </a>
         </div>
+        {% empty %}
+        <div class="hp-empty"><i class="ph ph-file-x"></i>No quarterly reports yet</div>
+        {% endfor %}
     </div>
 
-    <!-- AI Document Condensed History -->
-    <div class="card" style="border-color:#c8c4f8;">
-        <div class="card-header" style="padding:18px 20px 0;font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px;">
-            <i class="ph ph-brain" style="color:#5b52cc;font-size:15px;"></i>
+    <div class="history-panel" style="border-color:#c7d2fe;">
+        <div class="hp-header">
+            <i class="ph ph-brain" style="color:#4f46e5;font-size:15px;"></i>
             AI Condensed Reports
         </div>
-        <div class="card-body" style="padding:12px 0 0;">
-            {% for r in doc_reports %}
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 20px;border-bottom:1px solid var(--border-light);">
-                <div>
-                    <div style="font-size:13px;font-weight:500;color:var(--text-primary);">
-                        {{ r.title|truncatechars:30 }}
-                    </div>
-                    <div style="font-size:11.5px;color:var(--text-muted);">
-                        Q{{ r.quarter }} {{ r.year }} · {{ r.created_at|date:"d M Y" }}
-                    </div>
-                </div>
-                <a href="{% url 'preview_document_report' r.id %}" class="btn btn-sm btn-outline"
-                   style="border-color:#5b52cc;color:#5b52cc;" aria-label="Preview condensed document report: {{ r.title }}">
-                    <i class="ph ph-arrow-square-out"></i>
-                </a>
+        {% for r in doc_reports %}
+        <div class="hp-item">
+            <div>
+                <div class="hp-title">{{ r.title|truncatechars:30 }}</div>
+                <div class="hp-meta">Q{{ r.quarter }} {{ r.year }} · {{ r.created_at|date:"d M Y" }}</div>
             </div>
-            {% empty %}
-            <div style="padding:28px 20px;text-align:center;color:var(--text-muted);font-size:13px;">
-                <i class="ph ph-upload-simple" style="font-size:26px;display:block;margin-bottom:8px;opacity:0.4;"></i>
-                Upload a large report to condense it
-            </div>
-            {% endfor %}
+            <a href="{% url 'preview_document_report' r.id %}" class="btn btn-sm btn-outline" style="border-color:#4f46e5;color:#4f46e5;" aria-label="Preview condensed report: {{ r.title }}">
+                <i class="ph ph-arrow-square-out"></i>
+            </a>
         </div>
+        {% empty %}
+        <div class="hp-empty"><i class="ph ph-upload-simple"></i>Upload a large report to condense it</div>
+        {% endfor %}
     </div>
-
 </div>
 
 <script>
 const QUARTER_MONTHS = {
-    '1': ['January',  'February', 'March'],
-    '2': ['April',    'May',      'June'],
-    '3': ['July',     'August',   'September'],
-    '4': ['October',  'November', 'December'],
+    '1': ['January','February','March'],
+    '2': ['April','May','June'],
+    '3': ['July','August','September'],
+    '4': ['October','November','December'],
 };
 
+const EL = id => document.getElementById(id);
+
 function showFile(input, displayId) {
-    const display = document.getElementById(displayId);
-    const label   = input.previousElementSibling || input.closest('div').querySelector('label');
+    const display = EL(displayId);
     if (input.files && input.files[0]) {
-        const name = input.files[0].name;
         const size = (input.files[0].size / 1024 / 1024).toFixed(1);
-        display.textContent = name + ' (' + size + ' MB)';
-        display.style.color = '#5b52cc';
-        // Highlight the zone
+        display.textContent = input.files[0].name + ' (' + size + ' MB)';
+        display.style.color = '#4f46e5';
         const zone = input.previousElementSibling;
-        if (zone) { zone.style.borderColor = '#5b52cc'; zone.style.background = '#f5f4ff'; }
+        if (zone) {
+            zone.classList.remove('error');
+            zone.classList.add('filled');
+        }
     }
 }
 
 function updateMonthLabels() {
-    const q      = document.getElementById('id_doc_quarter').value;
-    const months = QUARTER_MONTHS[q] || ['Month 1', 'Month 2', 'Month 3'];
-    document.getElementById('label-m1').textContent = 'Month 1 (' + months[0] + ') — required';
-    document.getElementById('label-m2').textContent = 'Month 2 (' + months[1] + ') — optional';
-    document.getElementById('label-m3').textContent = 'Month 3 (' + months[2] + ') — optional';
+    const q = EL('id_doc_quarter').value;
+    const months = QUARTER_MONTHS[q] || ['Month 1','Month 2','Month 3'];
+    EL('label-m1').textContent = 'Month 1 (' + months[0] + ') — required';
+    EL('label-m2').textContent = 'Month 2 (' + months[1] + ') — optional';
+    EL('label-m3').textContent = 'Month 3 (' + months[2] + ') — optional';
 }
 
-// Initialise labels on page load
+function disableBtn(btn) {
+    btn.disabled = true;
+    btn.classList.add('btn-loading');
+}
+
+function setupProgress(formId, btnId, containerId, barId, msgId, messages, btnLabel) {
+    EL(formId).addEventListener('submit', function() {
+        const btn = EL(btnId);
+        const container = EL(containerId);
+        const bar = EL(barId);
+        const msg = EL(msgId);
+        btn.innerHTML = '<i class="ph ph-circle-notch" style="animation:spin 1s linear infinite;display:inline-block;"></i> ' + btnLabel;
+        disableBtn(btn);
+        container.style.display = 'block';
+        let p = 5;
+        bar.style.width = p + '%';
+        const iv = setInterval(function() {
+            if (p < 95) {
+                p += (95 - p) * 0.08;
+                bar.style.width = p + '%';
+                msg.textContent = p < 30 ? messages[0] : (p < 75 ? messages[1] : messages[2]);
+            } else {
+                clearInterval(iv);
+            }
+        }, 450);
+    });
+}
+
+document.querySelectorAll('input[type="file"]').forEach(function(input) {
+    input.addEventListener('change', function() {
+        showFile(this, this.getAttribute('data-display') || 'fname-' + this.id.slice(-1));
+    });
+});
+
+EL('id_doc_quarter').addEventListener('change', updateMonthLabels);
 updateMonthLabels();
 
-// Show loading state on form submit
-document.getElementById('doc-upload-form').addEventListener('submit', function() {
-    const btn = document.getElementById('upload-btn');
-    btn.innerHTML = '<i class="ph ph-circle-notch" style="animation:spin 1s linear infinite;display:inline-block;"></i>'
-                  + ' Uploading & processing… this takes 2–5 min, please wait';
-    btn.disabled = true;
-    btn.style.opacity = '0.75';
+EL('doc-upload-form').addEventListener('submit', function() {
+    const btn = EL('upload-btn');
+    btn.innerHTML = '<i class="ph ph-circle-notch" style="animation:spin 1s linear infinite;display:inline-block;"></i> Uploading &amp; processing… please wait';
+    disableBtn(btn);
 });
 
-// Show loading state and progress bar on Quarterly Report form submit
-document.getElementById('quarterly-report-form').addEventListener('submit', function() {
-    const btn = document.getElementById('quarterly-btn');
-    const progressContainer = document.getElementById('quarterly-progress-container');
-    const progressBar = document.getElementById('quarterly-progress-bar');
-    const statusMsg = document.getElementById('quarterly-status-message');
-    
-    btn.innerHTML = '<i class="ph ph-circle-notch" style="animation:spin 1s linear infinite;display:inline-block;"></i>'
-                  + ' Generating… please wait';
-    btn.disabled = true;
-    btn.style.opacity = '0.75';
-    
-    progressContainer.style.display = 'block';
-    
-    let progress = 5;
-    progressBar.style.width = progress + '%';
-    
-    const interval = setInterval(function() {
-        if (progress < 95) {
-            progress += (95 - progress) * 0.08;
-            progressBar.style.width = progress + '%';
-            
-            if (progress < 30) {
-                statusMsg.textContent = 'Extracting analytics metrics from database…';
-            } else if (progress < 75) {
-                statusMsg.textContent = 'Gemini AI is generating narrative summary…';
-            } else {
-                statusMsg.textContent = 'Compiling report and formatting PDF…';
-            }
-        } else {
-            clearInterval(interval);
-        }
-    }, 450);
-});
-
-// Show loading state and progress bar on Compare Months form submit
-document.getElementById('compare-form').addEventListener('submit', function() {
-    const btn = document.getElementById('compare-btn');
-    const progressContainer = document.getElementById('compare-progress-container');
-    const progressBar = document.getElementById('compare-progress-bar');
-    const statusMsg = document.getElementById('compare-status-message');
-    
-    btn.innerHTML = '<i class="ph ph-circle-notch" style="animation:spin 1s linear infinite;display:inline-block;"></i>'
-                  + ' Comparing… please wait';
-    btn.disabled = true;
-    btn.style.opacity = '0.75';
-    
-    progressContainer.style.display = 'block';
-    
-    let progress = 5;
-    progressBar.style.width = progress + '%';
-    
-    const interval = setInterval(function() {
-        if (progress < 95) {
-            progress += (95 - progress) * 0.08;
-            progressBar.style.width = progress + '%';
-            
-            if (progress < 30) {
-                statusMsg.textContent = 'Fetching analytics data for selected months…';
-            } else if (progress < 75) {
-                statusMsg.textContent = 'Gemini AI is analyzing differences…';
-            } else {
-                statusMsg.textContent = 'Preparing comparison report…';
-            }
-        } else {
-            clearInterval(interval);
-        }
-    }, 450);
-});
+setupProgress('quarterly-report-form','quarterly-btn','quarterly-progress-container','quarterly-progress-bar','quarterly-status-message',
+    ['Extracting analytics metrics from database…','Gemini AI is generating narrative summary…','Compiling report and formatting PDF…'],
+    'Generating… please wait');
+setupProgress('compare-form','compare-btn','compare-progress-container','compare-progress-bar','compare-status-message',
+    ['Fetching analytics data for selected months…','Gemini AI is analyzing differences…','Preparing comparison report…'],
+    'Comparing… please wait');
 </script>
-<style>
-@keyframes spin { to { transform: rotate(360deg); } }
-@keyframes pulse {
-    0% { opacity: 0.8; }
-    50% { opacity: 1; }
-    100% { opacity: 0.8; }
-}
-</style>
-
 {% endblock %}

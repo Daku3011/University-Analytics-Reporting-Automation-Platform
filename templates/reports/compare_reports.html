@@ -3,110 +3,174 @@
 {% block title %}Compare Months{% endblock %}
 {% block topbar_title %}Month-over-Month Comparison{% endblock %}
 
+{% block extra_css %}
+<style>
+.compare-hero {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 16px;
+}
+.compare-hero h1 { font-size: 20px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.02em; margin-bottom: 4px; }
+.compare-hero p { font-size: 13px; color: var(--text-muted); margin: 0; }
+.btn-hero {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 9px 18px; border-radius: 8px;
+    font-size: 13px; font-weight: 600; font-family: var(--font-body);
+    cursor: pointer; border: none; text-decoration: none; transition: all 0.15s;
+    background: var(--surface-alt); color: var(--text-secondary); border: 1px solid var(--border);
+}
+.btn-hero:hover { background: var(--border-light); color: var(--text-primary); }
+
+/* Form card */
+.compare-form-card {
+    border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--surface); box-shadow: var(--shadow-sm);
+    padding: 24px; margin-bottom: 24px;
+}
+.compare-form-card .ai-hint {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 10px 14px; border-radius: 8px;
+    font-size: 12.5px; margin-bottom: 14px; line-height: 1.5;
+    background: var(--accent-3-light); color: #8a5020; border: 1px solid #f0d4b0;
+}
+
+/* AI Results card */
+.ai-results {
+    border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--surface); box-shadow: var(--shadow-sm);
+    margin-bottom: 24px; overflow: hidden;
+    border-left: 4px solid var(--accent-3);
+}
+.ai-results .ar-header {
+    padding: 18px 24px; border-bottom: 1px solid var(--border-light);
+    display: flex; align-items: center; gap: 12px;
+}
+.ai-results .ar-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: var(--accent-3-light); display: flex; align-items: center; justify-content: center;
+    color: var(--accent-3); font-size: 19px;
+}
+.ai-results .ar-title { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+.ai-results .ar-subtitle { font-size: 12px; color: var(--text-muted); }
+.ai-results .ar-body {
+    padding: 20px 24px; font-size: 14px; line-height: 1.75; color: var(--text-secondary);
+}
+.ai-results .ar-body h2 {
+    font-size: 16px; font-weight: 700; color: #b45309;
+    margin: 22px 0 10px; padding-bottom: 5px; border-bottom: 2px solid #fde68a;
+}
+.ai-results .ar-body h3 { font-size: 14px; font-weight: 600; color: var(--text-primary); margin: 16px 0 6px; }
+.ai-results .ar-body p  { margin-bottom: 10px; }
+.ai-results .ar-body ul, .ai-results .ar-body ol { margin: 8px 0 12px 20px; }
+.ai-results .ar-body li { margin-bottom: 6px; }
+.ai-results .ar-body strong { color: var(--text-primary); }
+.ai-results .ar-body table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 13px; border-radius: 8px; overflow: hidden; }
+.ai-results .ar-body th { background: #b45309; color: #fff; padding: 10px 14px; text-align: left; font-weight: 600; }
+.ai-results .ar-body td { padding: 10px 14px; border-bottom: 1px solid #eee; }
+.ai-results .ar-body tr:nth-child(even) td { background: #fffbeb; }
+
+/* Raw data card */
+.raw-card {
+    border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--surface); box-shadow: var(--shadow-sm); overflow: hidden;
+}
+.raw-card .raw-header {
+    padding: 14px 20px; border-bottom: 1px solid var(--border-light);
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 600; color: var(--text-secondary);
+}
+.raw-card .raw-body { padding: 20px; }
+.month-label {
+    font-size: 14px; font-weight: 600; margin: 0 0 10px;
+    display: flex; align-items: center; gap: 7px;
+}
+.month-label .dot {
+    width: 8px; height: 8px; border-radius: 50%; display: inline-block;
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="page-header">
+<div class="compare-hero">
     <div>
         <h1>Compare Two Months</h1>
         <p>Honest AI-powered month-over-month analysis — no sugar coating</p>
     </div>
-    <a href="{% url 'report_dashboard' %}" class="btn btn-secondary">
+    <a href="{% url 'report_dashboard' %}" class="btn-hero">
         <i class="ph ph-arrow-left"></i> Back to Reports
     </a>
 </div>
 
-<!-- Comparison Form -->
-<div class="card" style="margin-bottom:24px;">
-    <div class="card-body">
-        <form method="post" action="{% url 'compare_reports' %}">
-            {% csrf_token %}
-            <div class="grid grid-4" style="align-items:end;">
-                <div class="form-group">
-                    <label class="form-label" for="id_college">College</label>
-                    <select name="college" id="id_college" class="form-control form-select">
-                        {% for c in colleges %}
-                        <option value="{{ c.id }}" {% if college and c.id == college.id %}selected{% endif %}>{{ c.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="id_month_a">Month A (earlier)</label>
-                    <select name="month_a" id="id_month_a" class="form-control form-select">
-                        {% for m in months %}
-                        <option value="{{ m }}" {% if m == 1 %}selected{% endif %}>{{ m }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="id_month_b">Month B (later)</label>
-                    <select name="month_b" id="id_month_b" class="form-control form-select">
-                        {% for m in months %}
-                        <option value="{{ m }}" {% if m == 2 %}selected{% endif %}>{{ m }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="id_year">Year</label>
-                    <input type="number" name="year" id="id_year" class="form-control" value="{{ year|default:'2026' }}" min="2020" max="2030">
-                </div>
+<div class="compare-form-card">
+    <form method="post" action="{% url 'compare_reports' %}">
+        {% csrf_token %}
+        <div class="grid grid-4" style="align-items:end;">
+            <div class="form-group">
+                <label class="form-label" for="id_college">College</label>
+                <select name="college" id="id_college" class="form-control form-select">
+                    {% for c in colleges %}
+                    <option value="{{ c.id }}" {% if college and c.id == college.id %}selected{% endif %}>{{ c.name }}</option>
+                    {% endfor %}
+                </select>
             </div>
-            <div style="background:var(--accent-2-light);border:1px solid #b8e0d5;border-radius:6px;padding:10px 12px;font-size:12.5px;color:#3d7a6a;margin-bottom:14px;display:flex;align-items:flex-start;gap:8px;">
-                <i class="ph ph-robot" style="font-size:15px;flex-shrink:0;margin-top:1px;"></i>
-                Gemini AI analyzes both months and gives an honest, direct assessment. Rate limit: 1/60s, 50/day.
+            <div class="form-group">
+                <label class="form-label" for="id_month_a">Month A (earlier)</label>
+                <select name="month_a" id="id_month_a" class="form-control form-select">
+                    {% for m in months %}
+                    <option value="{{ m }}" {% if m == 1 %}selected{% endif %}>{{ m }}</option>
+                    {% endfor %}
+                </select>
             </div>
-            <button type="submit" class="btn btn-primary" style="width:100%;">
-                <i class="ph ph-chart-line-up"></i> Compare Months
-            </button>
-        </form>
-    </div>
+            <div class="form-group">
+                <label class="form-label" for="id_month_b">Month B (later)</label>
+                <select name="month_b" id="id_month_b" class="form-control form-select">
+                    {% for m in months %}
+                    <option value="{{ m }}" {% if m == 2 %}selected{% endif %}>{{ m }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="id_year">Year</label>
+                <input type="number" name="year" id="id_year" class="form-control" value="{{ year|default:'2026' }}" min="2020" max="2030">
+            </div>
+        </div>
+        <div class="ai-hint">
+            <i class="ph ph-robot" style="font-size:15px;flex-shrink:0;margin-top:1px;"></i>
+            Gemini AI analyzes both months and gives an honest, direct assessment. Rate limit: 1/60s, 50/day.
+        </div>
+        <button type="submit" class="btn" style="width:100%;background:var(--accent-3);color:#fff;border-color:var(--accent-3);">
+            <i class="ph ph-chart-line-up"></i> Compare Months
+        </button>
+    </form>
 </div>
 
 {% if comparison_html %}
-<!-- AI Comparison Results -->
-<div class="card" style="margin-bottom:24px;border-left:4px solid var(--accent);">
-    <div class="card-body">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
-            <div style="width:36px;height:36px;border-radius:8px;background:var(--accent-light);display:flex;align-items:center;justify-content:center;">
-                <i class="ph ph-chart-line-up" style="font-size:18px;color:var(--accent);"></i>
-            </div>
-            <div>
-                <div style="font-size:15px;font-weight:600;color:var(--text-primary);">
-                    {{ college.name }} — {{ month_a_name }} vs {{ month_b_name }} {{ year }}
-                </div>
-                <div style="font-size:12px;color:var(--text-muted);">AI-Generated Comparison · Powered by Gemini</div>
-            </div>
+<div class="ai-results">
+    <div class="ar-header">
+        <div class="ar-icon"><i class="ph ph-chart-line-up"></i></div>
+        <div>
+            <div class="ar-title">{{ college.name }} — {{ month_a_name }} vs {{ month_b_name }} {{ year }}</div>
+            <div class="ar-subtitle">AI-Generated Comparison · Powered by Gemini</div>
         </div>
-
-        <div style="font-size:14px;line-height:1.75;color:var(--text-secondary);">
-            <style>
-                .comparison-content h2 { font-size:16px;font-weight:700;color:#4f46e5;margin:22px 0 10px;padding-bottom:5px;border-bottom:2px solid #e8e6ff; }
-                .comparison-content h3 { font-size:14px;font-weight:600;color:var(--text-primary);margin:16px 0 6px; }
-                .comparison-content p  { margin-bottom:10px; }
-                .comparison-content ul,.comparison-content ol { margin:8px 0 12px 20px; }
-                .comparison-content li { margin-bottom:6px; }
-                .comparison-content strong { color:var(--text-primary); }
-                .comparison-content table { width:100%;border-collapse:collapse;margin:14px 0;font-size:13px;border-radius:6px;overflow:hidden; }
-                .comparison-content th { background:#4f46e5;color:#fff;padding:10px 14px;text-align:left;font-weight:600; }
-                .comparison-content td { padding:10px 14px;border-bottom:1px solid #eee; }
-                .comparison-content tr:nth-child(even) td { background:#faf9ff; }
-            </style>
-            <div class="comparison-content">
-                {{ comparison_html|safe }}
-            </div>
-        </div>
+    </div>
+    <div class="ar-body">
+        {{ comparison_html|safe }}
     </div>
 </div>
 
-<!-- Raw Data Comparison Table -->
-<div class="card">
-    <div class="card-header" style="padding:16px 20px 0;font-size:13px;font-weight:600;color:var(--text-secondary);display:flex;align-items:center;gap:7px;">
+<div class="raw-card">
+    <div class="raw-header">
         <i class="ph ph-table" style="font-size:15px;"></i>
         Raw Data Comparison
     </div>
-    <div class="card-body" style="padding:16px;">
+    <div class="raw-body">
         <div class="grid grid-2">
-            <!-- Month A -->
             <div>
-                <h4 style="font-size:14px;margin:0 0 10px;color:var(--accent);">{{ month_a_name }} {{ year }}</h4>
+                <div class="month-label"><span class="dot" style="background:var(--accent);"></span> {{ month_a_name }} {{ year }}</div>
                 <table class="table-clean">
                     <thead><tr><th>Metric</th><th>Value</th></tr></thead>
                     <tbody>
@@ -123,9 +187,8 @@
                     </tbody>
                 </table>
             </div>
-            <!-- Month B -->
             <div>
-                <h4 style="font-size:14px;margin:0 0 10px;color:var(--accent-2);">{{ month_b_name }} {{ year }}</h4>
+                <div class="month-label"><span class="dot" style="background:var(--accent-2);"></span> {{ month_b_name }} {{ year }}</div>
                 <table class="table-clean">
                     <thead><tr><th>Metric</th><th>Value</th></tr></thead>
                     <tbody>
