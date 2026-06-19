@@ -68,9 +68,6 @@ def add_analytics(request):
 @login_required
 def extract_from_pdf(request):
     if request.method == 'POST':
-        college_id = request.POST.get('college')
-        month = int(request.POST.get('month'))
-        year = int(request.POST.get('year'))
         pdf_file = request.FILES.get('pdf_file')
 
         if not pdf_file:
@@ -105,15 +102,27 @@ def extract_from_pdf(request):
 
             client = genai.Client(api_key=api_key)
 
-            # Read file and base64 encode
             with open(save_path, 'rb') as f:
                 b64_data = base64.b64encode(f.read()).decode('utf-8')
 
-            prompt = """You are a data extraction specialist for Sarvajanik University. Analyze the PDF and extract all social media analytics, events, and top posts data.
+            college_list = list(College.objects.all().values('id', 'name', 'code'))
+            college_names_str = '", "'.join(f'{c["name"]} (code: {c["code"]})' for c in college_list)
 
-Extract the information and return ONLY valid JSON with this exact structure:
-{
-    "analytics": {
+            prompt = f'''You are a data extraction specialist for Sarvajanik University. Analyze the PDF and extract data.
+
+First, identify which college this document belongs to from the list below:
+"{college_names_str}"
+
+Also identify the month (as a number 1-12) and year.
+
+Then extract all social media analytics, events, and top posts.
+
+Return ONLY valid JSON with this exact structure:
+{{
+    "college_name": "<exact college name from the list or empty string if unsure>",
+    "month": <month number 1-12 or 0>,
+    "year": <year number or 0>,
+    "analytics": {{
         "instagram_views": <number or 0>,
         "facebook_views": <number or 0>,
         "total_views": <number or 0>,
@@ -126,34 +135,34 @@ Extract the information and return ONLY valid JSON with this exact structure:
         "followers_gained": <number or 0>,
         "reels_count": <number or 0>,
         "graphics_count": <number or 0>
-    },
+    }},
     "top_posts": [
-        {
+        {{
             "platform": "instagram" or "facebook",
             "caption": "<post caption or description>",
             "views": <number or 0>,
             "likes": <number or 0>,
             "shares": <number or 0>,
             "post_link": "<URL if available, else empty string>"
-        }
+        }}
     ],
     "events": [
-        {
+        {{
             "title": "<event title>",
             "description": "<event description>",
             "category": "workshop/festival/placement/achievement/conference/guest_lecture/academic/cultural/sports/other",
             "date": "<YYYY-MM-DD>"
-        }
+        }}
     ]
-}
+}}
 
 Rules:
-- Use 0 for any numeric field where data is not available.
-- For events, map the category to the closest match from the allowed list.
-- If no events are found, return an empty array.
-- If no top posts are found, return an empty array.
-- If no analytics data is found, return an empty object for analytics.
-- Output ONLY valid JSON. No markdown, no code fences, no explanatory text."""
+- college_name must be EXACTLY one of the provided names or empty string.
+- month must be a number 1-12 (January=1, February=2, etc.) or 0 if unknown.
+- Use 0 for any missing numeric field.
+- Map event categories to the closest match from the allowed list.
+- Empty arrays if nothing found. Empty object for analytics if no data.
+- Output ONLY valid JSON. No markdown, no code fences, no explanatory text.'''
 
             try:
                 response = client.models.generate_content(
@@ -189,9 +198,21 @@ Rules:
             except Exception:
                 pass
 
+            # Match extracted college name to DB
+            detected_college_name = extracted.get('college_name', '')
+            college = None
+            if detected_college_name:
+                college = College.objects.filter(name__iexact=detected_college_name.strip()).first()
+                if not college:
+                    college = College.objects.filter(name__icontains=detected_college_name.strip()).first()
+
+            month = int(extracted.get('month', 0)) or 0
+            year = int(extracted.get('year', 0)) or 0
+
             # Store in session
             request.session['extracted_data'] = {
-                'college_id': int(college_id),
+                'detected_college_id': college.id if college else None,
+                'detected_college_name': college.name if college else (detected_college_name or ''),
                 'month': month,
                 'year': year,
                 'analytics': extracted.get('analytics', {}),
@@ -199,6 +220,9 @@ Rules:
                 'events': extracted.get('events', []),
             }
             request.session.modified = True
+
+            if not college:
+                messages.warning(request, 'Could not determine the college from the PDF. Please select one manually on the next screen.')
 
             return redirect('preview_extracted_data')
 
@@ -209,12 +233,7 @@ Rules:
 
         return redirect('extract_from_pdf')
 
-    colleges = College.objects.all()
-    months = MonthlyAnalytics.MONTH_CHOICES
-    return render(request, 'analytics_app/extract_from_pdf.html', {
-        'colleges': colleges,
-        'months': months,
-    })
+    return render(request, 'analytics_app/extract_from_pdf.html')
 
 
 @login_required
@@ -224,25 +243,32 @@ def preview_extracted_data(request):
         messages.warning(request, 'No extracted data found. Please upload a PDF first.')
         return redirect('extract_from_pdf')
 
-    college = get_object_or_404(College, id=data['college_id'])
+    colleges = College.objects.all()
+    months = MonthlyAnalytics.MONTH_CHOICES
+    current_year = date.today().year
+
+    college_id = data.get('detected_college_id')
+    college = College.objects.filter(id=college_id).first() if college_id else None
+    month = data.get('month', 0)
+    year = data.get('year', 0)
 
     if request.method == 'POST':
-        month = data['month']
-        year = data['year']
+        college_id = request.POST.get('college')
+        month = int(request.POST.get('month', 0))
+        year = int(request.POST.get('year', 0))
+        college = get_object_or_404(College, id=college_id)
 
-        # Save events
         for ev in data.get('events', []):
             Event.objects.create(
                 college=college,
                 title=ev.get('title', 'Untitled'),
                 description=ev.get('description', ''),
                 category=ev.get('category', 'other'),
-                date=ev.get('date', f'{year}-{month:02d}-01'),
+                date=ev.get('date', f'{year}-{month:02d}-01') if month and year else f'{current_year}-01-01',
             )
 
-        # Save analytics
         analytics_data = data.get('analytics', {})
-        if analytics_data:
+        if analytics_data and month and year:
             MonthlyAnalytics.objects.update_or_create(
                 college=college, month=month, year=year,
                 defaults={
@@ -261,12 +287,11 @@ def preview_extracted_data(request):
                 }
             )
 
-        # Save top posts
         for post in data.get('top_posts', []):
             TopPost.objects.create(
                 college=college,
-                month=month,
-                year=year,
+                month=month or 1,
+                year=year or current_year,
                 platform=post.get('platform', 'instagram'),
                 caption=post.get('caption', ''),
                 views=int(post.get('views', 0)),
@@ -275,7 +300,6 @@ def preview_extracted_data(request):
                 post_link=post.get('post_link', ''),
             )
 
-        # Clean up
         del request.session['extracted_data']
 
         messages.success(request, 'Data extracted from PDF has been saved successfully!')
@@ -284,4 +308,7 @@ def preview_extracted_data(request):
     return render(request, 'analytics_app/preview_extracted_data.html', {
         'data': data,
         'college': college,
+        'colleges': colleges,
+        'months': months,
+        'current_year': current_year,
     })
