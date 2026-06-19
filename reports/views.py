@@ -37,13 +37,32 @@ def report_dashboard(request):
 def generate_monthly(request):
     if request.method == 'POST':
         college_id = request.POST.get('college')
-        month = int(request.POST['month'])
-        year = int(request.POST['year'])
+        month_str = request.POST.get('month')
+        year_str = request.POST.get('year')
+
+        if not college_id or not month_str or not year_str:
+            messages.error(request, "Missing required parameters: College, Month, or Year.")
+            return redirect('report_dashboard')
+
+        try:
+            month = int(month_str)
+            year = int(year_str)
+        except ValueError:
+            messages.error(request, "Month and Year must be valid numeric values.")
+            return redirect('report_dashboard')
+
+        if not (1 <= month <= 12):
+            messages.error(request, "Month must be between 1 and 12.")
+            return redirect('report_dashboard')
 
         if hasattr(request.user, 'profile') and request.user.profile.college:
             college = request.user.profile.college
         else:
-            college = College.objects.get(id=college_id)
+            try:
+                college = College.objects.get(id=college_id)
+            except (College.DoesNotExist, ValueError):
+                messages.error(request, "Specified College does not exist.")
+                return redirect('report_dashboard')
 
         analytics = MonthlyAnalytics.objects.filter(college=college, month=month, year=year).first()
         events = Event.objects.filter(college=college, date__month=month, date__year=year)
@@ -52,7 +71,11 @@ def generate_monthly(request):
         newspapers = NewspaperCoverage.objects.filter(college=college, month=month, year=year)
         press_releases = PressRelease.objects.filter(college=college, month=month, year=year)
 
-        month_name = date(year, month, 1).strftime('%B')
+        try:
+            month_name = date(year, month, 1).strftime('%B')
+        except ValueError:
+            messages.error(request, "Invalid Year value specified.")
+            return redirect('report_dashboard')
 
         max_views = 1
         if analytics:
@@ -72,11 +95,16 @@ def generate_monthly(request):
             'press_releases': press_releases,
         }
         html_string = render_to_string('reports/monthly_report_template.html', context)
-        from weasyprint import HTML  # lazy import — requires GTK/Pango on Windows
-        pdf_dir = settings.MEDIA_ROOT / 'reports' / 'monthly'
-        pdf_dir.mkdir(parents=True, exist_ok=True)
-        pdf_path = pdf_dir / f'{college.code}_{month}_{year}.pdf'
-        HTML(string=html_string).write_pdf(pdf_path)
+        
+        try:
+            from weasyprint import HTML  # lazy import — requires GTK/Pango on Windows
+            pdf_dir = settings.MEDIA_ROOT / 'reports' / 'monthly'
+            pdf_dir.mkdir(parents=True, exist_ok=True)
+            pdf_path = pdf_dir / f'{college.code}_{month}_{year}.pdf'
+            HTML(string=html_string).write_pdf(pdf_path)
+        except Exception as e:
+            messages.error(request, f"PDF compilation failed: {str(e)}")
+            return redirect('report_dashboard')
 
         report = MonthlyReport.objects.create(
             college=college, month=month, year=year,
@@ -96,11 +124,31 @@ def preview_monthly(request, report_id):
 @login_required
 def generate_quarterly(request):
     if request.method == 'POST':
-        quarter = int(request.POST['quarter'])
-        year = int(request.POST.get('year', 2026))
+        quarter_str = request.POST.get('quarter')
+        year_str = request.POST.get('year')
+        
+        if not quarter_str:
+            messages.error(request, "Missing quarter parameter.")
+            return redirect('report_dashboard')
+
+        try:
+            quarter = int(quarter_str)
+            year = int(year_str) if year_str else 2026
+        except ValueError:
+            messages.error(request, "Quarter and Year must be valid numeric values.")
+            return redirect('report_dashboard')
+
+        if quarter not in [1, 2, 3, 4]:
+            messages.error(request, "Quarter must be between 1 and 4.")
+            return redirect('report_dashboard')
+
         start_month = {1: 1, 2: 4, 3: 7, 4: 10}[quarter]
         months_range = range(start_month, start_month + 3)
-        month_names = [date(year, m, 1).strftime('%B') for m in months_range]
+        try:
+            month_names = [date(year, m, 1).strftime('%B') for m in months_range]
+        except ValueError:
+            messages.error(request, "Invalid Year value specified.")
+            return redirect('report_dashboard')
 
         all_analytics = MonthlyAnalytics.objects.filter(month__in=months_range, year=year)
         all_events = Event.objects.filter(date__month__in=months_range, date__year=year)
@@ -281,9 +329,13 @@ Write a structured quarterly summary in clean HTML (use <h2>, <h3>, <p>, <ul>, <
 
 Output ONLY valid HTML. Use <strong> for emphasis."""
 
+                    from google.genai import types
                     response = client.models.generate_content(
                         model=model_name,
                         contents=prompt,
+                        config=types.GenerateContentConfig(
+                            http_options={'timeout': 600000}
+                        )
                     )
                     raw_text = response.text
 
@@ -336,11 +388,16 @@ Output ONLY valid HTML. Use <strong> for emphasis."""
             'prev_press_releases_count': prev_all_press_releases.count(),
         }
         html_string = render_to_string('reports/quarterly_report_template.html', context)
-        from weasyprint import HTML  # lazy import — requires GTK/Pango on Windows
-        pdf_dir = settings.MEDIA_ROOT / 'reports' / 'quarterly'
-        pdf_dir.mkdir(parents=True, exist_ok=True)
-        pdf_path = pdf_dir / f'Q{quarter}_{year}.pdf'
-        HTML(string=html_string).write_pdf(pdf_path)
+        
+        try:
+            from weasyprint import HTML  # lazy import — requires GTK/Pango on Windows
+            pdf_dir = settings.MEDIA_ROOT / 'reports' / 'quarterly'
+            pdf_dir.mkdir(parents=True, exist_ok=True)
+            pdf_path = pdf_dir / f'Q{quarter}_{year}.pdf'
+            HTML(string=html_string).write_pdf(pdf_path)
+        except Exception as e:
+            messages.error(request, f"PDF compilation failed: {str(e)}")
+            return redirect('report_dashboard')
 
         report = QuarterlyReport.objects.create(
             quarter=quarter, year=year,
@@ -366,10 +423,21 @@ ALLOWED_EXTENSIONS = {'pdf'}   # Only PDF — Gemini natively understands PDF st
 def _save_uploaded_file(ufile, prefix):
     """Stream-save an uploaded file to disk without loading it all into memory."""
     import pathlib
+    import uuid
+    from django.utils.text import get_valid_filename
+    
     upload_dir = settings.MEDIA_ROOT / 'reports' / 'uploaded_sources'
     upload_dir.mkdir(parents=True, exist_ok=True)
-    safe_name = f"{prefix}_{ufile.name.replace(' ', '_').replace('/', '_')}"
+    
+    orig_path = pathlib.Path(ufile.name)
+    ext = orig_path.suffix.lower()
+    if ext != '.pdf':
+        raise ValueError("Only PDF files allowed")
+        
+    clean_stem = get_valid_filename(orig_path.stem)
+    safe_name = f"{prefix}_{clean_stem}_{uuid.uuid4().hex}{ext}"
     save_path = upload_dir / safe_name
+    
     with open(save_path, 'wb') as fout:
         for chunk in ufile.chunks(chunk_size=8 * 1024 * 1024):   # 8 MB chunks
             fout.write(chunk)
@@ -418,9 +486,19 @@ def upload_document_report(request):
     if request.method != 'POST':
         return redirect('report_dashboard')
 
-    title   = request.POST.get('doc_title', '').strip() or 'Uploaded Report'
-    quarter = int(request.POST.get('doc_quarter', 1))
-    year    = int(request.POST.get('doc_year', date.today().year))
+    title = request.POST.get('doc_title', '').strip() or 'Uploaded Report'
+    quarter_str = request.POST.get('doc_quarter')
+    year_str = request.POST.get('doc_year')
+    try:
+        quarter = int(quarter_str) if quarter_str else 1
+        year = int(year_str) if year_str else date.today().year
+    except ValueError:
+        messages.error(request, "Quarter and Year must be valid numeric values.")
+        return redirect('report_dashboard')
+
+    if quarter not in [1, 2, 3, 4]:
+        messages.error(request, "Quarter must be between 1 and 4.")
+        return redirect('report_dashboard')
 
     # ── DEBUG: print what Django received ─────────────────────────────────────
     print(f"[upload_document_report] request.FILES keys: {list(request.FILES.keys())}")
@@ -542,14 +620,53 @@ def compare_reports(request):
         })
 
     college_id = request.POST.get('college')
-    month_a = int(request.POST['month_a'])
-    month_b = int(request.POST['month_b'])
-    year = int(request.POST.get('year', 2026))
+    month_a_str = request.POST.get('month_a')
+    month_b_str = request.POST.get('month_b')
+    year_str = request.POST.get('year')
 
-    college = get_object_or_404(College, id=college_id)
+    if not college_id or not month_a_str or not month_b_str:
+        return render(request, 'reports/compare_reports.html', {
+            'colleges': colleges,
+            'months': months,
+            'comparison_html': "<div style='display:flex;align-items:flex-start;gap:10px;padding:12px 16px;background:#fbecea;border:1px solid #f0c8c5;border-radius:6px;'><i class='ph ph-warning-circle' style='font-size:18px;color:#b5534a;flex-shrink:0;margin-top:2px;'></i><div style='font-size:13.5px;color:#7a2a22;'><strong>Error</strong> &mdash; Missing required fields for comparison.</div></div>",
+        })
 
-    month_a_name = date(year, month_a, 1).strftime('%B')
-    month_b_name = date(year, month_b, 1).strftime('%B')
+    try:
+        month_a = int(month_a_str)
+        month_b = int(month_b_str)
+        year = int(year_str) if year_str else 2026
+    except ValueError:
+        return render(request, 'reports/compare_reports.html', {
+            'colleges': colleges,
+            'months': months,
+            'comparison_html': "<div style='display:flex;align-items:flex-start;gap:10px;padding:12px 16px;background:#fbecea;border:1px solid #f0c8c5;border-radius:6px;'><i class='ph ph-warning-circle' style='font-size:18px;color:#b5534a;flex-shrink:0;margin-top:2px;'></i><div style='font-size:13.5px;color:#7a2a22;'><strong>Error</strong> &mdash; Month and Year must be valid numeric values.</div></div>",
+        })
+
+    if not (1 <= month_a <= 12) or not (1 <= month_b <= 12):
+        return render(request, 'reports/compare_reports.html', {
+            'colleges': colleges,
+            'months': months,
+            'comparison_html': "<div style='display:flex;align-items:flex-start;gap:10px;padding:12px 16px;background:#fbecea;border:1px solid #f0c8c5;border-radius:6px;'><i class='ph ph-warning-circle' style='font-size:18px;color:#b5534a;flex-shrink:0;margin-top:2px;'></i><div style='font-size:13.5px;color:#7a2a22;'><strong>Error</strong> &mdash; Months must be between 1 and 12.</div></div>",
+        })
+
+    try:
+        college = College.objects.get(id=college_id)
+    except (College.DoesNotExist, ValueError):
+        return render(request, 'reports/compare_reports.html', {
+            'colleges': colleges,
+            'months': months,
+            'comparison_html': "<div style='display:flex;align-items:flex-start;gap:10px;padding:12px 16px;background:#fbecea;border:1px solid #f0c8c5;border-radius:6px;'><i class='ph ph-warning-circle' style='font-size:18px;color:#b5534a;flex-shrink:0;margin-top:2px;'></i><div style='font-size:13.5px;color:#7a2a22;'><strong>Error</strong> &mdash; Specified College does not exist.</div></div>",
+        })
+
+    try:
+        month_a_name = date(year, month_a, 1).strftime('%B')
+        month_b_name = date(year, month_b, 1).strftime('%B')
+    except ValueError:
+        return render(request, 'reports/compare_reports.html', {
+            'colleges': colleges,
+            'months': months,
+            'comparison_html': "<div style='display:flex;align-items:flex-start;gap:10px;padding:12px 16px;background:#fbecea;border:1px solid #f0c8c5;border-radius:6px;'><i class='ph ph-warning-circle' style='font-size:18px;color:#b5534a;flex-shrink:0;margin-top:2px;'></i><div style='font-size:13.5px;color:#7a2a22;'><strong>Error</strong> &mdash; Invalid Year value specified.</div></div>",
+        })
 
     # Fetch data for both months
     analytics_a = MonthlyAnalytics.objects.filter(college=college, month=month_a, year=year).first()
@@ -687,9 +804,13 @@ Structure:
 <li>If a metric improved, explain what to keep doing.</li>
 </ul>"""
 
+                from google.genai import types
                 response = client.models.generate_content(
                     model=model_name,
                     contents=prompt,
+                    config=types.GenerateContentConfig(
+                        http_options={'timeout': 600000}
+                    )
                 )
                 raw = response.text or ''
 
