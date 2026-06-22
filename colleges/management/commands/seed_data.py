@@ -127,6 +127,13 @@ class Command(BaseCommand):
     help = 'Seed demo data from January-March 2026 reports'
 
     def handle(self, *args, **options):
+        # Create default superuser if none exists
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        if not User.objects.filter(username='suanalytics').exists():
+            User.objects.create_superuser(username='suanalytics', email='admin@su-analytics.in', password='admin')
+            self.stdout.write(self.style.SUCCESS("Superuser 'suanalytics' created with password 'admin'"))
+
         # ── Seed all 8 colleges (idempotent) ──────────────────────
         valid_codes = {c["code"] for c in COLLEGES}
         created_colleges = []
