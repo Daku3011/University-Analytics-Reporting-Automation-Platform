@@ -54,7 +54,9 @@
             <span style="font-size:12px;color:var(--text-muted);">Views &amp; Reach</span>
         </div>
         <div class="card-body">
-            <canvas id="performanceChart" height="190"></canvas>
+            <div style="position: relative; height: 320px; width: 100%;">
+                <canvas id="performanceChart"></canvas>
+            </div>
         </div>
     </div>
 
@@ -134,6 +136,15 @@ new Chart(document.getElementById('performanceChart'), {
     },
     options: {
         responsive: true,
+        maintainAspectRatio: false,
+        layout: {
+            padding: {
+                left: 25,
+                right: 25,
+                top: 10,
+                bottom: 10
+            }
+        },
         plugins: {
             legend: {
                 position: 'top',

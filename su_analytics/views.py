@@ -1,4 +1,5 @@
 import json
+import datetime
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum
@@ -27,9 +28,10 @@ def dashboard(request):
     total_views = totals['total_views'] or 0
     total_reach = totals['total_reach'] or 0
 
-    # ── Chart data: aggregate by month ───────────────────────────
+    current_year = datetime.date.today().year
     monthly_data = (
         analytics
+        .filter(year=current_year)
         .values('month')
         .annotate(
             views=Sum('total_views'),
@@ -39,13 +41,16 @@ def dashboard(request):
     )
 
     month_names = dict(MONTH_CHOICES)
-    events_by_month = {}
+    # Initialize all 12 months with 0 views and reach to show full year trend
+    events_by_month = {name: {'views': 0, 'reach': 0} for _, name in MONTH_CHOICES}
+    
     for row in monthly_data:
         m_label = month_names.get(row['month'], f"Month {row['month']}")
-        events_by_month[m_label] = {
-            'views': row['views'] or 0,
-            'reach': row['reach'] or 0,
-        }
+        if m_label in events_by_month:
+            events_by_month[m_label] = {
+                'views': row['views'] or 0,
+                'reach': row['reach'] or 0,
+            }
 
     chart_data = json.dumps({
         'labels': list(events_by_month.keys()),
