@@ -1,16 +1,15 @@
 from django.db import models
 from colleges.models import College
+import datetime
+from su_analytics.constants import MONTH_CHOICES, QUARTER_CHOICES, QUARTER_MONTHS
+
+def get_current_year():
+    return datetime.date.today().year
 
 class MonthlyReport(models.Model):
-    MONTH_CHOICES = [
-        (1, 'January'), (2, 'February'), (3, 'March'),
-        (4, 'April'), (5, 'May'), (6, 'June'),
-        (7, 'July'), (8, 'August'), (9, 'September'),
-        (10, 'October'), (11, 'November'), (12, 'December'),
-    ]
     college = models.ForeignKey(College, on_delete=models.CASCADE, related_name='monthly_reports')
     month = models.IntegerField(choices=MONTH_CHOICES)
-    year = models.IntegerField(default=2026)
+    year = models.IntegerField(default=get_current_year)
     pdf_file = models.FileField(upload_to='reports/monthly/', blank=True, null=True)
     generated_text = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -27,14 +26,8 @@ class MonthlyReport(models.Model):
         return f"{self.college.code} - {self.month}/{self.year}"
 
 class QuarterlyReport(models.Model):
-    QUARTER_CHOICES = [
-        (1, 'Q1 (Jan-Mar)'),
-        (2, 'Q2 (Apr-Jun)'),
-        (3, 'Q3 (Jul-Sep)'),
-        (4, 'Q4 (Oct-Dec)'),
-    ]
     quarter = models.IntegerField(choices=QUARTER_CHOICES)
-    year = models.IntegerField(default=2026)
+    year = models.IntegerField(default=get_current_year)
     pdf_file = models.FileField(upload_to='reports/quarterly/', blank=True, null=True)
     ai_summary = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -43,15 +36,9 @@ class QuarterlyReport(models.Model):
         return f"Q{self.quarter} {self.year} Report"
 
 class NewspaperCoverage(models.Model):
-    MONTH_CHOICES = [
-        (1, 'January'), (2, 'February'), (3, 'March'),
-        (4, 'April'), (5, 'May'), (6, 'June'),
-        (7, 'July'), (8, 'August'), (9, 'September'),
-        (10, 'October'), (11, 'November'), (12, 'December'),
-    ]
     college = models.ForeignKey(College, on_delete=models.CASCADE, related_name='newspaper_coverage')
     month = models.IntegerField(choices=MONTH_CHOICES)
-    year = models.IntegerField(default=2026)
+    year = models.IntegerField(default=get_current_year)
     publication = models.CharField(max_length=255)
     date = models.DateField()
     edition = models.CharField(max_length=100, blank=True)
@@ -71,15 +58,9 @@ class NewspaperCoverage(models.Model):
         return f"{self.publication} - {self.date}"
 
 class ChannelCoverage(models.Model):
-    MONTH_CHOICES = [
-        (1, 'January'), (2, 'February'), (3, 'March'),
-        (4, 'April'), (5, 'May'), (6, 'June'),
-        (7, 'July'), (8, 'August'), (9, 'September'),
-        (10, 'October'), (11, 'November'), (12, 'December'),
-    ]
     college = models.ForeignKey(College, on_delete=models.CASCADE, related_name='channel_coverage')
     month = models.IntegerField(choices=MONTH_CHOICES)
-    year = models.IntegerField(default=2026)
+    year = models.IntegerField(default=get_current_year)
     channel_name = models.CharField(max_length=255)
     platform = models.CharField(max_length=50, blank=True)
     edition = models.CharField(max_length=100, blank=True)
@@ -95,15 +76,9 @@ class ChannelCoverage(models.Model):
         return f"{self.channel_name} ({self.platform})"
 
 class PressRelease(models.Model):
-    MONTH_CHOICES = [
-        (1, 'January'), (2, 'February'), (3, 'March'),
-        (4, 'April'), (5, 'May'), (6, 'June'),
-        (7, 'July'), (8, 'August'), (9, 'September'),
-        (10, 'October'), (11, 'November'), (12, 'December'),
-    ]
     college = models.ForeignKey(College, on_delete=models.CASCADE, related_name='press_releases')
     month = models.IntegerField(choices=MONTH_CHOICES)
-    year = models.IntegerField(default=2026)
+    year = models.IntegerField(default=get_current_year)
     title = models.CharField(max_length=500)
     content = models.TextField()
     date_submitted = models.DateField()
@@ -127,22 +102,9 @@ class UploadedDocumentReport(models.Model):
     Gemini reads all 3 via the Files API and condenses them into a professional
     3-month quarterly summary report stored as a PDF.
     """
-    QUARTER_CHOICES = [
-        (1, 'Q1 (Jan–Mar)'),
-        (2, 'Q2 (Apr–Jun)'),
-        (3, 'Q3 (Jul–Sep)'),
-        (4, 'Q4 (Oct–Dec)'),
-    ]
-    QUARTER_MONTHS = {
-        1: ('January', 'February', 'March'),
-        2: ('April',   'May',      'June'),
-        3: ('July',    'August',   'September'),
-        4: ('October', 'November', 'December'),
-    }
-
     title        = models.CharField(max_length=300, help_text="Short label for this report")
     quarter      = models.IntegerField(choices=QUARTER_CHOICES)
-    year         = models.IntegerField(default=2026)
+    year         = models.IntegerField(default=get_current_year)
 
     # One file per month — only month 1 is required
     source_file_1 = models.FileField(
