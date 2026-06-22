@@ -1,0 +1,57 @@
+# ── Version Control ──────────────────────────────────────────
+.git
+.gitignore
+
+# ── Python ───────────────────────────────────────────────────
+__pycache__
+*.pyc
+*.pyo
+*.egg-info
+.eggs
+dist
+build
+
+# ── Virtual Environments ─────────────────────────────────────
+.venv
+venv
+
+# ── Database (local dev only) ────────────────────────────────
+db.sqlite3
+db.sqlite3-journal
+
+# ── Media / User Uploads (regenerated at runtime) ────────────
+media/
+
+# ── Secrets ──────────────────────────────────────────────────
+.env
+*.env
+
+# ── IDE & Editor Files ───────────────────────────────────────
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ── Testing & Coverage ──────────────────────────────────────
+.coverage
+htmlcov
+.pytest_cache
+coverage.xml
+test_gemini.py
+
+# ── Documentation (not needed in image) ──────────────────────
+docs/
+AGENTS.md
+POSTGRESQL.md
+*.md
+!README.md
+
+# ── Collected static (rebuilt in image) ──────────────────────
+staticfiles/
+static_root/
+
+# ── WeasyPrint / Fonts cache ────────────────────────────────
+fontconfig/

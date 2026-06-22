@@ -18,7 +18,10 @@ class ReportsSecurityAndRobustnessTests(TestCase):
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create_user(username='testuser', password='password')
-        self.profile = Profile.objects.create(user=self.user, role='super_admin', college=None)
+        self.profile = self.user.profile
+        self.profile.role = 'super_admin'
+        self.profile.college = None
+        self.profile.save()
         self.college = College.objects.create(name='Sarvajanik College of Engineering and Technology', code='SCET')
         
     def login_user(self):

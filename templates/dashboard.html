@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load humanize %}
 {% block title %}Dashboard{% endblock %}
 {% block topbar_title %}Dashboard{% endblock %}
 
@@ -16,7 +17,7 @@
         <div class="stat-icon">
             <i class="ph ph-eye" style="font-size:18px;"></i>
         </div>
-        <div class="stat-number">{{ total_views|default:"0" }}</div>
+        <div class="stat-number">{{ total_views|intcomma|default:"0" }}</div>
         <div class="stat-label">Total Views</div>
     </div>
 
@@ -24,7 +25,7 @@
         <div class="stat-icon">
             <i class="ph ph-broadcast" style="font-size:18px;"></i>
         </div>
-        <div class="stat-number">{{ total_reach|default:"0" }}</div>
+        <div class="stat-number">{{ total_reach|intcomma|default:"0" }}</div>
         <div class="stat-label">Total Reach</div>
     </div>
 
@@ -32,7 +33,7 @@
         <div class="stat-icon">
             <i class="ph ph-calendar-check" style="font-size:18px;"></i>
         </div>
-        <div class="stat-number">{{ events_count|default:"0" }}</div>
+        <div class="stat-number">{{ events_count|intcomma|default:"0" }}</div>
         <div class="stat-label">Total Events</div>
     </div>
 
@@ -77,9 +78,9 @@
                 </span>
             </div>
             {% empty %}
-            <div style="text-align:center;padding:24px 0;color:var(--text-muted);font-size:13.5px;">
-                <i class="ph ph-calendar" style="font-size:28px;display:block;margin-bottom:8px;opacity:0.4;"></i>
-                No events yet
+            <div class="empty-state">
+                <i class="ph ph-calendar"></i>
+                <p>No events yet</p>
             </div>
             {% endfor %}
         </div>
@@ -88,13 +89,22 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"
+        integrity="sha384-bMhQoG0oH/5m2r+DVfCDVlNwJPQlJk4LqIwnT8xfkuhVrTaASD0J3WgYBuWoBP+"
+        crossorigin="anonymous"></script>
 <script>
 const chartData = {{ chart_data|safe }};
 
-// Use design system colors
-const accentColor    = '#7c6ef7';
-const tealColor      = '#6cbfa6';
+// Respect dark mode for chart colors
+const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+const accentColor    = isDark ? '#9b8fff' : '#7c6ef7';
+const tealColor      = isDark ? '#7dd4b8' : '#6cbfa6';
+const gridColor      = isDark ? '#2e2b27' : '#f0ece6';
+const tickColor      = isDark ? '#6e6860' : '#9a948e';
+const tooltipBg      = isDark ? '#1e1c19' : '#ffffff';
+const tooltipTitle   = isDark ? '#edebe8' : '#1e1c19';
+const tooltipBody    = isDark ? '#b5afa6' : '#5a5650';
+const tooltipBorder  = isDark ? '#2e2b27' : '#e5e0d8';
 
 new Chart(document.getElementById('performanceChart'), {
     type: 'bar',
@@ -131,28 +141,39 @@ new Chart(document.getElementById('performanceChart'), {
                     boxHeight: 12,
                     borderRadius: 3,
                     usePointStyle: false,
-                    color: '#5a5650',
+                    color: tickColor,
                 }
             },
             tooltip: {
-                backgroundColor: '#ffffff',
-                titleColor: '#1e1c19',
-                bodyColor: '#5a5650',
-                borderColor: '#e5e0d8',
+                backgroundColor: tooltipBg,
+                titleColor: tooltipTitle,
+                bodyColor: tooltipBody,
+                borderColor: tooltipBorder,
                 borderWidth: 1,
                 titleFont: { family: 'DM Sans', weight: '600' },
                 bodyFont: { family: 'DM Mono', size: 13 },
                 padding: 10,
+                callbacks: {
+                    label: function(context) {
+                        return context.dataset.label + ': ' + context.parsed.y.toLocaleString('en-IN');
+                    }
+                }
             }
         },
         scales: {
             x: {
                 grid: { display: false },
-                ticks: { font: { family: 'DM Sans', size: 12 }, color: '#9a948e' }
+                ticks: { font: { family: 'DM Sans', size: 12 }, color: tickColor }
             },
             y: {
-                grid: { color: '#f0ece6', lineWidth: 1 },
-                ticks: { font: { family: 'DM Mono', size: 11 }, color: '#9a948e' },
+                grid: { color: gridColor, lineWidth: 1 },
+                ticks: {
+                    font: { family: 'DM Mono', size: 11 },
+                    color: tickColor,
+                    callback: function(value) {
+                        return value.toLocaleString('en-IN');
+                    }
+                },
                 border: { dash: [4, 4] }
             }
         }

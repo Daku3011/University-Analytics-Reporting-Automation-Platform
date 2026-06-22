@@ -11,35 +11,73 @@ from django.conf import settings
 from .models import MonthlyAnalytics, TopPost
 from colleges.models import College
 from events.models import Event
+from su_analytics.constants import MONTH_CHOICES
 
 
 @login_required
 def add_analytics(request):
     if request.method == 'POST':
         college_id = request.POST.get('college')
-        month = int(request.POST['month'])
-        year = int(request.POST['year'])
-        if hasattr(request.user, 'profile') and request.user.profile.college:
-            college = request.user.profile.college
+        month_str = request.POST.get('month', '')
+        year_str = request.POST.get('year', '')
+
+        # ── Input Validation ─────────────────────────────────────────
+        if not month_str or not year_str:
+            messages.error(request, 'Month and Year are required.')
+            return redirect('add_analytics')
+
+        try:
+            month = int(month_str)
+            year = int(year_str)
+        except (ValueError, TypeError):
+            messages.error(request, 'Month and Year must be valid numbers.')
+            return redirect('add_analytics')
+
+        if not (1 <= month <= 12):
+            messages.error(request, 'Month must be between 1 and 12.')
+            return redirect('add_analytics')
+
+        # ── College Assignment (RBAC) ────────────────────────────────
+        from accounts.decorators import get_user_college
+        user_college = get_user_college(request.user)
+        if user_college:
+            college = user_college
+        elif college_id:
+            try:
+                college = College.objects.get(id=college_id)
+            except (College.DoesNotExist, ValueError):
+                messages.error(request, 'Selected college does not exist.')
+                return redirect('add_analytics')
         else:
-            college = College.objects.get(id=college_id) if college_id else College.objects.first()
+            college = College.objects.first()
+            if not college:
+                messages.error(request, 'No colleges exist.')
+                return redirect('add_analytics')
+
+        def safe_int(val):
+            """Safely convert POST value to int, defaulting to 0."""
+            try:
+                return int(val) if val else 0
+            except (ValueError, TypeError):
+                return 0
+
         data = {
-            'instagram_views': request.POST.get('instagram_views', 0),
-            'facebook_views': request.POST.get('facebook_views', 0),
-            'total_views': request.POST.get('total_views', 0),
-            'instagram_reach': request.POST.get('instagram_reach', 0),
-            'facebook_reach': request.POST.get('facebook_reach', 0),
-            'total_reach': request.POST.get('total_reach', 0),
-            'instagram_followers': request.POST.get('instagram_followers', 0),
-            'facebook_followers': request.POST.get('facebook_followers', 0),
-            'youtube_subscribers': request.POST.get('youtube_subscribers', 0),
-            'followers_gained': request.POST.get('followers_gained', 0),
-            'reels_count': request.POST.get('reels_count', 0),
-            'graphics_count': request.POST.get('graphics_count', 0),
+            'instagram_views': safe_int(request.POST.get('instagram_views')),
+            'facebook_views': safe_int(request.POST.get('facebook_views')),
+            'total_views': safe_int(request.POST.get('total_views')),
+            'instagram_reach': safe_int(request.POST.get('instagram_reach')),
+            'facebook_reach': safe_int(request.POST.get('facebook_reach')),
+            'total_reach': safe_int(request.POST.get('total_reach')),
+            'instagram_followers': safe_int(request.POST.get('instagram_followers')),
+            'facebook_followers': safe_int(request.POST.get('facebook_followers')),
+            'youtube_subscribers': safe_int(request.POST.get('youtube_subscribers')),
+            'followers_gained': safe_int(request.POST.get('followers_gained')),
+            'reels_count': safe_int(request.POST.get('reels_count')),
+            'graphics_count': safe_int(request.POST.get('graphics_count')),
         }
         MonthlyAnalytics.objects.update_or_create(
             college=college, month=month, year=year,
-            defaults={k: int(v) for k, v in data.items()}
+            defaults=data
         )
 
         # Save top posts
@@ -52,17 +90,26 @@ def add_analytics(request):
                         platform=platform_val,
                         defaults={
                             'caption': caption,
-                            'views': int(request.POST.get(f'top_{platform_key}_{i}_views', 0)),
-                            'likes': int(request.POST.get(f'top_{platform_key}_{i}_likes', 0)),
-                            'shares': int(request.POST.get(f'top_{platform_key}_{i}_shares', 0)),
+                            'views': safe_int(request.POST.get(f'top_{platform_key}_{i}_views')),
+                            'likes': safe_int(request.POST.get(f'top_{platform_key}_{i}_likes')),
+                            'shares': safe_int(request.POST.get(f'top_{platform_key}_{i}_shares')),
                             'post_link': request.POST.get(f'top_{platform_key}_{i}_link', ''),
                         }
                     )
 
+        messages.success(request, f'Analytics for {college.code} — {date(year, month, 1).strftime("%B %Y")} saved.')
         return redirect('dashboard')
-    colleges = College.objects.all()
-    months = MonthlyAnalytics.MONTH_CHOICES
+
+    # GET: show form, scoped by RBAC
+    from accounts.decorators import get_user_college
+    user_college = get_user_college(request.user)
+    if user_college:
+        colleges = College.objects.filter(id=user_college.id)
+    else:
+        colleges = College.objects.all()
+    months = MONTH_CHOICES
     return render(request, 'analytics_app/add_analytics.html', {'colleges': colleges, 'months': months})
+
 
 
 @login_required

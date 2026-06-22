@@ -1,24 +1,170 @@
 {% extends 'base.html' %}
-{% block title %}Event Detail{% endblock %}
+{% load humanize %}
+{% block title %}{{ event.title }}{% endblock %}
+{% block topbar_title %}Event Details{% endblock %}
+
+{% block extra_css %}
+.event-hero {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-sm);
+}
+.event-hero-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    line-height: 1.3;
+}
+.event-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 12px;
+}
+.event-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+.event-meta-item i {
+    font-size: 16px;
+    color: var(--accent);
+}
+.event-description {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-light);
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text-secondary);
+}
+.media-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+}
+.media-item {
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    aspect-ratio: 4/3;
+    position: relative;
+    background: var(--surface-alt);
+}
+.media-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+.media-item:hover img {
+    transform: scale(1.05);
+}
+.media-item video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.social-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 13.5px;
+    font-weight: 500;
+    padding: 6px 14px;
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-sm);
+    transition: background 0.15s;
+    margin-top: 16px;
+}
+.social-link:hover {
+    background: var(--accent-light);
+}
+{% endblock %}
+
 {% block content %}
-<h2>{{ event.title }}</h2>
-<div class="card p-4 mt-3">
-    <p><strong>College:</strong> {{ event.college.name }}</p>
-    <p><strong>Category:</strong> {{ event.get_category_display }}</p>
-    <p><strong>Date:</strong> {{ event.date }}</p>
-    <p><strong>Description:</strong> {{ event.description }}</p>
-    {% if event.social_media_link %}
-    <p><strong>Social Media:</strong> <a href="{{ event.social_media_link }}" target="_blank" rel="noopener">{{ event.social_media_link }}</a></p>
-    {% endif %}
-    {% if event.media.all %}
-    <h5 class="mt-3">Media</h5>
-    <div class="row">
-        {% for m in event.media.all %}
-        <div class="col-md-3 mb-2">
-            <img src="{{ m.file.url }}" class="img-fluid rounded" alt="media">
+<div class="page-header">
+    <div>
+        <a href="{% url 'dashboard' %}" class="btn btn-secondary btn-sm" style="margin-bottom:12px;">
+            <i class="ph ph-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<div class="event-hero">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+        <div style="flex:1;min-width:280px;">
+            <div style="margin-bottom:8px;">
+                <span class="badge badge-purple">{{ event.get_category_display|default:"Event" }}</span>
+            </div>
+            <h1 class="event-hero-title">{{ event.title }}</h1>
+
+            <div class="event-meta">
+                <div class="event-meta-item">
+                    <i class="ph ph-buildings"></i>
+                    {{ event.college.name }}
+                </div>
+                <div class="event-meta-item">
+                    <i class="ph ph-calendar-blank"></i>
+                    {{ event.date }}
+                </div>
+                {% if event.created_at %}
+                <div class="event-meta-item">
+                    <i class="ph ph-clock"></i>
+                    Added {{ event.created_at|naturaltime }}
+                </div>
+                {% endif %}
+            </div>
+
+            {% if event.social_media_link %}
+            <a href="{{ event.social_media_link }}" target="_blank" rel="noopener noreferrer" class="social-link">
+                <i class="ph ph-arrow-square-out"></i>
+                View on Social Media
+            </a>
+            {% endif %}
         </div>
-        {% endfor %}
+    </div>
+
+    {% if event.description %}
+    <div class="event-description">
+        {{ event.description|linebreaksbr }}
     </div>
     {% endif %}
 </div>
+
+{% if event.media.exists %}
+<div class="card">
+    <div class="card-header" style="padding:20px 20px 0;font-size:14px;font-weight:600;color:var(--text-primary);">
+        <div style="display:flex;align-items:center;gap:8px;">
+            <i class="ph ph-images" style="color:var(--accent);"></i>
+            Media Gallery
+            <span class="badge badge-teal" style="margin-left:8px;">{{ event.media.count }}</span>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="media-grid">
+            {% for media in event.media.all %}
+            <div class="media-item">
+                {% if media.file.url|lower|slice:"-4:" == ".mp4" or media.file.url|lower|slice:"-4:" == ".mov" %}
+                    <video controls preload="metadata">
+                        <source src="{{ media.file.url }}">
+                    </video>
+                {% else %}
+                    <img src="{{ media.file.url }}" alt="{{ event.title }} media {{ forloop.counter }}" loading="lazy">
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock %}

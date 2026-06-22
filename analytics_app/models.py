@@ -1,16 +1,15 @@
 from django.db import models
 from colleges.models import College
+import datetime
+from su_analytics.constants import MONTH_CHOICES, PLATFORM_CHOICES
+
+def get_current_year():
+    return datetime.date.today().year
 
 class MonthlyAnalytics(models.Model):
-    MONTH_CHOICES = [
-        (1, 'January'), (2, 'February'), (3, 'March'),
-        (4, 'April'), (5, 'May'), (6, 'June'),
-        (7, 'July'), (8, 'August'), (9, 'September'),
-        (10, 'October'), (11, 'November'), (12, 'December'),
-    ]
     college = models.ForeignKey(College, on_delete=models.CASCADE, related_name='analytics')
     month = models.IntegerField(choices=MONTH_CHOICES)
-    year = models.IntegerField(default=2026)
+    year = models.IntegerField(default=get_current_year)
 
     instagram_views = models.IntegerField(default=0)
     facebook_views = models.IntegerField(default=0)
@@ -34,17 +33,18 @@ class MonthlyAnalytics(models.Model):
         ]
         verbose_name_plural = 'Monthly Analytics'
 
+    def save(self, *args, **kwargs):
+        self.total_views = self.instagram_views + self.facebook_views
+        self.total_reach = self.instagram_reach + self.facebook_reach
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.college.code} - {self.get_month_display()} {self.year}"
 
 class TopPost(models.Model):
-    PLATFORM_CHOICES = [
-        ('instagram', 'Instagram'),
-        ('facebook', 'Facebook'),
-    ]
     college = models.ForeignKey(College, on_delete=models.CASCADE, related_name='top_posts')
-    month = models.IntegerField(choices=MonthlyAnalytics.MONTH_CHOICES)
-    year = models.IntegerField(default=2026)
+    month = models.IntegerField(choices=MONTH_CHOICES)
+    year = models.IntegerField(default=get_current_year)
     platform = models.CharField(max_length=10, choices=PLATFORM_CHOICES)
     caption = models.TextField(blank=True)
     views = models.IntegerField(default=0)
