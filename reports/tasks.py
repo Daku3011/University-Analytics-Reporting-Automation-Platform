@@ -253,7 +253,7 @@ IMPORTANT RULES:
     try:
         user = User.objects.get(id=uploaded_by_id)
         uploaded_by_name = user.get_full_name() or user.username
-    except:
+    except Exception:
         uploaded_by_name = 'System'
 
     context = {
@@ -273,8 +273,8 @@ IMPORTANT RULES:
     out_path     = out_dir / out_filename
 
     try:
-        from weasyprint import HTML as WeasyprintHTML
-        WeasyprintHTML(string=html_string).write_pdf(out_path)
+        from reports.services.pdf_service import PDFService
+        PDFService.compile_html_to_pdf(html_string, out_path)
         pdf_relative = f'reports/doc_quarterly/{out_filename}'
     except Exception as e:
         print(f"WeasyPrint failed: {e}")
