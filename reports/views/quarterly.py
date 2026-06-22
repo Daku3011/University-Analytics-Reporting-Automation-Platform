@@ -14,10 +14,10 @@ from reports.services.pdf_service import PDFService
 from reports.services.gemini_service import GeminiService
 from reports.services.rate_limit_service import RateLimitService
 from su_analytics.constants import ANALYTICS_KEYS
+from accounts.decorators import role_required
 
-@login_required
+@role_required('super_admin')
 def generate_quarterly(request):
-    if request.method == 'POST':
         quarter_str = request.POST.get('quarter')
         year_str = request.POST.get('year')
         
