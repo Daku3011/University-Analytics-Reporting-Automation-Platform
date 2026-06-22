@@ -83,7 +83,10 @@ def add_event(request):
 
 @login_required
 def event_detail(request, event_id):
-    event = get_object_or_404(Event, id=event_id)
+    event = get_object_or_404(
+        Event.objects.select_related('college').prefetch_related('media'),
+        id=event_id
+    )
 
     # RBAC: college admins can only see their college's events
     user_college = get_user_college(request.user)
