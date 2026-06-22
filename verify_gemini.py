@@ -10,7 +10,7 @@ def main():
 
     client = genai.Client(api_key=api_key)
 
-    print("API Key prefix:", api_key[:10] if api_key else "None")
+    print("GEMINI_API_KEY present:", bool(api_key))
 
     # Use a small test PDF
     test_pdf = "test_doc.pdf"
