@@ -18,6 +18,7 @@ from accounts.decorators import role_required
 
 @role_required('super_admin')
 def generate_quarterly(request):
+    if request.method == 'POST':
         quarter_str = request.POST.get('quarter')
         year_str = request.POST.get('year')
         
