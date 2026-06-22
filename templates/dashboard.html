@@ -90,10 +90,13 @@
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"
-        integrity="sha384-bMhQoG0oH/5m2r+DVfCDVlNwJPQlJk4LqIwnT8xfkuhVrTaASD0J3WgYBuWoBP+"
+        integrity="sha384-b0GXujLkk9eYYSmcSfoyZbfyElGAQnDyY0skCHSG6w3JgTMFnz11ggrTAr7seu9f"
         crossorigin="anonymous"></script>
+<script id="chart-data" type="application/json">
+{{ chart_data|safe }}
+</script>
 <script>
-const chartData = {{ chart_data|safe }};
+const chartData = JSON.parse(document.getElementById('chart-data').textContent);
 
 // Respect dark mode for chart colors
 const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
