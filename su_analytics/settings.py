@@ -13,13 +13,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / '.env')
 
 # ── Security ──────────────────────────────────────────────────────────────────
-# IMPORTANT: Move SECRET_KEY to your .env file in production!
-SECRET_KEY = os.environ.get(
-    'DJANGO_SECRET_KEY',
-    'django-insecure-ie53i!u)+hx1u*z*%u&*pqx1djx&uw4x&6hy0w+r842)$ja2&&'
-)
+# SECRET_KEY MUST be set via environment variable in production.
+# The insecure fallback only works when DEBUG=True.
+_default_secret = 'django-insecure-ie53i!u)+hx1u*z*%u&*pqx1djx&uw4x&6hy0w+r842)$ja2&&'
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', _default_secret)
 
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
+
+# Safety: Refuse to start in production mode with the insecure key
+if not DEBUG and SECRET_KEY == _default_secret:
+    raise ValueError(
+        "DJANGO_SECRET_KEY must be set to a unique, unpredictable value in production. "
+        "Generate one with: python -c \"from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())\""
+    )
 
 ALLOWED_HOSTS = os.environ.get(
     'ALLOWED_HOSTS',
@@ -34,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',    # {% load humanize %} for intcomma, naturaltime, etc.
     'accounts',
     'colleges',
     'events',
@@ -80,21 +87,36 @@ LOGOUT_REDIRECT_URL = 'login'
 SESSION_COOKIE_AGE = 3600
 # Session ends when browser closes
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-# Required for cross-origin iframe (HF Spaces): SameSite=None + Secure
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SAMESITE = 'None'
-SESSION_COOKIE_SECURE = True   # SameSite=None requires Secure
+
+# Cross-origin cookies: only enable SameSite=None + Secure in production (HTTPS)
+if DEBUG:
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_SECURE = False
+else:
+    # Required for cross-origin iframe (HF Spaces): SameSite=None + Secure
+    SESSION_COOKIE_SAMESITE = 'None'
+    SESSION_COOKIE_SECURE = True
 
 # ── CSRF Security ─────────────────────────────────────────────────────────────
 CSRF_COOKIE_HTTPONLY = True
-CSRF_COOKIE_SAMESITE = 'None'
-CSRF_COOKIE_SECURE = True      # SameSite=None requires Secure
+if DEBUG:
+    CSRF_COOKIE_SAMESITE = 'Lax'
+    CSRF_COOKIE_SECURE = False
+else:
+    CSRF_COOKIE_SAMESITE = 'None'
+    CSRF_COOKIE_SECURE = True
 
 # ── Security Headers ──────────────────────────────────────────────────────────
-# X-Frame-Options intentionally NOT set — HF Spaces must embed app from different origin
-# (huggingface.co embedding dwarkesh3011-su-report-analytics.hf.space)
-SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
+
+if not DEBUG:
+    # HTTPS enforcement in production
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000       # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Trusted origins for CSRF (required for HF Spaces cross-origin requests)
 CSRF_TRUSTED_ORIGINS = [
@@ -117,17 +139,9 @@ import dj_database_url
 DATABASES = {
     'default': dj_database_url.config(
         default='sqlite:///' + str(BASE_DIR / 'db.sqlite3'),
-        conn_max_age=0,
+        conn_max_age=600,   # Reuse DB connections for 10 minutes
     )
 }
-# SQLite (for local dev without PostgreSQL):
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
-
 
 # ── Password Validation ───────────────────────────────────────────────────────
 AUTH_PASSWORD_VALIDATORS = [
@@ -152,6 +166,21 @@ MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ── Caching (Redis-backed, shared with Celery) ───────────────────────────────
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0'),
+        'OPTIONS': {
+            'db': '1',    # Use a separate Redis DB from Celery to avoid collisions
+        },
+    }
+} if not DEBUG else {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    }
+}
 
 # ── Email Configuration (email-systems skill) ─────────────────────────────────
 # Development: print emails to console
@@ -183,3 +212,46 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
+
+# ── Logging ───────────────────────────────────────────────────────────────────
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{asctime}] {levelname} {name} {module}.{funcName}:{lineno} — {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'reports': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'analytics_app': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}

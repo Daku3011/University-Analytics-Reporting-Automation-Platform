@@ -12,15 +12,18 @@ echo "Seeding colleges and demo data..."
 python manage.py seed_data
 
 # Create a default superuser if none exists
-# Credentials controlled by environment variables
+# Credentials MUST be set via environment variables — no hardcoded defaults
 echo "Checking for superuser..."
 python manage.py shell -c "
 from django.contrib.auth import get_user_model
+import os
 User = get_user_model()
-username = '${DJANGO_SUPERUSER_USERNAME:-admin}'
-password = '${DJANGO_SUPERUSER_PASSWORD:-suanalytics2026}'
-email = '${DJANGO_SUPERUSER_EMAIL:-admin@su-analytics.in}'
-if not User.objects.filter(username=username).exists():
+username = os.environ.get('DJANGO_SUPERUSER_USERNAME', 'admin')
+password = os.environ.get('DJANGO_SUPERUSER_PASSWORD', '')
+email = os.environ.get('DJANGO_SUPERUSER_EMAIL', 'admin@su-analytics.in')
+if not password:
+    print('WARNING: DJANGO_SUPERUSER_PASSWORD not set. Skipping superuser creation.')
+elif not User.objects.filter(username=username).exists():
     User.objects.create_superuser(username=username, email=email, password=password)
     print(f'Superuser created: {username}')
 else:
@@ -30,15 +33,29 @@ else:
 # ── Start Redis (required by Celery for async tasks) ────────────
 echo "Starting Redis server..."
 redis-server --daemonize yes
-# Give Redis a moment to initialize
-sleep 1
+
+# Wait for Redis to be ready before starting Celery
+echo "Waiting for Redis..."
+for i in $(seq 1 10); do
+    if redis-cli ping | grep -q PONG; then
+        echo "Redis is ready."
+        break
+    fi
+    if [ "$i" -eq 10 ]; then
+        echo "ERROR: Redis failed to start after 10 attempts."
+        exit 1
+    fi
+    sleep 1
+done
 
 # ── Start Celery worker in background ──────────────────────────
 echo "Starting Celery worker..."
 celery -A su_analytics worker --loglevel=info --concurrency=1 &
-# Track PID so we can check on it later
 CELERY_PID=$!
 echo "Celery worker started (PID: $CELERY_PID)"
+
+# Graceful shutdown: stop Celery before Gunicorn exits
+trap "echo 'Shutting down...'; kill $CELERY_PID 2>/dev/null; wait $CELERY_PID 2>/dev/null; exit 0" SIGTERM SIGINT
 
 # ── Start Gunicorn ─────────────────────────────────────────────
 echo "Starting Gunicorn server on port 7860..."

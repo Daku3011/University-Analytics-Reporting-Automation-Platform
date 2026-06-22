@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.views.decorators.http import require_POST
 from django.core.cache import cache
 from django.conf import settings
+from django.utils.http import url_has_allowed_host_and_scheme
 
 
 def login_view(request):
@@ -48,8 +49,13 @@ def login_view(request):
                 request.session.set_expiry(0)  # Expires when browser closes
 
             # Redirect to intended page (supports ?next= parameter)
+            # Secure: validate redirect target to prevent open redirect attacks
             next_url = request.GET.get('next') or request.POST.get('next', '')
-            if next_url and next_url.startswith('/'):
+            if next_url and url_has_allowed_host_and_scheme(
+                next_url,
+                allowed_hosts={request.get_host()},
+                require_https=request.is_secure(),
+            ):
                 return redirect(next_url)
             return redirect('dashboard')
 
