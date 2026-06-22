@@ -1,9 +1,14 @@
-# ── Stage: Build ─────────────────────────────────────────────────────────────
-FROM python:3.10-slim
+# ── SU Analytics Dockerfile ──────────────────────────────────────────────────
+# Two-stage build: dependencies layer (cached) + application layer (fast rebuild)
+# ─────────────────────────────────────────────────────────────────────────────
 
-# Install GTK3/Pango/Cairo (required by WeasyPrint for PDF generation)
-# plus Redis server (required by Celery for async tasks)
+# ── Stage 1: Dependencies ────────────────────────────────────────────────────
+FROM python:3.10-slim AS deps
+
+# Install system libraries required by WeasyPrint (PDF generation),
+# Redis server (Celery broker), and PostgreSQL client
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    # WeasyPrint rendering engine
     libglib2.0-0 \
     libpango-1.0-0 \
     libpangocairo-1.0-0 \
@@ -14,34 +19,46 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     shared-mime-info \
     fonts-liberation \
     fonts-dejavu-core \
+    # Redis (in-container broker for HF Spaces single-container deployment)
     redis-server \
+    # PostgreSQL
     postgresql-client \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
 WORKDIR /app
 
-# Install Python dependencies first (layer caching)
+# Install Python dependencies (cached unless requirements.txt changes)
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy project files
+# ── Stage 2: Application ─────────────────────────────────────────────────────
+FROM deps AS app
+
+WORKDIR /app
+
+# Copy application source
 COPY . .
 
-# Create necessary directories
+# Create required directories
 RUN mkdir -p /app/media/reports/monthly \
              /app/media/reports/quarterly \
+             /app/media/reports/uploaded \
              /app/static
 
-# Collect static files
-RUN python manage.py collectstatic --noinput --settings=su_analytics.settings || true
+# Collect static files into /app/staticfiles for WhiteNoise
+# Note: this runs with DEBUG=True default, which is safe for collectstatic
+RUN python manage.py collectstatic --noinput --settings=su_analytics.settings
 
-# Run migrations and create superuser on startup via entrypoint
+# Entrypoint: handles migrations, seeding, Redis, Celery, and Gunicorn startup
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 # HF Spaces runs on port 7860
 EXPOSE 7860
+
+# Health check: verify the web server is responding
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:7860/accounts/login/')" || exit 1
 
 ENTRYPOINT ["/entrypoint.sh"]
