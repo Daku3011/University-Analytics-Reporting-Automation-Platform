@@ -39,6 +39,7 @@ static_root/
 *~
 .DS_Store
 Thumbs.db
+.opencode/
 
 # ── Testing ──────────────────────────────────────────────────
 .coverage
