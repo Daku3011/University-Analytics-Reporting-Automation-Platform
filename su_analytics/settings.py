@@ -92,13 +92,13 @@ SESSION_COOKIE_HTTPONLY = True
 # Cross-origin cookies: only enable SameSite=None + Secure in production (HTTPS on HF)
 RUNNING_ON_HF = 'SPACE_ID' in os.environ
 
-if DEBUG:
-    SESSION_COOKIE_SAMESITE = 'Lax'
-    SESSION_COOKIE_SECURE = False
-elif RUNNING_ON_HF:
+if RUNNING_ON_HF:
     # Required for cross-origin iframe (HF Spaces): SameSite=None + Secure
     SESSION_COOKIE_SAMESITE = 'None'
     SESSION_COOKIE_SECURE = True
+elif DEBUG:
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_SECURE = False
 else:
     # Production settings for local testing (HTTP)
     SESSION_COOKIE_SAMESITE = 'Lax'
@@ -106,12 +106,12 @@ else:
 
 # ── CSRF Security ─────────────────────────────────────────────────────────────
 CSRF_COOKIE_HTTPONLY = True
-if DEBUG:
-    CSRF_COOKIE_SAMESITE = 'Lax'
-    CSRF_COOKIE_SECURE = False
-elif RUNNING_ON_HF:
+if RUNNING_ON_HF:
     CSRF_COOKIE_SAMESITE = 'None'
     CSRF_COOKIE_SECURE = True
+elif DEBUG:
+    CSRF_COOKIE_SAMESITE = 'Lax'
+    CSRF_COOKIE_SECURE = False
 else:
     CSRF_COOKIE_SAMESITE = 'Lax'
     CSRF_COOKIE_SECURE = False
@@ -119,13 +119,15 @@ else:
 # ── Security Headers ──────────────────────────────────────────────────────────
 SECURE_CONTENT_TYPE_NOSNIFF = True
 
-if not DEBUG and RUNNING_ON_HF:
-    # HTTPS enforcement in production (Hugging Face Spaces)
-    SECURE_SSL_REDIRECT = True
-    SECURE_HSTS_SECONDS = 31536000       # 1 year
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
+if RUNNING_ON_HF:
+    # Tell Django it's behind a secure reverse proxy (Hugging Face Spaces load balancer)
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    if not DEBUG:
+        # HTTPS enforcement in production (Hugging Face Spaces)
+        SECURE_SSL_REDIRECT = True
+        SECURE_HSTS_SECONDS = 31536000       # 1 year
+        SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+        SECURE_HSTS_PRELOAD = True
 elif not DEBUG:
     # Production settings for local testing (HTTP)
     SECURE_SSL_REDIRECT = False
