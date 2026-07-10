@@ -54,6 +54,15 @@ RUN python manage.py collectstatic --noinput --settings=su_analytics.settings
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
+# Create a non-root user with UID 1000 (standard for Hugging Face Spaces)
+RUN useradd -m -u 1000 user
+
+# Ensure user owns all application files and directories for write access (SQLite, media uploads, etc.)
+RUN chown -R user:user /app /entrypoint.sh
+
+# Switch to the non-root user
+USER user
+
 # HF Spaces runs on port 7860
 EXPOSE 7860
 
