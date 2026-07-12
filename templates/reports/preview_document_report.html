@@ -103,7 +103,7 @@
 <div class="preview-hero">
     <div>
         <h1>{{ report.title }}</h1>
-        <div class="meta">
+        <div class="meta" style="margin-bottom:10px;margin-top:5px;">
             <i class="ph ph-brain"></i>
             Q{{ report.quarter }} {{ report.year }} — {{ report.get_quarter_months }} · Uploaded {{ report.created_at|date:"d M Y, H:i" }}
         </div>
@@ -135,7 +135,7 @@
     </div>
 </div>
 
-<div class="status-pill">
+<div class="status-pill" style="margin-top:10px">
     <i class="ph ph-sparkle" style="font-size:14px;"></i>
     Condensed by Gemini AI from {{ report.uploaded_files_count }} uploaded file(s)
 </div>

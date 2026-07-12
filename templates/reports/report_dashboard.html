@@ -4,7 +4,6 @@
 
 {% block extra_css %}
 <style>
-/* ── Report Dashboard Premium Styles ── */
 .report-hero {
     background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%);
     border-radius: var(--radius-lg);
@@ -165,6 +164,21 @@
     display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;
 }
 
+#fname-1,
+#fname-2,
+#fname-3 {
+    font-size: 11.5px;
+    color: black;
+    margin-top: 1px;
+    word-break: break-word;
+}
+
+html[data-theme="dark"] #fname-1,
+html[data-theme="dark"] #fname-2,
+html[data-theme="dark"] #fname-3 {
+    color: white;
+}
+
 @keyframes barPulse { 0%,100%{opacity:.8} 50%{opacity:1} }
 @keyframes spin { to { transform: rotate(360deg); } }
 </style>
@@ -265,7 +279,7 @@
                     <label class="form-label" for="id_year_q">Year</label>
                     <input type="number" name="year" id="id_year_q" class="form-control" value="2026" min="2020" max="2030" required>
                 </div>
-                <div class="ai-hint teal">
+                <div class="ai-hint teal" id="quarterly-ai-hint">
                     <i class="ph ph-robot" style="font-size:15px;flex-shrink:0;margin-top:1px;"></i>
                     Gemini AI generates a narrative summary from your analytics data. Rate limit: 1/60s, 50/day.
                 </div>
@@ -311,30 +325,30 @@
                     </div>
                 </div>
                 <div class="upload-files-wrap">
-                    <label for="id_sf1" class="upload-zone">
+                    <label for="id_sf1" class="upload-zone" style="background:transparent;">
                         <div class="uz-icon"><i class="ph ph-file-pdf"></i></div>
                         <div style="flex:1;min-width:0;">
-                            <div class="uz-name" id="label-m1" style="color: black;">Month 1 (January)</div>
+                            <div class="uz-name" id="label-m1">Month 1 (January)</div>
                             <div class="uz-hint" id="fname-1">Click to select PDF</div>
                         </div>
                         <i class="ph ph-upload-simple" style="font-size:16px;color:#818cf8;flex-shrink:0;"></i>
                     </label>
                     <input type="file" name="source_file_1" id="id_sf1" accept=".pdf" required hidden>
 
-                    <label for="id_sf2" class="upload-zone">
+                    <label for="id_sf2" class="upload-zone" style="background:transparent;">
                         <div class="uz-icon"><i class="ph ph-file-pdf"></i></div>
                         <div style="flex:1;min-width:0;">
-                            <div class="uz-name" id="label-m2" style="color: black;">Month 2 (February)</div>
+                            <div class="uz-name" id="label-m2">Month 2 (February)</div>
                             <div class="uz-hint" id="fname-2">Click to select PDF</div>
                         </div>
                         <i class="ph ph-upload-simple" style="font-size:16px;color:#818cf8;flex-shrink:0;"></i>
                     </label>
                     <input type="file" name="source_file_2" id="id_sf2" accept=".pdf" hidden>
 
-                    <label for="id_sf3" class="upload-zone">
+                    <label for="id_sf3" class="upload-zone" style="background:transparent;">
                         <div class="uz-icon"><i class="ph ph-file-pdf"></i></div>
                         <div style="flex:1;min-width:0;">
-                            <div class="uz-name" id="label-m3" style="color: black;">Month 3 (March)</div>
+                            <div class="uz-name" id="label-m3">Month 3 (March)</div>
                             <div class="uz-hint" id="fname-3">Click to select PDF</div>
                         </div>
                         <i class="ph ph-upload-simple" style="font-size:16px;color:#818cf8;flex-shrink:0;"></i>
@@ -446,7 +460,7 @@
         {% endfor %}
     </div>
 
-    <div class="history-panel" style="border-color:#c7d2fe;">
+    <div class="history-panel">
         <div class="hp-header">
             <i class="ph ph-brain" style="color:#4f46e5;font-size:15px;"></i>
             AI Condensed Reports

@@ -302,12 +302,12 @@ body {
     border-left: 3px solid var(--accent);
     padding: 20px;
     box-shadow: var(--shadow-sm);
-    transition: box-shadow 0.2s, transform 0.2s;
+    /* transition: box-shadow 0.2s, transform 0.2s; */
 }
-.stat-card:hover {
+/* .stat-card:hover {
     box-shadow: var(--shadow);
     transform: translateY(-2px);
-}
+} */
 .stat-card.teal { border-left-color: var(--accent-2); }
 .stat-card.amber { border-left-color: var(--accent-3); }
 .stat-card.green { border-left-color: var(--success); }
