@@ -45,6 +45,10 @@
                href="{% url 'dashboard' %}">
                 <i class="ph ph-squares-four"></i> Dashboard
             </a>
+            <a class="nav-link {% if request.resolver_match.url_name == 'yearly_overview' %}active{% endif %}"
+               href="{% url 'yearly_overview' %}">
+                <i class="ph ph-calendar-blank"></i> Yearly Overview
+            </a>
 
             <span class="sidebar-section-label">Data Entry</span>
             <a class="nav-link {% if request.resolver_match.url_name == 'add_event' %}active{% endif %}"

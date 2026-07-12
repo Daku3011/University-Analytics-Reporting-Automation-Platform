@@ -359,3 +359,80 @@ def preview_extracted_data(request):
         'months': months,
         'current_year': current_year,
     })
+
+
+@login_required
+def yearly_overview(request):
+    # 1. RBAC college filtering
+    from accounts.decorators import get_user_college, college_queryset_filter
+    colleges = college_queryset_filter(College.objects.all(), request.user, college_field='pk')
+    
+    # 2. Get available years in DB
+    from django.utils import timezone
+    from reports.models import NewspaperCoverage, PressRelease
+    current_year = timezone.now().year
+    
+    # Get distinct years
+    years_set = set(
+        list(MonthlyAnalytics.objects.values_list('year', flat=True).distinct()) +
+        list(Event.objects.values_list('date__year', flat=True).distinct()) +
+        list(NewspaperCoverage.objects.values_list('year', flat=True).distinct()) +
+        list(PressRelease.objects.values_list('year', flat=True).distinct())
+    )
+    years_set.add(current_year)
+    years = sorted(list(years_set), reverse=True)
+    
+    # 3. Determine selected college
+    user_college = get_user_college(request.user)
+    if user_college:
+        selected_college = user_college
+    else:
+        college_id = request.GET.get('college')
+        if college_id:
+            selected_college = get_object_or_404(colleges, id=college_id)
+        else:
+            selected_college = colleges.first()
+            
+    # 4. Determine selected year
+    year_str = request.GET.get('year')
+    if year_str:
+        try:
+            selected_year = int(year_str)
+        except ValueError:
+            selected_year = current_year
+    else:
+        selected_year = current_year
+        
+    # 5. Fetch yearly data if college exists
+    yearly_data = {}
+    chart_data = "{}"
+    if selected_college:
+        from analytics_app.services.yearly_data import get_yearly_data
+        yearly_data = get_yearly_data(selected_college, selected_year)
+        
+        # Prepare monthly views & reach chart data
+        # Initialize all 12 months
+        monthly_stats = {name: {'views': 0, 'reach': 0} for _, name in MONTH_CHOICES}
+        month_names = dict(MONTH_CHOICES)
+        
+        for item in yearly_data['analytics']:
+            m_name = month_names.get(item.month)
+            if m_name in monthly_stats:
+                monthly_stats[m_name]['views'] = item.total_views
+                monthly_stats[m_name]['reach'] = item.total_reach
+                
+        chart_data = json.dumps({
+            'labels': list(monthly_stats.keys()),
+            'views': [v['views'] for v in monthly_stats.values()],
+            'reach': [v['reach'] for v in monthly_stats.values()],
+        })
+
+    return render(request, 'analytics_app/yearly_overview.html', {
+        'colleges': colleges if not user_college else None,  # Hide selector if locked to single college
+        'years': years,
+        'selected_college': selected_college,
+        'selected_year': selected_year,
+        'yearly_data': yearly_data,
+        'chart_data': chart_data,
+        'month_choices': MONTH_CHOICES,
+    })
