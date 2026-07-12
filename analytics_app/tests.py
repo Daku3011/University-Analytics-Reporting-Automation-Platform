@@ -121,3 +121,20 @@ class AnalyticsAppTests(TestCase):
         self.assertEqual(fb_post.caption, 'FB Top Post Caption')
         self.assertEqual(fb_post.views, 400)
         self.assertEqual(fb_post.post_link, 'https://facebook.com/1')
+
+    def test_preview_extracted_data_renders(self):
+        self.client.login(username="collegeadmin", password="password123")
+        session = self.client.session
+        session['extracted_data'] = {
+            'detected_college_id': self.college1.id,
+            'month': 6,
+            'year': 2026,
+            'analytics': {
+                'instagram_views': 100,
+            }
+        }
+        session.save()
+        
+        response = self.client.get(reverse('preview_extracted_data'))
+        self.assertEqual(response.status_code, 200)
+

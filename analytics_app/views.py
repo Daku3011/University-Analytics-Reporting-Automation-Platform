@@ -291,7 +291,7 @@ def preview_extracted_data(request):
         return redirect('extract_from_pdf')
 
     colleges = College.objects.all()
-    months = MonthlyAnalytics.MONTH_CHOICES
+    months = MONTH_CHOICES
     current_year = date.today().year
 
     college_id = data.get('detected_college_id')
