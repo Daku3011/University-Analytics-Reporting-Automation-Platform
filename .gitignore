@@ -41,6 +41,7 @@ static_root/
 Thumbs.db
 .opencode/
 .agent/
+TASK_BOARD.md
 
 # ── Testing ──────────────────────────────────────────────────
 .coverage
