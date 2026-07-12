@@ -409,16 +409,102 @@
     font-size: 14.5px;
 }
 
-#collegeSelect {
-    background : white;
-    color: black;
+.filter-select {
+    background: var(--surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border-light);
 }
 
-html[data-theme="dark"] #collegeSelect {
-    background : #201e1b;
+html[data-theme="dark"] .filter-select {
+    background: #201e1b;
     color: white;
+    border-color: #3e3b37;
 }
 
+/* ── Responsive Mobile Optimizations ────────────────────────────────── */
+@media (max-width: 768px) {
+    .college-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+        padding: 16px;
+    }
+    .college-info {
+        gap: 12px;
+    }
+    .college-logo-container {
+        width: 48px;
+        height: 48px;
+    }
+    .college-details h2 {
+        font-size: 18px;
+    }
+    .college-details p {
+        font-size: 12px;
+        flex-wrap: wrap;
+    }
+    .filter-form {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+    .filter-group {
+        width: 100%;
+    }
+    .filter-select {
+        width: 100%;
+        min-width: unset;
+    }
+    .tab-button {
+        padding: 10px 14px;
+        font-size: 13.5px;
+    }
+    .event-timeline {
+        padding-left: 16px;
+        margin-left: 6px;
+    }
+    .event-node::before {
+        left: -23px;
+    }
+    .event-card {
+        padding: 16px;
+    }
+    .event-gallery {
+        gap: 8px;
+        padding-top: 12px;
+    }
+    .event-media-item {
+        width: 76px;
+        height: 76px;
+    }
+    .table-clean th, .table-clean td {
+        padding: 8px 4px;
+        font-size: 12.5px;
+    }
+}
+
+@media (max-width: 600px) {
+    .filter-form {
+        grid-template-columns: 1fr;
+    }
+    .top-posts-grid, .newspaper-grid, .press-grid {
+        grid-template-columns: 1fr !important;
+        gap: 16px;
+    }
+    .post-image {
+        height: 160px;
+    }
+    .news-card, .press-card {
+        padding: 16px;
+    }
+    .stat-card {
+        padding: 16px;
+    }
+    .stat-number {
+        font-size: 20px !important;
+    }
+}
 {% endblock %}
 
 {% block content %}
@@ -457,7 +543,7 @@ html[data-theme="dark"] #collegeSelect {
         
         <div class="filter-group">
             <span class="filter-label">Year Selection</span>
-            <select id="collegeSelect" name="year" class="filter-select" onchange="this.form.submit()">
+            <select id="yearSelect" name="year" class="filter-select" onchange="this.form.submit()">
                 {% for y in years %}
                 <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
                 {% endfor %}

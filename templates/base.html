@@ -20,6 +20,32 @@
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
 
     <style>
+        .sidebar-close-btn {
+            background: none;
+            border: none;
+            color: var(--sidebar-text);
+            font-size: 20px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 6px;
+            border-radius: 6px;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .sidebar-close-btn:hover {
+            background-color: var(--sidebar-hover);
+            color: var(--text-primary);
+        }
+        @media (max-width: 768px) {
+            .sidebar-close-btn {
+                display: flex;
+            }
+            .sidebar-overlay {
+                backdrop-filter: blur(4px);
+                -webkit-backdrop-filter: blur(4px);
+            }
+        }
         {% block extra_css %}{% endblock %}
     </style>
 </head>
@@ -29,14 +55,18 @@
 
     <!-- ── Sidebar ───────────────────────────────────────────────── -->
     <aside class="sidebar" id="sidebar">
-        <div class="sidebar-brand">
-            <div class="sidebar-brand-icon">
-                <i class="ph ph-chart-bar" style="font-size:16px;"></i>
+        <div class="sidebar-brand" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div class="sidebar-brand-icon">
+                    <img src="{% static 'favicon.ico' %}" alt="SU Analytics Logo" style="max-width: 100%; height: auto; max-height: 90px; object-fit: contain; border-radius: 30%;">
+                </div>
+                <div class="sidebar-brand-text">
+                    <b>SU Analytics</b>
+                </div>
             </div>
-            <div class="sidebar-brand-text">
-                SU Analytics
-                <small>Sarvajanik University</small>
-            </div>
+            <button class="sidebar-close-btn" onclick="closeSidebar()" aria-label="Close sidebar">
+                <i class="ph ph-x"></i>
+            </button>
         </div>
 
         <nav class="sidebar-nav" aria-label="Main navigation">

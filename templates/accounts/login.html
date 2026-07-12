@@ -223,10 +223,9 @@
 <body>
     <div class="login-wrapper">
         <div class="login-brand">
-            <div class="login-brand-icon">
-                <i class="ph ph-chart-bar" style="font-size:22px;color:#fff;"></i>
-            </div>
-            <div class="login-brand-name">SU Analytics</div>
+            {% load static %}
+            <img src="{% static 'logo_banner.png' %}" alt="SU Analytics Banner" style="max-width: 100%; height: auto; max-height: 190px; object-fit: contain; margin-bottom: 12px;">
+            <!-- <div class="login-brand-name">SU Analytics</div> -->
             <div class="login-brand-sub">Sarvajanik University Reporting Platform</div>
         </div>
 
