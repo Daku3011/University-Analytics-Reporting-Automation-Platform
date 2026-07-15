@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+{% block title %}Annual Summary Report — {{ report.title }}{% endblock %}
+{% block topbar_title %}Annual Report Summary{% endblock %}
+
+{% block extra_css %}
+<style>
+.preview-hero {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    display: flex; align-items: flex-start; justify-content: space-between;
+    flex-wrap: wrap; gap: 16px;
+}
+.preview-hero h1 { font-size: 20px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.02em; margin-bottom: 4px; }
+.preview-hero .meta { font-size: 13px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+.preview-hero .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn-hero {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 8px 16px; border-radius: 8px;
+    font-size: 12.5px; font-weight: 600; font-family: var(--font-body);
+    cursor: pointer; border: none; text-decoration: none; transition: all 0.15s;
+}
+.btn-back { background: var(--surface-alt); color: var(--text-secondary); border: 1px solid var(--border); }
+.btn-back:hover { background: var(--border-light); color: var(--text-primary); }
+.btn-download { background: #0d9488; color: #fff; }
+.btn-download:hover { background: #0f766e; }
+
+/* Status pill */
+.status-pill {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: #f0fdfa; border: 1px solid #ccfbf1; border-radius: 20px;
+    padding: 6px 16px; font-size: 12px; color: #0d9488; font-weight: 500;
+    margin-bottom: 20px;
+}
+
+/* AI Summary Card */
+.ai-card {
+    border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--surface); box-shadow: var(--shadow-sm);
+    margin-bottom: 20px; overflow: hidden;
+    border-top: 3px solid #0d9488;
+}
+.ai-card .ai-header {
+    padding: 18px 24px; border-bottom: 1px solid var(--border-light);
+    display: flex; align-items: center; gap: 12px;
+}
+.ai-card .ai-icon {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: #f0fdfa; display: flex; align-items: center; justify-content: center;
+    color: #0d9488; font-size: 18px;
+}
+.ai-card .ai-title { font-size: 14.5px; font-weight: 600; color: var(--text-primary); }
+.ai-card .ai-subtitle { font-size: 12px; color: var(--text-muted); }
+.ai-card .ai-body {
+    padding: 24px 32px; font-size: 14px; line-height: 1.75; color: var(--text-secondary);
+}
+
+/* Injected Styles for Gemini HTML structure */
+.ai-card .ai-body h2 {
+    font-size: 16px; font-weight: 700; color: #0d9488;
+    margin: 28px 0 12px; padding-bottom: 6px; border-bottom: 1.5px solid #ccfbf1;
+    text-transform: uppercase; letter-spacing: 0.5px;
+}
+.ai-card .ai-body h3 { font-size: 14px; font-weight: 600; color: var(--text-primary); margin: 18px 0 8px; }
+.ai-card .ai-body p  { margin-bottom: 12px; }
+.ai-card .ai-body ul, .ai-card .ai-body ol { margin: 8px 0 16px 20px; }
+.ai-card .ai-body li { margin-bottom: 6px; }
+.ai-card .ai-body strong { color: var(--text-primary); }
+.ai-card .ai-body table { width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 13px; }
+.ai-card .ai-body th { background: #0d9488; color: #fff; padding: 10px 14px; text-align: left; font-weight: 600; }
+.ai-card .ai-body td { padding: 10px 14px; border-bottom: 1px solid #eee; }
+.ai-card .ai-body tr:nth-child(even) td { background: #fcfdfd; }
+
+/* Metric Grid & Cards styled in browser */
+.ai-card .ai-body .metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin: 20px 0;
+}
+.ai-card .ai-body .metric-card {
+    background: var(--surface-alt);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+    border-top: 3px solid #0d9488;
+}
+.ai-card .ai-body .metric-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-family: 'DM Mono', monospace;
+    margin-bottom: 4px;
+}
+.ai-card .ai-body .metric-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Highlight Quote */
+.ai-card .ai-body .highlight-quote {
+    background: #f0fdfa;
+    border-left: 4px solid #0d9488;
+    border-radius: 0 8px 8px 0;
+    padding: 16px 20px;
+    margin: 20px 0;
+    font-style: italic;
+    color: #0f766e;
+    font-size: 14.5px;
+    font-weight: 500;
+}
+
+/* Charts Container */
+.ai-card .ai-body .chart-container {
+    background: #ffffff;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 24px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.ai-card .ai-body .chart-container svg {
+    max-width: 100%;
+    height: auto;
+}
+
+/* PDF Card */
+.pdf-card {
+    border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--surface); box-shadow: var(--shadow-sm); overflow: hidden;
+}
+.pdf-card .pdf-header {
+    padding: 14px 20px; border-bottom: 1px solid var(--border-light);
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 600; color: var(--text-secondary);
+}
+.pdf-card iframe { display: block; width: 100%; height: 850px; border: none; }
+.pdf-card .pdf-footer {
+    padding: 10px 20px; background: var(--surface-alt);
+    font-size: 12px; color: var(--text-muted);
+    display: flex; align-items: center; gap: 6px;
+}
+.pdf-card .pdf-footer a { color: #0d9488; text-decoration: none; }
+
+.warning-box {
+    padding: 18px 20px; background: #fffbeb; border: 1px solid #fde68a;
+    border-radius: var(--radius); font-size: 13.5px; color: #92400e;
+    display: flex; gap: 12px; align-items: flex-start;
+}
+.warning-box i { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="preview-hero">
+    <div>
+        <h1>{{ report.title }}</h1>
+        <div class="meta" style="margin-bottom:10px;margin-top:5px;">
+            <i class="ph ph-calendar"></i>
+            {{ report.start_date|date:"d M Y" }} to {{ report.end_date|date:"d M Y" }} · Synthesized {{ report.created_at|date:"d M Y, H:i" }}
+        </div>
+    </div>
+    <div class="actions">
+        <a href="{% url 'annual_analyzer' %}" class="btn-hero btn-back">
+            <i class="ph ph-arrow-left"></i> Back
+        </a>
+        {% if report.output_pdf %}
+        <a href="{{ report.output_pdf.url }}" class="btn-hero btn-download" target="_blank" rel="noopener">
+            <i class="ph ph-file-arrow-down"></i> Download PDF
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="status-pill" style="margin-top:10px">
+    <i class="ph ph-sparkle" style="font-size:14px;"></i>
+    Aggregated &amp; Synthesized via Gemini Map-Reduce Architecture
+</div>
+
+{% if report.ai_summary %}
+<div class="ai-card">
+    <div class="ai-header">
+        <div class="ai-icon"><i class="ph ph-brain"></i></div>
+        <div>
+            <div class="ai-title">AI Annual Performance Summary</div>
+            <div class="ai-subtitle">Compiled across Social, Digital and Newspaper report categories · Powered by Gemini</div>
+        </div>
+    </div>
+    <div class="ai-body">
+        {{ report.ai_summary|safe }}
+    </div>
+</div>
+{% endif %}
+
+{% if report.output_pdf %}
+<div class="pdf-card">
+    <div class="pdf-header">
+        <i class="ph ph-file-pdf" style="color:#0d9488;font-size:15px;"></i>
+        Generated PDF Report
+    </div>
+    <iframe
+        src="{{ report.output_pdf.url }}"
+        title="{{ report.title }} PDF"
+    ></iframe>
+    <div class="pdf-footer">
+        <i class="ph ph-info"></i>
+        If the PDF doesn't display correctly, you can <a href="{{ report.output_pdf.url }}" target="_blank">download it directly</a>.
+    </div>
+</div>
+{% else %}
+<div class="warning-box">
+    <i class="ph ph-warning"></i>
+    <div><strong>PDF compilation skipped</strong> — WeasyPrint/GTK may not be available on this server environment.
+    The interactive dashboard above is still fully available to view and analyze.</div>
+</div>
+{% endif %}
+{% endblock %}

@@ -95,10 +95,15 @@
             </a>
 
             <span class="sidebar-section-label">Reports</span>
-            <a class="nav-link {% if request.resolver_match.url_name == 'report_dashboard' %}active{% endif %}"
+            <a class="nav-link {% if request.resolver_match.url_name == 'report_dashboard'%}active{% endif %}"
                href="{% url 'report_dashboard' %}">
                 <i class="ph ph-file-pdf"></i> Reports
             </a>
+            <a class="nav-link {% if request.resolver_match.url_name == 'annual_analyzer' %}active{% endif %}"
+               href="{% url 'annual_analyzer' %}">
+                <i class="ph ph-calendar-star"></i> Annual Analyzer
+            </a>
+
 
             <span class="sidebar-section-label">System</span>
             <a class="nav-link" href="{% url 'admin:index' %}">
