@@ -156,3 +156,72 @@ class UploadedDocumentReport(models.Model):
     def uploaded_files_count(self):
         return sum(1 for f in [self.source_file_1, self.source_file_2, self.source_file_3] if f)
 
+
+class SeminarEventReport(models.Model):
+    title = models.CharField(max_length=300, help_text="Short label/title for the seminar/event")
+    college = models.ForeignKey(College, on_delete=models.CASCADE, related_name='seminar_reports')
+    date = models.DateField(default=datetime.date.today)
+    speaker_name = models.CharField(max_length=255, blank=True, help_text="Name of the speaker/faculty")
+    
+    # Audio inputs
+    audio_file = models.FileField(
+        upload_to='reports/seminars/audio/',
+        blank=True, null=True,
+        help_text="Recorded voice audio file"
+    )
+    transcript_text = models.TextField(
+        blank=True,
+        help_text="Optional text transcript or notes of the seminar speech"
+    )
+    
+    # Optional supporting documents (PDFs)
+    document_file_1 = models.FileField(
+        upload_to='reports/seminars/docs/',
+        blank=True, null=True,
+        help_text="Supporting document 1 (PDF)"
+    )
+    document_file_2 = models.FileField(
+        upload_to='reports/seminars/docs/',
+        blank=True, null=True,
+        help_text="Supporting document 2 (PDF)"
+    )
+    document_file_3 = models.FileField(
+        upload_to='reports/seminars/docs/',
+        blank=True, null=True,
+        help_text="Supporting document 3 (PDF)"
+    )
+    
+    # Social media mentions/posts text
+    social_media_posts = models.TextField(
+        blank=True,
+        help_text="Social media post contents, notes, or links"
+    )
+    
+    # Photographs of the event
+    photo_1 = models.ImageField(upload_to='reports/seminars/photos/', blank=True, null=True)
+    photo_2 = models.ImageField(upload_to='reports/seminars/photos/', blank=True, null=True)
+    photo_3 = models.ImageField(upload_to='reports/seminars/photos/', blank=True, null=True)
+    photo_4 = models.ImageField(upload_to='reports/seminars/photos/', blank=True, null=True)
+    photo_5 = models.ImageField(upload_to='reports/seminars/photos/', blank=True, null=True)
+    
+    # Outputs
+    ai_summary = models.TextField(blank=True, help_text="Gemini-generated HTML report summary")
+    output_pdf = models.FileField(
+        upload_to='reports/seminars/pdf/',
+        blank=True, null=True,
+        help_text="Generated PDF report"
+    )
+    uploaded_by = models.ForeignKey(
+        'auth.User', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='seminar_reports'
+    )
+    
+    status = models.CharField(max_length=20, default='pending')  # pending, processing, success, failed
+    error_message = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        
+    def __str__(self):
+        return f"{self.title} - {self.speaker_name or 'No Speaker'} ({self.date})"

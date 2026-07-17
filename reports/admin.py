@@ -1,5 +1,8 @@
 from django.contrib import admin
-from .models import MonthlyReport, QuarterlyReport, NewspaperCoverage, ChannelCoverage, PressRelease, UploadedDocumentReport
+from .models import (
+    MonthlyReport, QuarterlyReport, NewspaperCoverage, ChannelCoverage,
+    PressRelease, UploadedDocumentReport, SeminarEventReport
+)
 
 @admin.register(MonthlyReport)
 class MonthlyReportAdmin(admin.ModelAdmin):
@@ -30,3 +33,11 @@ class UploadedDocumentReportAdmin(admin.ModelAdmin):
     list_filter = ['quarter', 'year']
     search_fields = ['title']
     readonly_fields = ['created_at']
+
+@admin.register(SeminarEventReport)
+class SeminarEventReportAdmin(admin.ModelAdmin):
+    list_display = ['title', 'college', 'date', 'speaker_name', 'uploaded_by', 'status', 'created_at']
+    list_filter = ['college', 'date', 'status']
+    search_fields = ['title', 'speaker_name']
+    readonly_fields = ['created_at']
+
