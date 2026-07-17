@@ -13,4 +13,11 @@ urlpatterns = [
     path('processing/<str:task_id>/', views.document_report_processing, name='document_report_processing'),
     path('processing/status/<str:task_id>/', views.check_task_status, name='check_task_status'),
     path('compare/', views.compare_reports, name='compare_reports'),
+
+    # Seminar and Event Analyzer routes
+    path('seminar/', views.seminar_dashboard, name='seminar_dashboard'),
+    path('seminar/create/', views.create_seminar_report, name='create_seminar_report'),
+    path('seminar/processing/<str:task_id>/', views.seminar_report_processing, name='seminar_report_processing'),
+    path('seminar/processing/status/<str:task_id>/', views.check_seminar_task_status, name='check_seminar_task_status'),
+    path('seminar/preview/<int:report_id>/', views.preview_seminar_report, name='preview_seminar_report'),
 ]
