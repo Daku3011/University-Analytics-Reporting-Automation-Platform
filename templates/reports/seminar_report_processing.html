@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Analyzing Seminar | SU Analytics{% endblock %}
+{% block topbar_title %}Analyzing Seminar{% endblock %}
+
+{% block extra_css %}
+<style>
+.processing-page {
+    display: flex; align-items: center; justify-content: center;
+    min-height: calc(100vh - 140px);
+}
+.processing-card {
+    max-width: 520px; width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    padding: 48px 40px 40px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+.processing-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, #4f46e5, #7c3aed, #a78bfa, #4f46e5);
+    background-size: 300% 100%;
+    animation: shimmer 2s ease-in-out infinite;
+}
+@keyframes shimmer {
+    0% { background-position: 100% 0; }
+    100% { background-position: -100% 0; }
+}
+
+/* Animated orb */
+.orb-container {
+    width: 80px; height: 80px;
+    margin: 0 auto 24px;
+    position: relative;
+}
+.orb {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+    display: flex; align-items: center; justify-content: center;
+    animation: orbPulse 2.5s ease-in-out infinite;
+}
+.orb i { font-size: 32px; color: #4f46e5; }
+.orb-ring {
+    position: absolute; top: -6px; left: -6px;
+    width: 92px; height: 92px;
+    border: 2px solid transparent;
+    border-top-color: #4f46e5;
+    border-right-color: #818cf8;
+    border-radius: 50%;
+    animation: orbSpin 1.5s linear infinite;
+}
+@keyframes orbPulse {
+    0%,100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(79,70,229,0.15); }
+    50% { transform: scale(1.04); box-shadow: 0 0 20px 8px rgba(79,70,229,0.1); }
+}
+@keyframes orbSpin { to { transform: rotate(360deg); } }
+
+.processing-card h2 {
+    font-size: 18px; font-weight: 700; color: var(--text-primary);
+    margin-bottom: 8px; letter-spacing: -0.02em;
+}
+.processing-card .desc {
+    font-size: 13.5px; color: var(--text-muted); line-height: 1.6;
+    margin-bottom: 28px; max-width: 400px; margin-left: auto; margin-right: auto;
+}
+
+/* Progress bar */
+.progress-track {
+    width: 100%; height: 6px;
+    background: var(--surface-alt); border: 1px solid var(--border-light);
+    border-radius: 9999px; overflow: hidden;
+    margin-bottom: 12px;
+}
+.progress-fill {
+    height: 100%; border-radius: 9999px;
+    background: linear-gradient(90deg, #4f46e5, #7c3aed);
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: barPulse 2s infinite;
+}
+@keyframes barPulse { 0%,100%{opacity:.85} 50%{opacity:1} }
+
+#status-message {
+    font-size: 13px; font-weight: 500; color: #4f46e5;
+    min-height: 20px;
+}
+
+/* Steps indicator */
+.steps {
+    display: flex; flex-direction: column; gap: 0;
+    margin-top: 24px; text-align: left;
+    border-top: 1px solid var(--border-light);
+    padding-top: 20px;
+}
+.step {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 0; font-size: 12.5px; color: var(--text-muted);
+    transition: color 0.3s;
+}
+.step.active { color: #4f46e5; font-weight: 500; }
+.step.done   { color: var(--success); }
+.step .step-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--border); flex-shrink: 0;
+    transition: background 0.3s, box-shadow 0.3s;
+}
+.step.active .step-dot { background: #4f46e5; box-shadow: 0 0 0 3px rgba(79,70,229,0.15); }
+.step.done .step-dot   { background: var(--success); }
+
+/* Error state */
+.error-box {
+    margin-top: 20px; padding: 14px 16px;
+    background: #fdf2f2; border: 1px solid #fecaca;
+    border-radius: var(--radius-sm);
+    font-size: 12.5px; color: #b91c1c; text-align: left;
+    display: none;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="processing-page">
+    <div class="processing-card">
+        <div class="orb-container">
+            <div class="orb"><i class="ph ph-microphone"></i></div>
+            <div class="orb-ring"></div>
+        </div>
+
+        <h2>Gemini is Analyzing the Seminar</h2>
+        <p class="desc">Gemini AI is transcribing the voice recording, evaluating documents, reading photograph evidence, and drafting recommendations. This may take a few minutes — please don't close this window.</p>
+
+        <div class="progress-track">
+            <div id="progress-bar" class="progress-fill" style="width:0%;"></div>
+        </div>
+        <div id="status-message">Initializing…</div>
+
+        <div class="steps">
+            <div class="step active" id="step-1">
+                <span class="step-dot"></span> Uploading audio & photographs to Gemini
+            </div>
+            <div class="step" id="step-2">
+                <span class="step-dot"></span> Analyzing speech transcripts and documents
+            </div>
+            <div class="step" id="step-3">
+                <span class="step-dot"></span> Evaluating photographic evidence
+            </div>
+            <div class="step" id="step-4">
+                <span class="step-dot"></span> Compiling WeasyPrint PDF report
+            </div>
+        </div>
+
+        <div class="error-box" id="error-box"></div>
+    </div>
+</div>
+
+<script>
+    const taskId = '{{ task_id }}';
+    const statusUrl = "{% url 'check_seminar_task_status' task_id=task_id %}";
+
+    let currentProgress = 5;
+    const progressBar = document.getElementById('progress-bar');
+    const statusMessage = document.getElementById('status-message');
+    const errorBox = document.getElementById('error-box');
+    const steps = [
+        document.getElementById('step-1'),
+        document.getElementById('step-2'),
+        document.getElementById('step-3'),
+        document.getElementById('step-4'),
+    ];
+
+    function updateSteps(progress) {
+        const thresholds = [0, 25, 55, 85];
+        steps.forEach((s, i) => {
+            s.classList.remove('active', 'done');
+            if (progress >= thresholds[i + 1] || (i === 3 && progress >= 95)) {
+                s.classList.add('done');
+            } else if (progress >= thresholds[i]) {
+                s.classList.add('active');
+            }
+        });
+    }
+
+    function pollStatus() {
+        fetch(statusUrl)
+            .then(r => r.json())
+            .then(data => {
+                if (data.state === 'SUCCESS') {
+                    progressBar.style.width = '100%';
+                    statusMessage.textContent = 'Report compiled! Redirecting…';
+                    steps.forEach(s => { s.classList.remove('active'); s.classList.add('done'); });
+                    setTimeout(() => { window.location.href = data.redirect_url; }, 1000);
+                }
+                else if (data.state === 'FAILURE') {
+                    progressBar.style.background = '#ef4444';
+                    statusMessage.style.color = '#ef4444';
+                    statusMessage.textContent = 'Error: ' + data.message;
+                    errorBox.style.display = 'block';
+                    errorBox.textContent = data.error || 'An unexpected error occurred during processing.';
+                    document.querySelector('.orb').style.background = 'linear-gradient(135deg,#fef2f2,#fee2e2)';
+                    document.querySelector('.orb i').style.color = '#ef4444';
+                    document.querySelector('.orb-ring').style.animationPlayState = 'paused';
+                }
+                else {
+                    if (data.message) statusMessage.textContent = data.message;
+                    if (currentProgress < 90) {
+                        currentProgress += (90 - currentProgress) * 0.05;
+                        progressBar.style.width = currentProgress + '%';
+                        updateSteps(currentProgress);
+                    }
+                    setTimeout(pollStatus, 2000);
+                }
+            })
+            .catch(() => {
+                statusMessage.textContent = 'Network error. Retrying…';
+                setTimeout(pollStatus, 5000);
+            });
+    }
+
+    setTimeout(pollStatus, 1000);
+</script>
+{% endblock %}

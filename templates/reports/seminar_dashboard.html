@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+{% block title %}Seminar Analyzer — Dashboard{% endblock %}
+{% block topbar_title %}Seminar Analyzer{% endblock %}
+
+{% block extra_css %}
+<style>
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+.dashboard-header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+.dashboard-header p {
+    font-size: 13.5px;
+    color: var(--text-secondary);
+    margin: 0;
+}
+.btn-create {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    background: #4f46e5;
+    color: #fff;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color 0.15s, transform 0.1s;
+    cursor: pointer;
+    border: none;
+}
+.btn-create:hover {
+    background: #4338ca;
+}
+.btn-create:active {
+    transform: scale(0.98);
+}
+
+.report-grid {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+}
+
+.table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.report-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+}
+
+.report-table th {
+    background: var(--surface-alt);
+    color: var(--text-secondary);
+    font-weight: 600;
+    padding: 14px 20px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+
+.report-table td {
+    padding: 14px 20px;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border-light);
+}
+
+.report-table tr:hover td {
+    background: rgba(79, 70, 229, 0.02);
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+.badge-success { background: #e6f4ea; color: #137333; }
+.badge-warning { background: #fef7e0; color: #b06000; animation: pulse-warning 1.8s infinite ease-in-out; }
+.badge-danger { background: #fce8e6; color: #c5221f; }
+
+@keyframes pulse-warning {
+    0% { opacity: 1; }
+    50% { opacity: 0.6; }
+    100% { opacity: 1; }
+}
+
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    color: var(--text-secondary);
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s;
+}
+.action-btn:hover {
+    color: #4f46e5;
+    border-color: #c7d2fe;
+    background: #eef2ff;
+}
+
+.empty-state {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--text-muted);
+}
+.empty-state-icon {
+    font-size: 48px;
+    color: var(--border-dark);
+    margin-bottom: 16px;
+}
+.empty-state h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+}
+.empty-state p {
+    font-size: 13px;
+    max-width: 320px;
+    margin: 0 auto 20px;
+    line-height: 1.5;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <div>
+        <h1>Seminar & Event Analyzer</h1>
+        <p style="margin : 10px">Record speeches live and synthesize multimodal event feedback via Gemini AI</p>
+    </div>
+    <a href="{% url 'create_seminar_report' %}" style="margin : 10px" class="btn-create">
+        <i class="ph ph-microphone"></i> Record New Seminar
+    </a>
+</div>
+
+<div class="report-grid">
+    {% if reports %}
+    <div class="table-wrapper">
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>College</th>
+                    <th>Speaker</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Uploaded By</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in reports %}
+                <tr>
+                    <td><strong>{{ r.title }}</strong></td>
+                    <td>{{ r.college.code }}</td>
+                    <td>{{ r.speaker_name|default:"—" }}</td>
+                    <td>{{ r.date|date:"d M Y" }}</td>
+                    <td>
+                        {% if r.status == 'success' %}
+                        <span class="badge badge-success"><i class="ph ph-check-circle"></i> Success</span>
+                        {% elif r.status == 'processing' or r.status == 'pending' %}
+                        <span class="badge badge-warning"><i class="ph ph-clock"></i> Processing</span>
+                        {% else %}
+                        <span class="badge badge-danger"><i class="ph ph-x-circle"></i> Failed</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ r.uploaded_by.username }}</td>
+                    <td style="text-align: right;">
+                        <div style="display:inline-flex; gap:6px;">
+                            {% if r.status == 'success' %}
+                            <a href="{% url 'preview_seminar_report' r.id %}" class="action-btn" title="Preview Report">
+                                <i class="ph ph-eye"></i>
+                            </a>
+                            {% if r.output_pdf %}
+                            <a href="{{ r.output_pdf.url }}" class="action-btn" target="_blank" title="Download PDF">
+                                <i class="ph ph-file-pdf"></i>
+                            </a>
+                            {% endif %}
+                            {% elif r.status == 'processing' %}
+                            <a href="{% url 'seminar_report_processing' r.id %}" class="action-btn" title="View Processing">
+                                <i class="ph ph-arrow-clockwise"></i>
+                            </a>
+                            {% else %}
+                            <a href="{% url 'create_seminar_report' %}" class="action-btn" title="Retry / Re-create">
+                                <i class="ph ph-arrows-counter-clockwise"></i>
+                            </a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon"><i class="ph ph-waveform"></i></div>
+        <h3>No Seminar Reports</h3>
+        <p>Capture speech audio, documents, and event photos to generate a unified intelligence assessment.</p>
+        <a href="{% url 'create_seminar_report' %}" class="btn-create" style="padding: 8px 16px; font-size:12.5px;">
+            <i class="ph ph-microphone"></i> Start Recording
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

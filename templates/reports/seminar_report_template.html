@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>{{ report.title }} — Seminar Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
+
+@page {
+    size: A4;
+    margin: 20mm 15mm 20mm 15mm;
+    @bottom-right {
+        content: "Page " counter(page) " of " counter(pages);
+        font-family: 'Outfit', sans-serif;
+        font-size: 8pt;
+        color: #94a3b8;
+        font-weight: 500;
+    }
+    @bottom-left {
+        content: "Sarvajanik University • {{ report.college.code }} • Seminar Impact Report";
+        font-family: 'Outfit', sans-serif;
+        font-size: 8pt;
+        color: #94a3b8;
+        font-weight: 500;
+    }
+}
+@page :first {
+    margin: 0;
+    @bottom-right { content: normal; }
+    @bottom-left { content: normal; }
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #334155;
+    background: #ffffff;
+    line-height: 1.7;
+    font-size: 11pt;
+    -webkit-print-color-adjust: exact;
+}
+
+/* ========== COVER PAGE ========== */
+.cover {
+    width: 210mm;
+    height: 297mm;
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+    position: relative;
+    page-break-after: always;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    overflow: hidden;
+}
+.cover::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: 
+        radial-gradient(circle at 15% 20%, rgba(99, 102, 241, 0.2) 0%, transparent 60%),
+        radial-gradient(circle at 85% 80%, rgba(6, 182, 212, 0.15) 0%, transparent 60%);
+    z-index: 1;
+}
+.cover .grid-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    background-size: 24px 24px;
+    z-index: 2;
+}
+.cover .top-glow {
+    position: absolute;
+    top: 0;
+    width: 100%;
+    height: 6px;
+    background: linear-gradient(90deg, #6366f1, #06b6d4, #8b5cf6, #6366f1);
+    z-index: 3;
+}
+.cover .content-wrapper {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 45px;
+}
+.cover .brand {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    font-family: 'Outfit', sans-serif;
+}
+.cover .report-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 10px;
+    color: #818cf8;
+    margin-bottom: 25px;
+    text-transform: uppercase;
+    font-family: 'Outfit', sans-serif;
+}
+.cover h1 {
+    font-size: 32pt;
+    color: #ffffff;
+    margin: 0;
+    font-weight: 300;
+    letter-spacing: 2px;
+    line-height: 1.2;
+    font-family: 'Outfit', sans-serif;
+    text-transform: uppercase;
+}
+.cover h1 strong {
+    font-weight: 800;
+    color: #818cf8;
+}
+.cover .speaker-label {
+    font-size: 16pt;
+    color: #06b6d4;
+    margin: 25px 0 10px;
+    font-weight: 600;
+    font-family: 'Outfit', sans-serif;
+}
+.cover .date-label {
+    font-size: 13pt;
+    color: rgba(255, 255, 255, 0.75);
+    letter-spacing: 1px;
+    font-weight: 500;
+    margin-bottom: 35px;
+    font-family: 'Outfit', sans-serif;
+}
+.cover .divider-line {
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, #6366f1, #06b6d4);
+    border-radius: 2px;
+    margin: 0 auto 35px;
+}
+.cover .presented-by {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 500;
+}
+
+/* ========== CONTENT PAGES & SECTIONS ========== */
+.content {
+    page-break-after: always;
+    position: relative;
+}
+.content:last-child {
+    page-break-after: avoid;
+}
+
+.ai-badge {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid #6366f1;
+    border-radius: 6px;
+    padding: 10px 16px;
+    font-size: 10pt;
+    color: #4f46e5;
+    font-weight: 600;
+    margin-bottom: 25px;
+    display: inline-block;
+    font-family: 'Outfit', sans-serif;
+}
+
+.content h2 {
+    font-size: 15pt;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 25px 0 12px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid #f1f5f9;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-family: 'Outfit', sans-serif;
+}
+.content h3 {
+    font-size: 12pt;
+    font-weight: 600;
+    color: #1e1b4b;
+    margin: 18px 0 8px;
+    font-family: 'Outfit', sans-serif;
+}
+.content p {
+    margin-bottom: 12px;
+    color: #334155;
+    line-height: 1.7;
+}
+.content ul, .content ol {
+    margin: 10px 0 16px 20px;
+}
+.content li {
+    margin-bottom: 6px;
+    color: #334155;
+    line-height: 1.6;
+}
+.content strong {
+    color: #0f172a;
+    font-weight: 700;
+}
+
+.highlight-quote {
+    background: #faf5ff;
+    border-left: 4px solid #a855f7;
+    border-radius: 0 6px 6px 0;
+    padding: 14px 18px;
+    margin: 16px 0;
+    font-style: italic;
+    color: #581c87;
+    line-height: 1.6;
+}
+
+.metric-grid {
+    display: table;
+    width: 100%;
+    margin: 15px 0;
+    border-spacing: 10px 0;
+}
+.metric-card {
+    display: table-cell;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 14px;
+    text-align: center;
+    width: 33%;
+}
+.metric-value {
+    font-size: 18pt;
+    font-weight: 700;
+    color: #6366f1;
+    font-family: 'Outfit', sans-serif;
+    margin-bottom: 4px;
+}
+.metric-label {
+    font-size: 9pt;
+    color: #64748b;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+/* Tables styling */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 10pt;
+}
+th {
+    background: #6366f1;
+    color: #ffffff;
+    padding: 8px 12px;
+    text-align: left;
+    font-weight: 600;
+    border: 1px solid #6366f1;
+}
+td {
+    padding: 8px 12px;
+    border: 1px solid #e2e8f0;
+}
+tr:nth-child(even) td {
+    background: #f8fafc;
+}
+
+/* Photographs appendix */
+.photo-gallery {
+    margin-top: 20px;
+}
+.photo-container {
+    width: 100%;
+    margin-bottom: 25px;
+    page-break-inside: avoid;
+    text-align: center;
+}
+.photo-container img {
+    max-width: 100%;
+    max-height: 120mm;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+}
+.photo-caption {
+    font-size: 9.5pt;
+    color: #64748b;
+    margin-top: 8px;
+    font-style: italic;
+}
+.photo-placeholder {
+    width: 100%;
+    height: 70mm;
+    border: 2px dashed #cbd5e1;
+    border-radius: 8px;
+    background: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    color: #94a3b8;
+}
+.photo-placeholder-label {
+    font-size: 11pt;
+    font-weight: 600;
+    color: #94a3b8;
+    margin-bottom: 6px;
+    font-family: 'Outfit', sans-serif;
+}
+.photo-placeholder-sub {
+    font-size: 9pt;
+    color: #cbd5e1;
+}
+</style>
+</head>
+<body>
+
+<!-- ========== COVER PAGE ========== -->
+<div class="cover">
+    <div class="grid-overlay"></div>
+    <div class="top-glow"></div>
+    <div class="content-wrapper">
+        <div class="brand">Sarvajanik University</div>
+        <div class="report-label">Seminar Analysis & Impact Assessment</div>
+        <h1><strong>{{ report.title }}</strong></h1>
+        {% if report.speaker_name %}
+        <div class="speaker-label">Presented by: {{ report.speaker_name }}</div>
+        {% endif %}
+        <div class="date-label">{{ report.date|date:"d F Y" }}</div>
+        <div class="divider-line"></div>
+        <div class="presented-by">Synthesized via Gemini Multimodal AI • Prepared by: {{ uploaded_by }}</div>
+    </div>
+</div>
+
+<!-- ========== CONTENT PAGES ========== -->
+<div class="content">
+    <div class="ai-badge">
+        ✦ Multimodal Analysis Report generated by Gemini AI
+    </div>
+
+    {{ ai_summary|safe }}
+</div>
+
+<!-- ========== APPENDIX: PHOTO EVIDENCE ========== -->
+<div class="content" style="page-break-before: always;">
+    <h2>Appendix: Photographic Evidence</h2>
+    <p style="margin-bottom:20px;color:#64748b;">Visual documentation captured from the seminar environment during the presentation, speaker address, and audience segments.</p>
+    
+    {% if photo_paths %}
+    <div class="photo-gallery">
+        {% for path in photo_paths %}
+        <div class="photo-container">
+            <img src="file:///{{ path }}" alt="Event Photograph {{ forloop.counter }}">
+            <div class="photo-caption">Figure {{ forloop.counter }}: Event photographic log — visual verification evidence from the seminar.</div>
+        </div>
+        {% endfor %}
+        
+        {% comment %}If fewer than 5 photos, add placeholders for remaining slots{% endcomment %}
+        {% with filled=photo_paths|length %}
+        {% if filled < 5 %}
+        <p style="margin-top:20px; font-size:10pt; color:#94a3b8; font-style:italic;">{{ 5|add:"-"|add:filled }} additional photograph slot(s) available. Upload more event photos to complete the visual record.</p>
+        {% endif %}
+        {% endwith %}
+    </div>
+    {% else %}
+    <!-- No photographs uploaded — show placeholder grid -->
+    <p style="margin-bottom:20px; color:#64748b;">No photographs were uploaded for this event. The spaces below are reserved for event photographs to be added by the reporting administrator.</p>
+    <div class="photo-gallery">
+        {% for i in "12345" %}
+        <div class="photo-container">
+            <div class="photo-placeholder">
+                <div class="photo-placeholder-label">📷 Photo {{ forloop.counter }}</div>
+                <div class="photo-placeholder-sub">Photograph to be added by event administrator</div>
+            </div>
+            <div class="photo-caption">Figure {{ forloop.counter }}: [Placeholder] — Upload event photograph to include visual evidence.</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+</body>
+</html>

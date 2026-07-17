@@ -99,6 +99,10 @@
                href="{% url 'report_dashboard' %}">
                 <i class="ph ph-file-pdf"></i> Reports
             </a>
+            <a class="nav-link {% if request.resolver_match.url_name == 'seminar_dashboard' or request.resolver_match.url_name == 'create_seminar_report' or request.resolver_match.url_name == 'preview_seminar_report' %}active{% endif %}"
+               href="{% url 'seminar_dashboard' %}">
+                <i class="ph ph-microphone"></i> Seminar Analyzer
+            </a>
 
             <span class="sidebar-section-label">System</span>
             <a class="nav-link" href="{% url 'admin:index' %}">
