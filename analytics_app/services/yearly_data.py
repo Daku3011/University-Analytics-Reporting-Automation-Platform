@@ -15,8 +15,13 @@ def get_yearly_data(college, year):
     Returns:
         dict: Aggregated database objects.
     """
-    # 1. Fetch monthly analytics for the year
-    analytics = MonthlyAnalytics.objects.filter(college=college, year=year).order_by('month')
+    # 1. Fetch monthly analytics for the year — institute scope only.
+    # Department/programme breakdown rows are tracked separately (#4) and
+    # must not inflate institute totals.
+    analytics = MonthlyAnalytics.objects.filter(
+        college=college, year=year,
+        department__isnull=True, programme__isnull=True,
+    ).order_by('month')
     
     # 2. Sum up total views, reach, etc.
     totals = analytics.aggregate(

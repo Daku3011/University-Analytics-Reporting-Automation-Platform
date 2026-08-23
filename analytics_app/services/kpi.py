@@ -20,12 +20,18 @@ def get_kpi_rows(college=None, year=None):
 
     rows = []
     for t in target_qs:
-        # Aggregate the actual metric value across the matching scope
+        # Aggregate the actual metric value across the matching scope.
+        # College-scope targets must exclude department/programme breakdown
+        # rows — otherwise drill-down entry (#4) silently inflates actuals.
         filters = {'college': t.college, 'year': t.year}
         if t.department_id:
             filters['department'] = t.department
+        else:
+            filters['department__isnull'] = True
         if t.programme_id:
             filters['programme'] = t.programme
+        else:
+            filters['programme__isnull'] = True
         agg = MonthlyAnalytics.objects.filter(**filters).aggregate(total=Sum(t.metric))
         actual = agg['total'] or 0
         target_value = t.target_value

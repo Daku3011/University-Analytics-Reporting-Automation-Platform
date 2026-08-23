@@ -199,7 +199,8 @@ class Command(BaseCommand):
                     status = {1: 'verified', 2: 'submitted'}.get(
                         a['month'], MARCH_STATUS_CYCLE[idx % len(MARCH_STATUS_CYCLE)])
                 MonthlyAnalytics.objects.update_or_create(
-                    college=c_obj, month=a["month"], year=a["year"],
+                    college=c_obj, department=None, programme=None,
+                    month=a["month"], year=a["year"],
                     defaults={
                         "instagram_views": int(a["ig_views"] * mult),
                         "facebook_views": int(a["fb_views"] * mult),
@@ -341,6 +342,13 @@ class Command(BaseCommand):
                 placements=p["placements"],
                 potential_reach=p["reach"],
             )
+
+        # ── Automated alerts (#6): populate the Alert Center from fresh data ──
+        from analytics_app.services.alert_engine import run_alert_scan
+        summary = run_alert_scan()
+        self.stdout.write(
+            f"Alert scan: {summary['created']} created, {summary['updated']} refreshed, "
+            f"{summary['resolved']} auto-resolved, {summary['open_total']} open")
 
         self.stdout.write(self.style.SUCCESS(
             f"Seed data loaded: {len(COLLEGES)} colleges, "
