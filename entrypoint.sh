@@ -30,7 +30,11 @@ else:
 
 # ── Start Redis (required by Celery for async tasks) ────────────
 echo "Starting Redis server..."
-redis-server --daemonize yes
+redis-server \
+    --daemonize yes \
+    --pidfile /tmp/redis.pid \
+    --logfile /tmp/redis.log \
+    --dir /tmp
 
 # Wait for Redis to be ready before starting Celery
 echo "Waiting for Redis..."

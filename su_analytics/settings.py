@@ -29,7 +29,7 @@ if not DEBUG and SECRET_KEY == _default_secret:
 
 ALLOWED_HOSTS = os.environ.get(
     'ALLOWED_HOSTS',
-    '127.0.0.1,localhost,.hf.space,.huggingface.co'
+    '127.0.0.1,localhost,.hf.space,.huggingface.co,.render'
 ).split(',')
 
 # ── Application definition ────────────────────────────────────────────────────

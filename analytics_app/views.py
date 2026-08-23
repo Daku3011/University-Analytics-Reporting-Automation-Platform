@@ -5,10 +5,12 @@ import time
 from pathlib import Path
 from datetime import date
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import HttpResponseForbidden
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.conf import settings
-from .models import MonthlyAnalytics, TopPost
+from accounts.decorators import role_required
+from .models import MonthlyAnalytics, TopPost, STATUS_CHOICES
 from colleges.models import College
 from events.models import Event
 from su_analytics.constants import MONTH_CHOICES
@@ -427,6 +429,20 @@ def yearly_overview(request):
             'reach': [v['reach'] for v in monthly_stats.values()],
         })
 
+    # ── Submission status summary (#2) ──────────────────────────────
+    profile = getattr(request.user, 'profile', None)
+    can_manage_status = request.user.is_superuser or (profile and profile.role in ('super_admin', 'college_admin'))
+    status_summary = []
+    if selected_college:
+        from django.db.models import Count
+        counts = {
+            row['status']: row['c']
+            for row in MonthlyAnalytics.objects.filter(college=selected_college, year=selected_year)
+            .values('status').annotate(c=Count('id'))
+        }
+        for s_val, s_label in STATUS_CHOICES:
+            status_summary.append((s_val, s_label, counts.get(s_val, 0)))
+
     return render(request, 'analytics_app/yearly_overview.html', {
         'colleges': colleges if not user_college else None,  # Hide selector if locked to single college
         'years': years,
@@ -435,4 +451,226 @@ def yearly_overview(request):
         'yearly_data': yearly_data,
         'chart_data': chart_data,
         'month_choices': MONTH_CHOICES,
+        'status_summary': status_summary,
+        'status_choices': STATUS_CHOICES,
+        'can_manage_status': can_manage_status,
     })
+
+
+@role_required('super_admin', 'college_admin')
+def update_status(request, pk):
+    """Update the submission status of a monthly analytics record (#2)."""
+    from accounts.decorators import get_user_college
+    from django.utils import timezone
+
+    record = get_object_or_404(MonthlyAnalytics, pk=pk)
+
+    # College admins may only manage records for their own college
+    user_college = get_user_college(request.user)
+    if user_college and record.college_id != user_college.id:
+        return HttpResponseForbidden(
+            '<h2>403 Forbidden</h2><p>You can only manage records for your own college.</p>'
+        )
+
+    if request.method == 'POST':
+        new_status = request.POST.get('status')
+        valid = dict(STATUS_CHOICES)
+        if new_status in valid:
+            record.status = new_status
+            now = timezone.now()
+            if new_status == 'submitted':
+                record.submitted_by = request.user
+                record.submitted_at = now
+            elif new_status == 'verified':
+                record.verified_by = request.user
+                record.verified_at = now
+            record.save()
+            messages.success(
+                request,
+                f'Status for {record.college.code} — {record.get_month_display()} {record.year} '
+                f'set to {valid[new_status]}.'
+            )
+        else:
+            messages.error(request, 'Invalid status value.')
+
+    params = []
+    if not user_college:
+        params.append(f'college={record.college_id}')
+    params.append(f'year={record.year}')
+    return redirect('yearly_overview' + ('?' + '&'.join(params) if params else ''))
+
+
+@login_required
+def kpi_gap_view(request):
+    """Consolidated KPI/targets gap view: actual vs target per KPI (#1)."""
+    from accounts.decorators import get_user_college, college_queryset_filter
+    from django.db.models import Sum
+    from django.utils import timezone
+
+    colleges = college_queryset_filter(College.objects.all(), request.user, college_field='pk')
+    current_year = timezone.now().year
+
+    user_college = get_user_college(request.user)
+
+    # Years available from targets + analytics
+    years_set = set(
+        list(KpiTarget.objects.values_list('year', flat=True).distinct()) +
+        list(MonthlyAnalytics.objects.values_list('year', flat=True).distinct())
+    )
+    years_set.add(current_year)
+    years = sorted(list(years_set), reverse=True)
+
+    # Selected college (college_admin locked to own college)
+    if user_college:
+        selected_college = user_college
+    else:
+        college_id = request.GET.get('college')
+        selected_college = (
+            get_object_or_404(colleges, id=college_id) if college_id
+            else colleges.first()
+        )
+
+    # Selected year
+    year_str = request.GET.get('year')
+    try:
+        selected_year = int(year_str) if year_str else current_year
+    except ValueError:
+        selected_year = current_year
+
+    rows = []
+    if selected_college:
+        targets = KpiTarget.objects.filter(
+            college=selected_college, year=selected_year
+        ).select_related('department', 'programme', 'college')
+
+        for t in targets:
+            # Aggregate the actual metric value across the matching scope
+            filters = {'college': selected_college, 'year': selected_year}
+            if t.department_id:
+                filters['department'] = t.department
+            if t.programme_id:
+                filters['programme'] = t.programme
+            agg = MonthlyAnalytics.objects.filter(**filters).aggregate(
+                total=Sum(t.metric)
+            )
+            actual = agg['total'] or 0
+            target_value = t.target_value
+            gap = target_value - actual
+            achievement = round((actual / target_value * 100), 1) if target_value else 0.0
+            rows.append({
+                'scope': t.programme or t.department or t.college,
+                'scope_type': 'Programme' if t.programme_id else (
+                    'Department' if t.department_id else 'College'),
+                'metric': t.get_metric_display(),
+                'metric_key': t.metric,
+                'target': target_value,
+                'actual': actual,
+                'gap': gap,
+                'achievement': achievement,
+                'on_track': achievement >= 100,
+            })
+
+    total = len(rows)
+    on_track = sum(1 for r in rows if r['on_track'])
+    behind = total - on_track
+
+    context = {
+        'colleges': colleges,
+        'selected_college': selected_college,
+        'can_select_college': not bool(user_college),
+        'years': years,
+        'selected_year': selected_year,
+        'rows': rows,
+        'total': total,
+        'on_track': on_track,
+        'behind': behind,
+    }
+    return render(request, 'analytics_app/kpi_gap.html', context)
+
+
+@login_required
+def submission_status(request):
+    """Submission status indicators across the year (#2).
+
+    Shows, per month, the college-level submission status (pending / submitted /
+    incomplete / verified) plus who submitted/verified and when. Missing months
+    are surfaced explicitly so gaps are visible at a glance.
+    """
+    from accounts.decorators import get_user_college, college_queryset_filter
+    from django.utils import timezone
+
+    user_college = get_user_college(request.user)
+    colleges = college_queryset_filter(College.objects.all(), request.user, college_field='pk')
+    current_year = timezone.now().year
+
+    years_set = set(MonthlyAnalytics.objects.values_list('year', flat=True).distinct())
+    years_set.add(current_year)
+    years = sorted(list(years_set), reverse=True)
+
+    if user_college:
+        selected_college = user_college
+    else:
+        college_id = request.GET.get('college')
+        selected_college = (
+            get_object_or_404(colleges, id=college_id) if college_id
+            else colleges.first()
+        )
+
+    year_str = request.GET.get('year')
+    try:
+        selected_year = int(year_str) if year_str else current_year
+    except ValueError:
+        selected_year = current_year
+
+    records = {}
+    if selected_college:
+        qs = MonthlyAnalytics.objects.filter(
+            college=selected_college, year=selected_year,
+            department__isnull=True, programme__isnull=True,
+        ).select_related('submitted_by', 'verified_by')
+        for rec in qs:
+            records[rec.month] = rec
+
+    status_order = [s[0] for s in STATUS_CHOICES]
+    status_counts = {s[0]: 0 for s in STATUS_CHOICES}
+    status_counts['missing'] = 0
+
+    months = []
+    for m_num, m_label in MONTH_CHOICES:
+        rec = records.get(m_num)
+        if rec:
+            status_counts[rec.status] += 1
+            months.append({
+                'num': m_num,
+                'label': m_label,
+                'status': rec.status,
+                'status_label': rec.get_status_display(),
+                'submitted_by': rec.submitted_by.get_full_name() or rec.submitted_by.username if rec.submitted_by else '—',
+                'submitted_at': rec.submitted_at.strftime('%d %b %Y, %H:%M') if rec.submitted_at else '—',
+                'verified_by': rec.verified_by.get_full_name() or rec.verified_by.username if rec.verified_by else '—',
+                'pk': rec.pk,
+            })
+        else:
+            status_counts['missing'] += 1
+            months.append({
+                'num': m_num,
+                'label': m_label,
+                'status': 'missing',
+                'status_label': 'Not Submitted',
+                'submitted_by': '—',
+                'submitted_at': '—',
+                'verified_by': '—',
+                'pk': None,
+            })
+
+    context = {
+        'colleges': colleges,
+        'selected_college': selected_college,
+        'can_select_college': not bool(user_college),
+        'years': years,
+        'selected_year': selected_year,
+        'months': months,
+        'status_counts': status_counts,
+        'status_order': status_order,
+    }
+    return render(request, 'analytics_app/submission_status.html', context)

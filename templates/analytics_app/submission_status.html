@@ -1,0 +1,312 @@
+{% extends 'base.html' %}
+{% block title %}Submission Status — {{ selected_college.name }} ({{ selected_year }}){% endblock %}
+
+{% block extra_css %}
+.sub-header {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+.sub-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+.sub-logo-container {
+    width: 64px;
+    height: 64px;
+    background: var(--surface-alt);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border: 1px solid var(--border-light);
+}
+.sub-logo-container img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+.sub-logo-placeholder {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--accent);
+}
+.sub-details h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 6px 0;
+}
+.sub-details p {
+    font-size: 13.5px;
+    color: var(--text-muted);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.filter-form {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.filter-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+}
+.filter-select {
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text-primary);
+    outline: none;
+    cursor: pointer;
+    min-width: 150px;
+    transition: border-color 0.2s;
+}
+.filter-select:focus { border-color: var(--accent); }
+html[data-theme="dark"] .filter-select {
+    background: #201e1b;
+    color: white;
+    border-color: #3e3b37;
+}
+
+/* Summary stat cards */
+.sub-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.sub-summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+}
+.sub-summary-card .num {
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.1;
+}
+.sub-summary-card .lbl {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    margin-top: 6px;
+}
+.sub-summary-card.pending .num { color: #b45309; }
+.sub-summary-card.submitted .num { color: #1d4ed8; }
+.sub-summary-card.incomplete .num { color: #b91c1c; }
+.sub-summary-card.verified .num { color: #166534; }
+.sub-summary-card.missing .num { color: var(--text-muted); }
+html[data-theme="dark"] .sub-summary-card.pending .num { color: #fcd34d; }
+html[data-theme="dark"] .sub-summary-card.submitted .num { color: #93c5fd; }
+html[data-theme="dark"] .sub-summary-card.incomplete .num { color: #fca5a5; }
+html[data-theme="dark"] .sub-summary-card.verified .num { color: #86efac; }
+
+/* Month status table */
+.status-card {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    overflow-x: auto;
+    margin-bottom: 24px;
+}
+.status-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.status-table th {
+    text-align: left;
+    padding: 14px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.4px;
+    border-bottom: 1px solid var(--border-light);
+    white-space: nowrap;
+}
+.status-table td {
+    padding: 12px;
+    font-size: 13.5px;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-light);
+}
+.status-table tbody tr:last-child td { border-bottom: none; }
+.status-table td.sub-meta {
+    color: var(--text-muted);
+    font-size: 12.5px;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 3px 11px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+}
+.status-badge.pending { background: #fef3c7; color: #b45309; }
+.status-badge.submitted { background: #dbeafe; color: #1d4ed8; }
+.status-badge.incomplete { background: #fee2e2; color: #b91c1c; }
+.status-badge.verified { background: #dcfce7; color: #166534; }
+.status-badge.missing { background: var(--surface-alt); color: var(--text-muted); border: 1px solid var(--border-light); }
+html[data-theme="dark"] .status-badge.pending { background: #422006; color: #fcd34d; }
+html[data-theme="dark"] .status-badge.submitted { background: #172554; color: #93c5fd; }
+html[data-theme="dark"] .status-badge.incomplete { background: #450a0a; color: #fca5a5; }
+html[data-theme="dark"] .status-badge.verified { background: #052e16; color: #86efac; }
+html[data-theme="dark"] .status-badge.missing { background: #2a2723; color: #a8a29e; }
+
+.empty-state {
+    padding: 48px;
+    text-align: center;
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    color: var(--text-muted);
+}
+.empty-state i { font-size: 40px; color: var(--accent-light); margin-bottom: 12px; }
+.empty-state p { margin: 0; font-size: 14.5px; }
+
+@media (max-width: 768px) {
+    .sub-header { flex-direction: column; align-items: stretch; gap: 16px; padding: 16px; }
+    .sub-info { gap: 12px; }
+    .sub-logo-container { width: 48px; height: 48px; }
+    .sub-details h2 { font-size: 18px; }
+    .filter-form { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .filter-group { width: 100%; }
+    .filter-select { width: 100%; min-width: unset; }
+    .status-table th, .status-table td { padding: 8px 4px; font-size: 12.5px; }
+}
+@media (max-width: 600px) {
+    .filter-form { grid-template-columns: 1fr; }
+    .sub-summary-grid { grid-template-columns: 1fr 1fr; }
+}
+{% endblock %}
+
+{% block content %}
+<!-- Header & Selector -->
+<div class="sub-header">
+    <div class="sub-info">
+        <div class="sub-logo-container">
+            {% if selected_college.logo %}
+                <img src="{{ selected_college.logo.url }}" alt="{{ selected_college.name }} logo">
+            {% else %}
+                <div class="sub-logo-placeholder">{{ selected_college.code }}</div>
+            {% endif %}
+        </div>
+        <div class="sub-details">
+            <h2>{{ selected_college.name }}</h2>
+            <p>
+                <i class="ph ph-shield-check"></i> Code: {{ selected_college.code }}
+                <i class="ph ph-dot-outline"></i>
+                <i class="ph ph-calendar-blank"></i> Year: {{ selected_year }}
+            </p>
+        </div>
+    </div>
+
+    <form method="GET" action="{% url 'submission_status' %}" class="filter-form">
+        {% if can_select_college and colleges %}
+        <div class="filter-group">
+            <span class="filter-label">College</span>
+            <select name="college" class="filter-select" onchange="this.form.submit()">
+                {% for c in colleges %}
+                <option value="{{ c.id }}" {% if c.id == selected_college.id %}selected{% endif %}>{{ c.code }} — {{ c.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+        <div class="filter-group">
+            <span class="filter-label">Year</span>
+            <select name="year" class="filter-select" onchange="this.form.submit()">
+                {% for y in years %}
+                <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+</div>
+
+<!-- Summary -->
+{% if selected_college %}
+<div class="sub-summary-grid">
+    <div class="sub-summary-card pending">
+        <div class="num">{{ status_counts.pending }}</div>
+        <div class="lbl">Pending</div>
+    </div>
+    <div class="sub-summary-card submitted">
+        <div class="num">{{ status_counts.submitted }}</div>
+        <div class="lbl">Submitted</div>
+    </div>
+    <div class="sub-summary-card incomplete">
+        <div class="num">{{ status_counts.incomplete }}</div>
+        <div class="lbl">Incomplete</div>
+    </div>
+    <div class="sub-summary-card verified">
+        <div class="num">{{ status_counts.verified }}</div>
+        <div class="lbl">Verified</div>
+    </div>
+    <div class="sub-summary-card missing">
+        <div class="num">{{ status_counts.missing }}</div>
+        <div class="lbl">Not Submitted</div>
+    </div>
+</div>
+
+<!-- Month Table -->
+<div class="status-card">
+    <table class="status-table">
+        <thead>
+            <tr>
+                <th>Month</th>
+                <th>Status</th>
+                <th>Submitted By</th>
+                <th>Submitted At</th>
+                <th>Verified By</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in months %}
+            <tr>
+                <td><strong>{{ m.label }}</strong></td>
+                <td>
+                    <span class="status-badge {{ m.status }}">{{ m.status_label }}</span>
+                </td>
+                <td class="sub-meta">{{ m.submitted_by }}</td>
+                <td class="sub-meta">{{ m.submitted_at }}</td>
+                <td class="sub-meta">{{ m.verified_by }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="empty-state">
+    <i class="ph ph-buildings"></i>
+    <p>No college selected.</p>
+</div>
+{% endif %}
+{% endblock %}

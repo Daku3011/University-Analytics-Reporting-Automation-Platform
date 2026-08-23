@@ -1,0 +1,352 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}KPI Gap Analysis — {{ selected_college.name }} ({{ selected_year }}){% endblock %}
+
+{% block extra_css %}
+.kpi-header {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+.kpi-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+.kpi-logo-container {
+    width: 64px;
+    height: 64px;
+    background: var(--surface-alt);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border: 1px solid var(--border-light);
+}
+.kpi-logo-container img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+.kpi-logo-placeholder {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--accent);
+}
+.kpi-details h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 6px 0;
+}
+.kpi-details p {
+    font-size: 13.5px;
+    color: var(--text-muted);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.filter-form {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.filter-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+}
+.filter-select {
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    background: var(--background);
+    color: var(--text-primary);
+    outline: none;
+    cursor: pointer;
+    min-width: 150px;
+    transition: border-color 0.2s;
+}
+.filter-select:focus {
+    border-color: var(--accent);
+}
+.filter-select {
+    background: var(--surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border-light);
+}
+html[data-theme="dark"] .filter-select {
+    background: #201e1b;
+    color: white;
+    border-color: #3e3b37;
+}
+
+/* Summary stat cards */
+.kpi-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.kpi-summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+}
+.kpi-summary-card .num {
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.1;
+}
+.kpi-summary-card .lbl {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    margin-top: 6px;
+}
+.kpi-summary-card.good .num { color: #166534; }
+.kpi-summary-card.bad .num { color: #b91c1c; }
+html[data-theme="dark"] .kpi-summary-card.good .num { color: #86efac; }
+html[data-theme="dark"] .kpi-summary-card.bad .num { color: #fca5a5; }
+
+/* Gap table */
+.gap-card {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    overflow-x: auto;
+    margin-bottom: 24px;
+}
+.gap-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.gap-table th {
+    text-align: left;
+    padding: 14px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.4px;
+    border-bottom: 1px solid var(--border-light);
+    white-space: nowrap;
+}
+.gap-table td {
+    padding: 12px;
+    font-size: 13.5px;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-light);
+}
+.gap-table tbody tr:last-child td { border-bottom: none; }
+.gap-table td.num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+.scope-badge {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--surface-alt);
+    color: var(--text-muted);
+    border: 1px solid var(--border-light);
+}
+.ach-bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 140px;
+}
+.ach-bar {
+    flex: 1;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--surface-alt);
+    overflow: hidden;
+}
+.ach-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+}
+.ach-bar-fill.ontrack { background: #16a34a; }
+.ach-bar-fill.behind { background: #dc2626; }
+.ach-pct {
+    font-size: 12.5px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    min-width: 48px;
+    text-align: right;
+}
+.on-track-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+}
+.on-track-badge.yes { background: #dcfce7; color: #166534; }
+.on-track-badge.no { background: #fee2e2; color: #b91c1c; }
+html[data-theme="dark"] .on-track-badge.yes { background: #052e16; color: #86efac; }
+html[data-theme="dark"] .on-track-badge.no { background: #450a0a; color: #fca5a5; }
+
+.empty-state {
+    padding: 48px;
+    text-align: center;
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    color: var(--text-muted);
+}
+.empty-state i { font-size: 40px; color: var(--accent-light); margin-bottom: 12px; }
+.empty-state p { margin: 0; font-size: 14.5px; }
+
+@media (max-width: 768px) {
+    .kpi-header { flex-direction: column; align-items: stretch; gap: 16px; padding: 16px; }
+    .kpi-info { gap: 12px; }
+    .kpi-logo-container { width: 48px; height: 48px; }
+    .kpi-details h2 { font-size: 18px; }
+    .filter-form { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .filter-group { width: 100%; }
+    .filter-select { width: 100%; min-width: unset; }
+    .gap-table th, .gap-table td { padding: 8px 4px; font-size: 12.5px; }
+}
+@media (max-width: 600px) {
+    .filter-form { grid-template-columns: 1fr; }
+    .kpi-summary-grid { grid-template-columns: 1fr 1fr; }
+}
+{% endblock %}
+
+{% block content %}
+<!-- Header & Selector -->
+<div class="kpi-header">
+    <div class="kpi-info">
+        <div class="kpi-logo-container">
+            {% if selected_college.logo %}
+                <img src="{{ selected_college.logo.url }}" alt="{{ selected_college.name }} logo">
+            {% else %}
+                <div class="kpi-logo-placeholder">{{ selected_college.code }}</div>
+            {% endif %}
+        </div>
+        <div class="kpi-details">
+            <h2>{{ selected_college.name }}</h2>
+            <p>
+                <i class="ph ph-shield-check"></i> Code: {{ selected_college.code }}
+                <i class="ph ph-dot-outline"></i>
+                <i class="ph ph-calendar-blank"></i> Year: {{ selected_year }}
+            </p>
+        </div>
+    </div>
+
+    <form method="GET" action="{% url 'kpi_gap_view' %}" class="filter-form">
+        {% if can_select_college and colleges %}
+        <div class="filter-group">
+            <span class="filter-label">College</span>
+            <select name="college" class="filter-select" onchange="this.form.submit()">
+                {% for c in colleges %}
+                <option value="{{ c.id }}" {% if c.id == selected_college.id %}selected{% endif %}>{{ c.code }} — {{ c.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+        <div class="filter-group">
+            <span class="filter-label">Year</span>
+            <select name="year" class="filter-select" onchange="this.form.submit()">
+                {% for y in years %}
+                <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+</div>
+
+<!-- Summary -->
+<div class="kpi-summary-grid">
+    <div class="kpi-summary-card">
+        <div class="num">{{ total }}</div>
+        <div class="lbl">Total KPI Targets</div>
+    </div>
+    <div class="kpi-summary-card good">
+        <div class="num">{{ on_track }}</div>
+        <div class="lbl">On Track (≥ 100%)</div>
+    </div>
+    <div class="kpi-summary-card bad">
+        <div class="num">{{ behind }}</div>
+        <div class="lbl">Behind Target</div>
+    </div>
+</div>
+
+<!-- Gap Table -->
+<div class="gap-card">
+    {% if rows %}
+    <table class="gap-table">
+        <thead>
+            <tr>
+                <th>Scope</th>
+                <th>Level</th>
+                <th>Metric</th>
+                <th class="num">Target</th>
+                <th class="num">Actual</th>
+                <th class="num">Gap</th>
+                <th>Achievement</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in rows %}
+            <tr>
+                <td>{{ r.scope }}</td>
+                <td><span class="scope-badge">{{ r.scope_type }}</span></td>
+                <td>{{ r.metric }}</td>
+                <td class="num">{{ r.target|intcomma }}</td>
+                <td class="num">{{ r.actual|intcomma }}</td>
+                <td class="num">{{ r.gap|intcomma }}</td>
+                <td>
+                    <div class="ach-bar-wrap">
+                        <div class="ach-bar">
+                            <div class="ach-bar-fill {% if r.on_track %}ontrack{% else %}behind{% endif %}"
+                                 style="width: {% if r.achievement > 100 %}100{% else %}{{ r.achievement }}{% endif %}%;"></div>
+                        </div>
+                        <span class="ach-pct">{{ r.achievement }}%</span>
+                    </div>
+                </td>
+                <td>
+                    <span class="on-track-badge {% if r.on_track %}yes{% else %}no{% endif %}">
+                        {% if r.on_track %}On Track{% else %}Behind{% endif %}
+                    </span>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <i class="ph ph-target"></i>
+        <p>No KPI targets defined for {{ selected_college.code }} in {{ selected_year }}.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

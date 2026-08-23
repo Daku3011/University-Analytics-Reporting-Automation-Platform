@@ -505,6 +505,79 @@ html[data-theme="dark"] .filter-select {
         font-size: 20px !important;
     }
 }
+
+/* Submission status badges (Feature #2) */
+.status-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.4;
+    white-space: nowrap;
+}
+.status-pending { background: #fef3c7; color: #92400e; }
+.status-submitted { background: #dbeafe; color: #1e40af; }
+.status-incomplete { background: #fee2e2; color: #b91c1c; }
+.status-verified { background: #dcfce7; color: #166534; }
+html[data-theme="dark"] .status-pending { background: #422006; color: #fcd34d; }
+html[data-theme="dark"] .status-submitted { background: #172554; color: #93c5fd; }
+html[data-theme="dark"] .status-incomplete { background: #450a0a; color: #fca5a5; }
+html[data-theme="dark"] .status-verified { background: #052e16; color: #86efac; }
+
+.status-summary-card {
+    padding: 18px 20px;
+    margin-bottom: 24px;
+}
+.status-summary-card .summary-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+}
+.status-summary-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.status-summary-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 8px 12px;
+}
+.status-summary-item .count {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.status-form {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: flex-end;
+}
+.status-form select {
+    font-size: 12px;
+    padding: 3px 6px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+.status-form button {
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 6px;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    cursor: pointer;
+}
 {% endblock %}
 
 {% block content %}
@@ -605,6 +678,21 @@ html[data-theme="dark"] .filter-select {
         </div>
     </div>
 
+    <!-- Submission Status Summary (Feature #2) -->
+    <div class="card status-summary-card">
+        <div class="summary-title">
+            <i class="ph ph-circle-half"></i> Submission Status — {{ selected_year }} ({{ yearly_data.analytics.count }} months)
+        </div>
+        <div class="status-summary-list">
+            {% for s_val, s_label, s_count in status_summary %}
+            <div class="status-summary-item">
+                <span class="status-badge status-{{ s_val }}">{{ s_label }}</span>
+                <span class="count">{{ s_count }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
     <!-- Additional Secondary Stats Grid -->
     <div class="grid grid-3" style="margin-bottom: 24px;">
         <div class="stat-card purple" style="border-left-color: var(--accent);">
@@ -665,6 +753,7 @@ html[data-theme="dark"] .filter-select {
                         <th style="text-align:right; padding:12px 8px;">Reels</th>
                         <th style="text-align:right; padding:12px 8px;">Graphics</th>
                         <th style="text-align:right; padding:12px 8px;">Platform Followers (IG / FB / YT)</th>
+                        <th style="text-align:center; padding:12px 8px;">Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -678,6 +767,22 @@ html[data-theme="dark"] .filter-select {
                         <td style="text-align:right; padding:12px 8px;" class="tabular-nums">{{ item.graphics_count }}</td>
                         <td style="text-align:right; padding:12px 8px; font-size:12px; color:var(--text-muted);" class="tabular-nums">
                             {{ item.instagram_followers|intcomma }} / {{ item.facebook_followers|intcomma }} / {{ item.youtube_subscribers|intcomma }}
+                        </td>
+                        <td style="text-align:center; padding:12px 8px;">
+                            <span class="status-badge status-{{ item.status }}">{{ item.get_status_display }}</span>
+                            {% if can_manage_status %}
+                            <form method="POST" action="{% url 'update_status' item.id %}" class="status-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="college" value="{{ selected_college.id }}">
+                                <input type="hidden" name="year" value="{{ selected_year }}">
+                                <select name="status">
+                                    {% for s_val, s_label in status_choices %}
+                                    <option value="{{ s_val }}" {% if s_val == item.status %}selected{% endif %}>{{ s_label }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit">Save</button>
+                            </form>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}
