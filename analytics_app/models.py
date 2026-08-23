@@ -149,6 +149,11 @@ class Alert(models.Model):
     message = models.TextField(blank=True)
     month = models.IntegerField(choices=MONTH_CHOICES, blank=True, null=True)
     year = models.IntegerField(blank=True, null=True)
+    # Stable identity for the scan engine (#6): rescans upsert on this key
+    # instead of creating duplicates. Manual alerts (created via admin) keep
+    # it null and are never auto-resolved.
+    dedup_key = models.CharField(max_length=255, unique=True, null=True, blank=True)
+    notified_at = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     resolved = models.BooleanField(default=False)
     resolved_at = models.DateTimeField(blank=True, null=True)
