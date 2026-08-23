@@ -373,13 +373,18 @@ class PortfolioViewTests(PortfolioTestBase):
         self.assertIn('wordprocessingml', resp['Content-Type'])
 
     def test_quick_exports_scoped_for_college_admin(self):
+        from openpyxl import load_workbook
+
         self.client.login(username="collegeadmin", password="password123")
         resp = self.client.get(reverse('kpi_gap_export'), {'college': self.co2.id})
         self.assertEqual(resp.status_code, 200)
         # Row must reflect CO1's data even though CO2 was requested
-        self.assertIn(b'Alpha College', resp.content)
-        self.assertNotIn(b'Beta College', resp.content)
+        wb = load_workbook(BytesIO(resp.content))
+        ws = wb.active
+        college_names = [ws.cell(row=r, column=1).value for r in range(2, ws.max_row + 1)]
+        self.assertIn('Alpha College', college_names)
+        self.assertNotIn('Beta College', college_names)
 
         resp = self.client.get(reverse('submission_status_export'), {'year': 2026})
         self.assertEqual(resp.status_code, 200)
-        self.assertIn(b'submission_status_co1_2026.xlsx', resp.content)
+        self.assertIn('submission_status_co1_2026.xlsx', resp['Content-Disposition'])
