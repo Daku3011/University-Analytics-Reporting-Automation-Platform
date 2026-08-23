@@ -16,4 +16,7 @@ urlpatterns = [
     path('submission-status/', views.submission_status, name='submission_status'),
     path('submission-status/export/', views.submission_status_export, name='submission_status_export'),
     path('status-update/<int:pk>/', views.update_status, name='update_status'),
+    path('alerts/', views.alert_center, name='alert_center'),
+    path('alerts/<int:pk>/resolve/', views.alert_resolve, name='alert_resolve'),
+    path('alerts/scan-now/', views.alert_scan_now, name='alert_scan_now'),
 ]

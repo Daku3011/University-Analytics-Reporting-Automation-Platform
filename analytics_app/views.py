@@ -1250,3 +1250,87 @@ def programme_detail(request, programme_id):
         'views': totals['views_sum'] or 0,
         'reach': totals['reach_sum'] or 0,
     })
+
+
+# ══════════════════════════════════════════════════════════════════
+# Alert Center (#6) — automated alerts for missing data, stale
+# submissions, and sudden month-over-month swings.
+# ══════════════════════════════════════════════════════════════════
+
+@login_required
+@role_required('super_admin', 'college_admin')
+def alert_center(request):
+    from analytics_app.models import Alert
+    from accounts.decorators import get_user_college
+    from django.db.models import Count, Q
+
+    user_college = get_user_college(request.user)
+    alerts_qs = Alert.objects.select_related('college')
+    if user_college:
+        alerts_qs = alerts_qs.filter(college=user_college)
+
+    # Summary cards reflect the whole scoped set, before filters.
+    stats = alerts_qs.aggregate(
+        open_count=Count('id', filter=Q(resolved=False)),
+        critical=Count('id', filter=Q(resolved=False, level='critical')),
+        warning=Count('id', filter=Q(resolved=False, level='warning')),
+        resolved=Count('id', filter=Q(resolved=True)),
+    )
+
+    state = request.GET.get('state') or 'open'
+    level = request.GET.get('level') or ''
+    category = request.GET.get('category') or ''
+    if state == 'open':
+        alerts_qs = alerts_qs.filter(resolved=False)
+    elif state == 'resolved':
+        alerts_qs = alerts_qs.filter(resolved=True)
+    if level in ('critical', 'warning', 'info'):
+        alerts_qs = alerts_qs.filter(level=level)
+    if category in ('missing_data', 'big_change', 'status'):
+        alerts_qs = alerts_qs.filter(category=category)
+
+    return render(request, 'analytics_app/alert_center.html', {
+        'alerts': alerts_qs.order_by('-created_at')[:200],
+        'stats': stats,
+        'selected_state': state,
+        'selected_level': level,
+        'selected_category': category,
+        'user_college': user_college,
+        'is_super_admin': user_college is None,
+    })
+
+
+@login_required
+@role_required('super_admin', 'college_admin')
+def alert_resolve(request, pk):
+    from analytics_app.models import Alert
+    from accounts.decorators import get_user_college
+    from django.utils import timezone
+
+    if request.method != 'POST':
+        return redirect('alert_center')
+
+    alert = get_object_or_404(Alert, pk=pk)
+    user_college = get_user_college(request.user)
+    if user_college and alert.college_id != user_college.id:
+        return HttpResponseForbidden(
+            '<h2>403 Forbidden</h2><p>You can only resolve alerts for your own college.</p>')
+
+    alert.resolved = True
+    alert.resolved_at = timezone.now()
+    alert.save(update_fields=['resolved', 'resolved_at'])
+    messages.success(request, f'Alert resolved: {alert.title}')
+    return redirect('alert_center')
+
+
+@login_required
+@role_required('super_admin')
+def alert_scan_now(request):
+    from analytics_app.services.alert_engine import run_alert_scan
+
+    summary = run_alert_scan()
+    messages.success(
+        request,
+        f"Scan complete for {summary['year']}: {summary['created']} new, "
+        f"{summary['updated']} refreshed, {summary['resolved']} auto-resolved.")
+    return redirect('alert_center')

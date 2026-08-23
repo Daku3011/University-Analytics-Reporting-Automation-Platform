@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Alert Center{% endblock %}
+
+{% block extra_css %}
+{% include 'analytics_app/_hierarchy_styles.html' %}
+<style>
+    .alert-list { display: flex; flex-direction: column; gap: 12px; }
+    .alert-card {
+        background: var(--surface);
+        border: 1px solid var(--border-light);
+        border-left: 4px solid var(--accent, #2563eb);
+        border-radius: 10px;
+        padding: 14px 18px;
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+    }
+    .alert-card.critical { border-left-color: #dc2626; }
+    .alert-card.warning  { border-left-color: #d97706; }
+    .alert-card.info     { border-left-color: #2563eb; }
+    .alert-card.resolved-card { opacity: 0.62; }
+    .alert-icon {
+        font-size: 22px; line-height: 1; margin-top: 2px; flex-shrink: 0;
+    }
+    .alert-card.critical .alert-icon { color: #dc2626; }
+    .alert-card.warning  .alert-icon { color: #d97706; }
+    .alert-card.info     .alert-icon { color: #2563eb; }
+    .alert-body { flex: 1; min-width: 0; }
+    .alert-title { font-weight: 600; color: var(--text-primary); }
+    .alert-msg { font-size: 13.5px; color: var(--text-muted); margin-top: 3px; }
+    .alert-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; align-items: center; }
+    .lvl-pill {
+        display: inline-block; padding: 2px 9px; border-radius: 999px;
+        font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em;
+    }
+    .lvl-pill.critical { background: #fee2e2; color: #b91c1c; }
+    .lvl-pill.warning  { background: #fef3c7; color: #b45309; }
+    .lvl-pill.info     { background: #dbeafe; color: #1d4ed8; }
+    .lvl-pill.resolved { background: #dcfce7; color: #15803d; }
+    .cat-pill, .scope-pill, .when-pill {
+        font-size: 11.5px; color: var(--text-muted);
+        background: var(--surface-alt, rgba(127,127,127,0.08));
+        border-radius: 999px; padding: 2px 9px;
+        display: inline-flex; align-items: center; gap: 4px;
+    }
+    .resolve-btn {
+        border: 1px solid #16a34a; background: #f0fdf4; color: #15803d;
+        border-radius: 8px; padding: 7px 14px; font-size: 13px; font-weight: 600;
+        cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;
+    }
+    .resolve-btn:hover { background: #dcfce7; }
+    .scan-btn {
+        border: 1px solid var(--accent, #2563eb); background: var(--accent, #2563eb);
+        color: #fff; border-radius: 8px; padding: 8px 16px; font-size: 13px;
+        font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 7px;
+    }
+    .scan-btn:hover { filter: brightness(1.08); }
+    [data-theme="dark"] .lvl-pill.critical { background: #450a0a; color: #fca5a5; }
+    [data-theme="dark"] .lvl-pill.warning  { background: #451a03; color: #fcd34d; }
+    [data-theme="dark"] .lvl-pill.info     { background: #172554; color: #93c5fd; }
+    [data-theme="dark"] .lvl-pill.resolved { background: #052e16; color: #86efac; }
+    [data-theme="dark"] .resolve-btn { background: #052e16; }
+    [data-theme="dark"] .resolve-btn:hover { background: #064e3b; }
+    @media (max-width: 640px) {
+        .alert-card { flex-direction: column; gap: 8px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2><i class="ph ph-bell-ringing"></i> Alert Center</h2>
+        <p>
+            {% if user_college %}
+            Automated alerts for <strong>{{ user_college.name }}</strong> — missing submissions,
+            records stuck in review, and sudden month-over-month swings.
+            {% else %}
+            Automated alerts across every institute — missing submissions, records stuck in
+            review, and sudden month-over-month swings.
+            {% endif %}
+        </p>
+    </div>
+    {% if is_super_admin %}
+    <form method="POST" action="{% url 'alert_scan_now' %}">
+        {% csrf_token %}
+        <button type="submit" class="scan-btn">
+            <i class="ph ph-arrows-clockwise"></i> Run scan now
+        </button>
+    </form>
+    {% endif %}
+</div>
+
+<!-- Summary -->
+<div class="stat-grid">
+    <div class="stat-card">
+        <div class="lbl"><i class="ph ph-bell"></i> Open Alerts</div>
+        <div class="num">{{ stats.open_count|intcomma }}</div>
+        <div class="sub">awaiting attention</div>
+    </div>
+    <div class="stat-card">
+        <div class="lbl"><i class="ph ph-flame"></i> Critical</div>
+        <div class="num">{{ stats.critical|intcomma }}</div>
+        <div class="sub">act on these first</div>
+    </div>
+    <div class="stat-card">
+        <div class="lbl"><i class="ph ph-warning"></i> Warnings</div>
+        <div class="num">{{ stats.warning|intcomma }}</div>
+        <div class="sub">worth reviewing</div>
+    </div>
+    <div class="stat-card">
+        <div class="lbl"><i class="ph ph-check-circle"></i> Resolved</div>
+        <div class="num">{{ stats.resolved|intcomma }}</div>
+        <div class="sub">closed overall</div>
+    </div>
+</div>
+
+<!-- Filters -->
+<form method="GET" action="{% url 'alert_center' %}" class="filter-form">
+    <div class="filter-group">
+        <span class="filter-label">State</span>
+        <select name="state" class="filter-select" onchange="this.form.submit()">
+            <option value="open" {% if selected_state == 'open' %}selected{% endif %}>Open</option>
+            <option value="resolved" {% if selected_state == 'resolved' %}selected{% endif %}>Resolved</option>
+            <option value="all" {% if selected_state == 'all' %}selected{% endif %}>All</option>
+        </select>
+    </div>
+    <div class="filter-group">
+        <span class="filter-label">Level</span>
+        <select name="level" class="filter-select" onchange="this.form.submit()">
+            <option value="" {% if not selected_level %}selected{% endif %}>All levels</option>
+            <option value="critical" {% if selected_level == 'critical' %}selected{% endif %}>Critical</option>
+            <option value="warning" {% if selected_level == 'warning' %}selected{% endif %}>Warning</option>
+            <option value="info" {% if selected_level == 'info' %}selected{% endif %}>Info</option>
+        </select>
+    </div>
+    <div class="filter-group">
+        <span class="filter-label">Category</span>
+        <select name="category" class="filter-select" onchange="this.form.submit()">
+            <option value="" {% if not selected_category %}selected{% endif %}>All categories</option>
+            <option value="missing_data" {% if selected_category == 'missing_data' %}selected{% endif %}>Missing Data</option>
+            <option value="status" {% if selected_category == 'status' %}selected{% endif %}>Submission Status</option>
+            <option value="big_change" {% if selected_category == 'big_change' %}selected{% endif %}>Big Change</option>
+        </select>
+    </div>
+</form>
+
+<!-- Alert cards -->
+{% if alerts %}
+<div class="alert-list">
+    {% for a in alerts %}
+    <div class="alert-card {{ a.level }} {% if a.resolved %}resolved-card{% endif %}">
+        <i class="ph {% if a.level == 'critical' %}ph-flame{% elif a.level == 'warning' %}ph-warning{% else %}ph-info{% endif %} alert-icon"></i>
+        <div class="alert-body">
+            <div class="alert-title">{{ a.title }}</div>
+            <div class="alert-msg">{{ a.message }}</div>
+            <div class="alert-meta">
+                {% if a.resolved %}
+                <span class="lvl-pill resolved">Resolved</span>
+                {% else %}
+                <span class="lvl-pill {{ a.level }}">{{ a.level }}</span>
+                {% endif %}
+                <span class="cat-pill"><i class="ph ph-tag"></i> {{ a.get_category_display }}</span>
+                {% if not user_college %}
+                <span class="scope-pill"><i class="ph ph-buildings"></i> {{ a.college.name }}</span>
+                {% endif %}
+                {% if a.month and a.year %}
+                <span class="when-pill"><i class="ph ph-calendar-blank"></i> {{ a.month }}/{{ a.year }}</span>
+                {% endif %}
+                <span class="when-pill"><i class="ph ph-clock"></i> {{ a.created_at|naturaltime }}</span>
+            </div>
+        </div>
+        {% if not a.resolved %}
+        <form method="POST" action="{% url 'alert_resolve' a.id %}">
+            {% csrf_token %}
+            <button type="submit" class="resolve-btn" title="Mark this alert resolved">
+                <i class="ph ph-check"></i> Resolve
+            </button>
+        </form>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <i class="ph ph-bell-slash"></i>
+    <h3>No alerts match</h3>
+    <p>
+        {% if selected_state == 'open' %}
+        Nothing needs attention right now. The nightly scan runs at 08:17 and after every
+        "Run scan now".
+        {% else %}
+        Try widening the filters above.
+        {% endif %}
+    </p>
+</div>
+{% endif %}
+{% endblock %}

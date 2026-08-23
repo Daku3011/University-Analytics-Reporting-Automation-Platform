@@ -123,6 +123,20 @@
             </a>
 
             <span class="sidebar-section-label">System</span>
+            {% if user.is_authenticated and alert_counts and alert_counts.total > 0 %}
+            <a class="nav-link {% if request.resolver_match.url_name == 'alert_center' %}active{% endif %}"
+               href="{% url 'alert_center' %}">
+                <i class="ph ph-bell-ringing"></i> Alert Center
+                <span style="margin-left:auto;background:{% if alert_counts.critical > 0 %}#dc2626{% else %}#d97706{% endif %};color:#fff;border-radius:999px;font-size:11px;font-weight:700;padding:1px 7px;">
+                    {{ alert_counts.total }}
+                </span>
+            </a>
+            {% else %}
+            <a class="nav-link {% if request.resolver_match.url_name == 'alert_center' %}active{% endif %}"
+               href="{% url 'alert_center' %}">
+                <i class="ph ph-bell-ringing"></i> Alert Center
+            </a>
+            {% endif %}
             <a class="nav-link" href="{% url 'admin:index' %}">
                 <i class="ph ph-gear"></i> Admin Panel
             </a>
