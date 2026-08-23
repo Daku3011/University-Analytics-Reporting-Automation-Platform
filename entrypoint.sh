@@ -50,14 +50,20 @@ for i in $(seq 1 10); do
     sleep 1
 done
 
-# ── Start Celery worker in background ──────────────────────────
+# ── Start Celery worker + beat scheduler in background ─────────
 echo "Starting Celery worker..."
 celery -A su_analytics worker --loglevel=info --concurrency=1 &
 CELERY_PID=$!
 echo "Celery worker started (PID: $CELERY_PID)"
 
-# Graceful shutdown: stop Celery before Gunicorn exits
-trap "echo 'Shutting down...'; kill $CELERY_PID 2>/dev/null; wait $CELERY_PID 2>/dev/null; exit 0" SIGTERM SIGINT
+echo "Starting Celery beat scheduler (daily alert scan #6)..."
+celery -A su_analytics beat --loglevel=info &
+BEAT_PID=$!
+echo "Celery beat started (PID: $BEAT_PID)"
+
+# Graceful shutdown: stop Celery and beat before Gunicorn exits — otherwise
+# the exec'd gunicorn orphans them.
+trap "echo 'Shutting down...'; kill $CELERY_PID $BEAT_PID 2>/dev/null; wait $CELERY_PID $BEAT_PID 2>/dev/null; exit 0" SIGTERM SIGINT
 
 # ── Start Gunicorn ─────────────────────────────────────────────
 echo "Starting Gunicorn server on port 7860..."
