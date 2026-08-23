@@ -42,6 +42,33 @@
                 </div>
             </div>
 
+            <!-- Scope (optional Department / Programme breakdown, #4) -->
+            {% if has_hierarchy %}
+            <div class="section-title" style="margin-bottom:10px;">
+                <i class="ph ph-sitemap" style="margin-right:4px;"></i> Level
+                <span style="font-weight:400;font-size:12.5px;color:var(--text-muted);">— optional; leave as institute-wide for the usual entry</span>
+            </div>
+            <div class="grid grid-3" style="margin-bottom:8px;">
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label" for="id_department">Department</label>
+                    <select name="department" id="id_department" class="form-control form-select">
+                        <option value="">— Institute-wide —</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label" for="id_programme">Programme</label>
+                    <select name="programme" id="id_programme" class="form-control form-select" disabled>
+                        <option value="">— Whole department —</option>
+                    </select>
+                </div>
+                <div></div>
+            </div>
+            <p style="font-size:12.5px;color:var(--text-muted);margin:6px 0 20px 0;">
+                Pick a department to record department-level numbers, then optionally a programme.
+                Institute totals stay separate from these breakdowns, so nothing is double-counted.
+            </p>
+            {% endif %}
+
             <hr style="border:none;border-top:1px solid var(--border-light);margin-bottom:24px;">
 
             <!-- Instagram -->
@@ -197,4 +224,51 @@
         </form>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+{% if has_hierarchy %}
+{{ departments_json|json_script:"dept-map" }}
+{{ programmes_json|json_script:"prog-map" }}
+<script>
+(function () {
+    var deptMap = {}, progMap = {};
+    try { deptMap = JSON.parse(document.getElementById('dept-map').textContent); } catch (e) {}
+    try { progMap = JSON.parse(document.getElementById('prog-map').textContent); } catch (e) {}
+
+    var collegeSel = document.getElementById('id_college');
+    var deptSel = document.getElementById('id_department');
+    var progSel = document.getElementById('id_programme');
+    if (!collegeSel || !deptSel || !progSel) return;
+
+    function fill(select, items, placeholder) {
+        select.innerHTML = '';
+        var blank = document.createElement('option');
+        blank.value = '';
+        blank.textContent = placeholder;
+        select.appendChild(blank);
+        (items || []).forEach(function (it) {
+            var opt = document.createElement('option');
+            opt.value = it.id;
+            opt.textContent = it.name;
+            select.appendChild(opt);
+        });
+    }
+
+    function refreshProgrammes() {
+        fill(progSel, progMap[deptSel.value], '— Whole department —');
+        progSel.disabled = !deptSel.value;
+    }
+
+    collegeSel.addEventListener('change', function () {
+        fill(deptSel, deptMap[collegeSel.value], '— Institute-wide —');
+        refreshProgrammes();
+    });
+    deptSel.addEventListener('change', refreshProgrammes);
+
+    // Populate for the initially selected college
+    collegeSel.dispatchEvent(new Event('change'));
+})();
+</script>
+{% endif %}
 {% endblock %}

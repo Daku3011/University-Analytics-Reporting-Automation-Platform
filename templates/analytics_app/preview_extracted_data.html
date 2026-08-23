@@ -51,6 +51,27 @@
                     <input type="number" name="year" id="id_year" class="form-control" value="{% if data.year %}{{ data.year }}{% else %}{{ current_year }}{% endif %}" min="2020" max="2035">
                 </div>
             </div>
+
+            {% if has_hierarchy %}
+            <div class="grid grid-2" style="margin-top:14px;">
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label" for="id_department">Department</label>
+                    <select name="department" id="id_department" class="form-control form-select">
+                        <option value="">— Institute-wide —</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label" for="id_programme">Programme</label>
+                    <select name="programme" id="id_programme" class="form-control form-select" disabled>
+                        <option value="">— Whole department —</option>
+                    </select>
+                </div>
+            </div>
+            <p style="font-size:12px;color:var(--text-muted);margin-top:8px;">
+                Optional: file these numbers under a specific department or programme instead of the institute total.
+                Events and top posts are always saved at institute level.
+            </p>
+            {% endif %}
         </div>
     </div>
 
@@ -208,4 +229,50 @@
         Review the extracted data above. Click "Accept & Save" to add all events, analytics, and top posts to the database. Click "Cancel" to discard and try a different PDF.
     </p>
 </form>
+{% endblock %}
+
+{% block extra_js %}
+{% if has_hierarchy %}
+{{ departments_json|json_script:"dept-map" }}
+{{ programmes_json|json_script:"prog-map" }}
+<script>
+(function () {
+    var deptMap = {}, progMap = {};
+    try { deptMap = JSON.parse(document.getElementById('dept-map').textContent); } catch (e) {}
+    try { progMap = JSON.parse(document.getElementById('prog-map').textContent); } catch (e) {}
+
+    var collegeSel = document.getElementById('id_college');
+    var deptSel = document.getElementById('id_department');
+    var progSel = document.getElementById('id_programme');
+    if (!collegeSel || !deptSel || !progSel) return;
+
+    function fill(select, items, placeholder) {
+        select.innerHTML = '';
+        var blank = document.createElement('option');
+        blank.value = '';
+        blank.textContent = placeholder;
+        select.appendChild(blank);
+        (items || []).forEach(function (it) {
+            var opt = document.createElement('option');
+            opt.value = it.id;
+            opt.textContent = it.name;
+            select.appendChild(opt);
+        });
+    }
+
+    function refreshProgrammes() {
+        fill(progSel, progMap[deptSel.value], '— Whole department —');
+        progSel.disabled = !deptSel.value;
+    }
+
+    collegeSel.addEventListener('change', function () {
+        fill(deptSel, deptMap[collegeSel.value], '— Institute-wide —');
+        refreshProgrammes();
+    });
+    deptSel.addEventListener('change', refreshProgrammes);
+
+    collegeSel.dispatchEvent(new Event('change'));
+})();
+</script>
+{% endif %}
 {% endblock %}
