@@ -13,4 +13,9 @@ urlpatterns = [
     path('processing/<str:task_id>/', views.document_report_processing, name='document_report_processing'),
     path('processing/status/<str:task_id>/', views.check_task_status, name='check_task_status'),
     path('compare/', views.compare_reports, name='compare_reports'),
+    # Annual Portfolio Report (#5) — consolidated chapters + exports
+    path('portfolio/', views.portfolio_preview, name='portfolio_preview'),
+    path('portfolio/pdf/', views.portfolio_pdf, name='portfolio_pdf'),
+    path('portfolio/excel/', views.portfolio_excel, name='portfolio_excel'),
+    path('portfolio/word/', views.portfolio_word, name='portfolio_word'),
 ]

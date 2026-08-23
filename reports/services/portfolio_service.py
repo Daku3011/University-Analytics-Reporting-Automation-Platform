@@ -82,6 +82,9 @@ def build_portfolio_context(college, year):
         'totals': totals,
         'monthly': monthly_rows,
         'top_posts': list(data['top_posts']),
+        # Peak single-month views — used to scale the print bar chart
+        'max_month_views': max(
+            (row['record'].total_views or 0 for row in monthly_rows), default=0),
     }
 
     # ── Chapter 3: Events (+ category counts) ───────────────────────

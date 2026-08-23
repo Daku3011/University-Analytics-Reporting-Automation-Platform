@@ -117,6 +117,10 @@
                href="{% url 'report_dashboard' %}">
                 <i class="ph ph-file-pdf"></i> Reports
             </a>
+            <a class="nav-link {% if request.resolver_match.url_name == 'portfolio_preview' %}active{% endif %}"
+               href="{% url 'portfolio_preview' %}">
+                <i class="ph ph-files"></i> Annual Portfolio
+            </a>
 
             <span class="sidebar-section-label">System</span>
             <a class="nav-link" href="{% url 'admin:index' %}">

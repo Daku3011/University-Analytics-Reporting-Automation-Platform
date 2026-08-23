@@ -1,0 +1,315 @@
+{% comment %}
+Print document for the Annual Portfolio (#5). Rules for WeasyPrint:
+hardcoded light palette (never theme vars), no JavaScript/Chart.js,
+CSS-width bars instead of canvas charts, @page A4 with footer counters,
+page-break-before on each chapter.
+{% endcomment %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+@page {
+    size: A4;
+    margin: 18mm 15mm 20mm 15mm;
+    @bottom-right {
+        content: "Page " counter(page) " of " counter(pages);
+        font-family: Helvetica, Arial, sans-serif;
+        font-size: 8pt; color: #94a3b8; font-weight: 500;
+    }
+    @bottom-left {
+        content: "Sarvajanik University · {{ college_code }} Annual Portfolio · {{ selected_year }}";
+        font-family: Helvetica, Arial, sans-serif;
+        font-size: 8pt; color: #94a3b8; font-weight: 500;
+    }
+}
+
+body {
+    font-family: Helvetica, Arial, sans-serif;
+    color: #334155;
+    margin: 0; padding: 0;
+    -webkit-print-color-adjust: exact;
+    font-size: 10pt;
+}
+h1, h2, h3 { color: #1f3a5f; }
+
+/* ── Title block ─────────────────────────────────────────────── */
+.doc-head {
+    border-bottom: 3px solid #1f3a5f;
+    padding-bottom: 12px;
+    margin-bottom: 20px;
+}
+.doc-head .kicker {
+    font-size: 9pt; letter-spacing: 3px; text-transform: uppercase;
+    color: #64748b; margin: 0 0 6px 0; font-weight: 700;
+}
+.doc-head h1 { font-size: 22pt; margin: 0 0 4px 0; }
+.doc-head .sub { font-size: 11pt; color: #475569; margin: 0; }
+
+/* ── Chapters ────────────────────────────────────────────────── */
+.chapter { page-break-before: always; }
+.chapter:first-of-type { page-break-before: auto; }
+.chapter > h2 {
+    font-size: 14pt; margin: 0 0 2px 0;
+    border-bottom: 1px solid #cbd5e1; padding-bottom: 6px;
+}
+.chapter .lede { font-size: 9.5pt; color: #64748b; margin: 6px 0 14px 0; }
+
+table {
+    width: 100%; border-collapse: collapse; margin: 10px 0 16px 0;
+}
+th {
+    background: #1f3a5f; color: #ffffff; font-size: 8.5pt;
+    text-align: left; padding: 7px 9px; letter-spacing: .4px;
+}
+td {
+    font-size: 9.5pt; padding: 7px 9px;
+    border-bottom: 1px solid #e2e8f0; color: #334155;
+}
+tr:nth-child(even) td { background: #f8fafc; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.total-row td { font-weight: 700; background: #eef2f7 !important; }
+
+/* ── Summary cards ───────────────────────────────────────────── */
+.card-row { width: 100%; border-collapse: separate; border-spacing: 6px 0; margin: 4px 0 14px -6px; }
+.card-row td {
+    background: #f1f5f9; border: 1px solid #dbe3ec; border-radius: 8px;
+    padding: 10px 12px; vertical-align: top; width: 25%;
+}
+.card-row .lbl {
+    display: block; font-size: 7.5pt; text-transform: uppercase;
+    letter-spacing: .6px; color: #64748b; font-weight: 700; margin-bottom: 4px;
+}
+.card-row .val { display: block; font-size: 15pt; font-weight: 700; color: #1f3a5f; }
+.card-row .sub { display: block; font-size: 8pt; color: #64748b; margin-top: 2px; }
+
+/* ── Change badges & bars ────────────────────────────────────── */
+.up   { color: #166534; font-weight: 700; }
+.down { color: #b91c1c; font-weight: 700; }
+.flat { color: #64748b; font-weight: 600; }
+.bar-track { background: #e2e8f0; height: 7px; border-radius: 999px; width: 100%; }
+.bar-fill  { background: #2563eb; height: 7px; border-radius: 999px; }
+.bar-label { font-size: 8pt; color: #64748b; margin-bottom: 3px; }
+
+.note {
+    font-size: 8.5pt; color: #64748b; margin-top: 8px;
+}
+</style>
+</head>
+<body>
+
+<div class="doc-head">
+    <p class="kicker">Sarvajanik University · Communications</p>
+    <h1>{{ college_name }}</h1>
+    <p class="sub">Annual Portfolio Report — January to December {{ selected_year }}</p>
+</div>
+
+<!-- Chapter 1: Executive summary -->
+<div class="chapter">
+    <h2>1. Executive Summary</h2>
+    <p class="lede">Consolidated view of {{ selected_year }} performance across social media, events,
+       media coverage, press outreach and KPI targets.</p>
+
+    {% with ex=chapters.executive_summary %}
+    <table class="card-row">
+        <tr>
+            <td><span class="lbl">Total Views</span><span class="val">{{ ex.yoy.0.current }}</span>
+                <span class="sub">vs {{ ex.prev_year }}</span></td>
+            <td><span class="lbl">Total Reach</span><span class="val">{{ ex.yoy.1.current }}</span>
+                <span class="sub">{{ ex.months_reported }} month{{ ex.months_reported|pluralize }} reported</span></td>
+            <td><span class="lbl">Events</span><span class="val">{{ ex.event_count }}</span>
+                <span class="sub">held in {{ selected_year }}</span></td>
+            <td><span class="lbl">Media Items</span><span class="val">{{ ex.media_count }}</span>
+                <span class="sub">newspapers + channels</span></td>
+        </tr>
+    </table>
+
+    <table>
+        <thead><tr><th>Metric</th><th class="num">{{ ex.prev_year }}</th><th class="num">{{ selected_year }}</th><th>Change</th></tr></thead>
+        <tbody>
+            {% for m in ex.yoy %}
+            <tr>
+                <td>{{ m.label }}</td>
+                <td class="num">{{ m.previous|intcomma }}</td>
+                <td class="num">{{ m.current|intcomma }}</td>
+                <td>{% if m.change is None %}<span class="flat">— no {{ ex.prev_year }} baseline</span>
+                    {% elif m.change > 0 %}<span class="up">▲ +{{ m.change|floatformat:1 }}%</span>
+                    {% elif m.change < 0 %}<span class="down">▼ {{ m.change|floatformat:1 }}%</span>
+                    {% else %}<span class="flat">■ 0.0%</span>{% endif %}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <table class="card-row">
+        <tr>
+            <td><span class="lbl">Press Releases</span><span class="val">{{ ex.press_release_count }}</span></td>
+            <td><span class="lbl">Top Posts</span><span class="val">{{ ex.top_post_count }}</span></td>
+            <td><span class="lbl">KPI Targets Met</span><span class="val">{{ ex.kpi_targets_met }}/{{ ex.kpi_target_count }}</span></td>
+            <td><span class="lbl">Avg Attainment</span>
+                <span class="val">{% if ex.kpi_avg_attainment is not None %}{{ ex.kpi_avg_attainment }}%{% else %}—{% endif %}</span></td>
+        </tr>
+    </table>
+    {% endwith %}
+</div>
+
+<!-- Chapter 2: Social media -->
+<div class="chapter">
+    <h2>2. Social Media Performance</h2>
+    {% if chapters.social_media.monthly %}
+    <p class="bar-label">Monthly total views — bars relative to the best month of {{ selected_year }}</p>
+    {% with max_views=chapters.social_media.max_month_views %}
+    <table style="margin-top:4px;">
+        <tbody>
+            {% for row in chapters.social_media.monthly %}
+            <tr>
+                <td style="width:18%;">{{ row.label }}</td>
+                <td style="width:44%;">
+                    {% if max_views %}
+                    <div class="bar-track"><div class="bar-fill" style="width: {% widthratio row.record.total_views max_views 100 %}%;"></div></div>
+                    {% endif %}
+                </td>
+                <td class="num" style="width:19%;">{{ row.record.total_views|intcomma }}</td>
+                <td class="num" style="width:19%;">{{ row.record.total_reach|intcomma }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endwith %}
+    {% else %}
+    <p>No monthly analytics were recorded for {{ selected_year }}.</p>
+    {% endif %}
+
+    {% if chapters.social_media.top_posts %}
+    <h3 style="font-size:11pt;margin:14px 0 0 0;">Top Posts</h3>
+    <table>
+        <thead><tr><th>Month</th><th>Platform</th><th>Caption</th><th class="num">Views</th><th class="num">Likes</th></tr></thead>
+        <tbody>
+            {% for p in chapters.social_media.top_posts %}
+            <tr>
+                <td>{{ p.get_month_display }}</td>
+                <td>{{ p.platform|capfirst }}</td>
+                <td>{{ p.caption|truncatechars:70 }}</td>
+                <td class="num">{{ p.views|intcomma }}</td>
+                <td class="num">{{ p.likes|intcomma }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+
+<!-- Chapter 3: Events -->
+<div class="chapter">
+    <h2>3. Events</h2>
+    {% if chapters.events.events %}
+    <p class="lede">{{ chapters.events.total }} events held in {{ selected_year }}
+        {% if chapters.events.categories %}— by category:
+        {% for cat in chapters.events.categories %}{{ cat.0|title }} ×{{ cat.1 }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}.
+    </p>
+    <table>
+        <thead><tr><th>Date</th><th>Title</th><th>Category</th></tr></thead>
+        <tbody>
+            {% for e in chapters.events.events %}
+            <tr>
+                <td style="white-space:nowrap;width:16%;">{{ e.date|date:"d M Y" }}</td>
+                <td>{{ e.title }}</td>
+                <td style="color:#64748b;">{{ e.category|default:"other"|title }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No events were recorded for {{ selected_year }}.</p>
+    {% endif %}
+</div>
+
+<!-- Chapter 4: Media coverage -->
+<div class="chapter">
+    <h2>4. Media Coverage</h2>
+    {% if chapters.media_coverage.newspapers or chapters.media_coverage.channels %}
+    <table>
+        <thead><tr><th>Type</th><th>Publication / Channel</th><th>Date</th><th>Headline</th></tr></thead>
+        <tbody>
+            {% for n in chapters.media_coverage.newspapers %}
+            <tr>
+                <td>Newspaper</td><td>{{ n.publication }}</td>
+                <td style="white-space:nowrap;">{{ n.date|date:"d M Y" }}</td>
+                <td>{{ n.headline|truncatechars:90 }}</td>
+            </tr>
+            {% endfor %}
+            {% for c in chapters.media_coverage.channels %}
+            <tr>
+                <td>TV / Channel</td><td>{{ c.channel_name }}</td>
+                <td>{{ c.month }}/{{ c.year }}</td>
+                <td>{{ c.platform|default:"—" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No media coverage was recorded for {{ selected_year }}.</p>
+    {% endif %}
+</div>
+
+<!-- Chapter 5: Press releases -->
+<div class="chapter">
+    <h2>5. Press Releases</h2>
+    {% if chapters.press_releases.releases %}
+    <table>
+        <thead><tr><th>Date</th><th>Title</th><th class="num">Placements</th><th>Potential Reach</th></tr></thead>
+        <tbody>
+            {% for p in chapters.press_releases.releases %}
+            <tr>
+                <td style="white-space:nowrap;width:16%;">{{ p.date_submitted|date:"d M Y" }}</td>
+                <td>{{ p.title }}</td>
+                <td class="num">{{ p.placements }}</td>
+                <td>{{ p.potential_reach|default:"—" }}</td>
+            </tr>
+            {% endfor %}
+            <tr class="total-row">
+                <td colspan="2">Total placements</td>
+                <td class="num">{{ chapters.press_releases.total_placements }}</td>
+                <td></td>
+            </tr>
+        </tbody>
+    </table>
+    {% else %}
+    <p>No press releases were issued in {{ selected_year }}.</p>
+    {% endif %}
+</div>
+
+<!-- Chapter 6: KPI performance -->
+<div class="chapter">
+    <h2>6. KPI Performance</h2>
+    {% if chapters.kpi_performance.rows %}
+    <table>
+        <thead><tr><th>Scope</th><th>Metric</th><th class="num">Target</th><th class="num">Actual</th>
+                   <th class="num">Gap</th><th>Achievement</th></tr></thead>
+        <tbody>
+            {% for r in chapters.kpi_performance.rows %}
+            <tr>
+                <td>{{ r.scope }}</td>
+                <td>{{ r.metric }}</td>
+                <td class="num">{{ r.target|intcomma }}</td>
+                <td class="num">{{ r.actual|intcomma }}</td>
+                <td class="num">{{ r.gap|intcomma }}</td>
+                <td style="width:26%;">
+                    <span class="{% if r.on_track %}up{% else %}down{% endif %}">{{ r.achievement }}%</span>
+                    <div class="bar-track" style="margin-top:3px;">
+                        <div class="bar-fill" style="width: {% if r.achievement > 100 %}100{% else %}{{ r.achievement|floatformat:0 }}{% endif %}%;
+                             {% if not r.on_track %}background:#b91c1c;{% endif %}"></div>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No KPI targets were defined for {{ selected_year }}.</p>
+    {% endif %}
+    <p class="note">Compiled automatically from SU Analytics — figures reflect data recorded as of generation time.</p>
+</div>
+
+</body>
+</html>
