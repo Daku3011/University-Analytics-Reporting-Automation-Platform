@@ -739,6 +739,111 @@ def submission_status(request):
 
 
 @login_required
+def kpi_gap_export(request):
+    """Excel download of the KPI gap table (#5) — same params/RBAC as kpi_gap_view."""
+    from accounts.decorators import get_user_college
+    from django.utils import timezone
+
+    from .services.excel_export import rows_to_xlsx_response
+    from .services.kpi import get_kpi_rows
+
+    user_college = get_user_college(request.user)
+    current_year = timezone.localtime(timezone.now()).year
+
+    all_mode = False
+    if user_college:
+        selected_college = user_college
+    else:
+        college_param = request.GET.get('college')
+        if college_param == 'all':
+            all_mode = True
+            selected_college = None
+        elif college_param:
+            selected_college = get_object_or_404(College, id=college_param)
+        else:
+            selected_college = College.objects.first()
+
+    year_str = request.GET.get('year')
+    try:
+        selected_year = int(year_str) if year_str else current_year
+    except ValueError:
+        selected_year = current_year
+
+    kpi_rows = get_kpi_rows(college=selected_college, year=selected_year)
+    data = [[
+        row['college_name'], str(row['scope']), row['scope_type'], row['metric'],
+        row['target'], row['actual'], row['gap'], row['achievement'],
+        'On track' if row['on_track'] else 'Behind',
+    ] for row in kpi_rows]
+
+    scope_label = 'all-colleges' if all_mode else (
+        selected_college.code.lower() if selected_college else 'kpi')
+    return rows_to_xlsx_response(
+        title=f'KPI Gap {selected_year}',
+        headers=['College', 'Scope', 'Scope Type', 'Metric',
+                 'Target', 'Actual', 'Gap', 'Achievement %', 'Status'],
+        rows=data,
+        filename=f'kpi_gaps_{scope_label}_{selected_year}.xlsx',
+    )
+
+
+@login_required
+def submission_status_export(request):
+    """Excel download of the submission-status grid (#5)."""
+    from accounts.decorators import get_user_college, college_queryset_filter
+    from django.utils import timezone
+
+    from .services.excel_export import rows_to_xlsx_response
+
+    user_college = get_user_college(request.user)
+    colleges = college_queryset_filter(College.objects.all(), request.user, college_field='pk')
+    current_year = timezone.localtime(timezone.now()).year
+
+    selected_college = user_college or (
+        get_object_or_404(colleges, id=request.GET.get('college'))
+        if request.GET.get('college') else colleges.first()
+    )
+
+    year_str = request.GET.get('year')
+    try:
+        selected_year = int(year_str) if year_str else current_year
+    except ValueError:
+        selected_year = current_year
+
+    records = {}
+    if selected_college:
+        for rec in MonthlyAnalytics.objects.filter(
+                college=selected_college, year=selected_year,
+                department__isnull=True, programme__isnull=True,
+        ).select_related('submitted_by', 'verified_by'):
+            records[rec.month] = rec
+
+    def _who(user):
+        if not user:
+            return '—'
+        return user.get_full_name() or user.username
+
+    data = []
+    for m_num, m_label in MONTH_CHOICES:
+        rec = records.get(m_num)
+        data.append([
+            m_label,
+            rec.status if rec else 'missing',
+            _who(rec.submitted_by) if rec else '—',
+            rec.submitted_at.strftime('%d %b %Y, %H:%M') if rec and rec.submitted_at else '—',
+            _who(rec.verified_by) if rec else '—',
+        ])
+
+    scope_label = selected_college.code.lower() if selected_college else 'submission'
+    return rows_to_xlsx_response(
+        title=f'Submission Status {selected_year}',
+        headers=['Month', 'Status', 'Submitted By', 'Submitted At', 'Verified By'],
+        rows=data,
+        filename=f'submission_status_{scope_label}_{selected_year}.xlsx',
+    )
+
+
+@login_required
 def comparison_view(request):
     """Year-on-year and institute-wise comparisons with trends (#3).
 

@@ -293,6 +293,13 @@ html[data-theme="dark"] .on-track-badge.no { background: #450a0a; color: #fca5a5
                 {% endfor %}
             </select>
         </div>
+        <div class="filter-group" style="justify-content:flex-end;">
+            <span class="filter-label">&nbsp;</span>
+            <a class="filter-select" style="display:inline-flex;align-items:center;gap:7px;text-decoration:none;background:#dcfce7;color:#166534;border-color:transparent;font-weight:600;"
+               href="{% url 'kpi_gap_export' %}?{% if all_mode %}college=all&{% endif %}year={{ selected_year }}{% if not all_mode and selected_college %}&college={{ selected_college.id }}{% endif %}">
+                <i class="ph ph-file-xls"></i> Export Excel
+            </a>
+        </div>
     </form>
 </div>
 

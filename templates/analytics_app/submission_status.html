@@ -248,6 +248,13 @@ html[data-theme="dark"] .status-badge.missing { background: #2a2723; color: #a8a
                 {% endfor %}
             </select>
         </div>
+        <div class="filter-group" style="justify-content:flex-end;">
+            <span class="filter-label">&nbsp;</span>
+            <a class="filter-select" style="display:inline-flex;align-items:center;gap:7px;text-decoration:none;background:#dcfce7;color:#166534;border-color:transparent;font-weight:600;"
+               href="{% url 'submission_status_export' %}?year={{ selected_year }}{% if selected_college %}&college={{ selected_college.id }}{% endif %}">
+                <i class="ph ph-file-xls"></i> Export Excel
+            </a>
+        </div>
     </form>
 </div>
 
