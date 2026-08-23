@@ -10,7 +10,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.conf import settings
 from accounts.decorators import role_required
-from .models import MonthlyAnalytics, TopPost, STATUS_CHOICES
+from .models import KpiTarget, MonthlyAnalytics, TopPost, STATUS_CHOICES
 from colleges.models import College
 from events.models import Event
 from su_analytics.constants import MONTH_CHOICES
