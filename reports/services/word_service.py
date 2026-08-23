@@ -39,7 +39,7 @@ def _table(doc, headers, rows, number_cols=()):
                 for run in paragraph.runs:
                     run.font.size = Pt(9.5)
                     if i in number_cols:
-                        paragraph.alignment = WD_ALIGN_PARAGRAPH_RIGHT
+                        paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
     return table
 
 

@@ -73,6 +73,7 @@ def _portfolio_response(request, fmt):
 
     context = build_portfolio_context(college, year)
     stem = f"{college.code}_Annual_Portfolio_{year}"
+    extension = {'pdf': 'pdf', 'excel': 'xlsx', 'word': 'docx'}[fmt]
 
     if fmt == 'pdf':
         html_string = render_to_string('reports/portfolio_pdf.html', {
@@ -108,7 +109,7 @@ def _portfolio_response(request, fmt):
     else:
         return redirect('portfolio_preview')
 
-    response['Content-Disposition'] = f'attachment; filename="{stem}.{fmt}"'
+    response['Content-Disposition'] = f'attachment; filename="{stem}.{extension}"'
     return response
 
 
