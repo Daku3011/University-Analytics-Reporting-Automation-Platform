@@ -79,6 +79,10 @@
                href="{% url 'yearly_overview' %}">
                 <i class="ph ph-calendar-blank"></i> Yearly Overview
             </a>
+            <a class="nav-link {% if request.resolver_match.url_name == 'university_overview' %}active{% endif %}"
+               href="{% url 'university_overview' %}">
+                <i class="ph ph-buildings"></i> University Explorer
+            </a>
 
             <span class="sidebar-section-label">Analytics</span>
             <a class="nav-link {% if request.resolver_match.url_name == 'kpi_gap_view' %}active{% endif %}"
@@ -88,6 +92,10 @@
             <a class="nav-link {% if request.resolver_match.url_name == 'submission_status' %}active{% endif %}"
                href="{% url 'submission_status' %}">
                 <i class="ph ph-check-circle"></i> Submission Status
+            </a>
+            <a class="nav-link {% if request.resolver_match.url_name == 'comparison_view' %}active{% endif %}"
+               href="{% url 'comparison_view' %}">
+                <i class="ph ph-arrows-left-right"></i> Compare &amp; Trends
             </a>
 
             <span class="sidebar-section-label">Data Entry</span>

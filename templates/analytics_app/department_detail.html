@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}{{ department.name }} — Department{% endblock %}
+
+{% block extra_css %}
+{% include 'analytics_app/_hierarchy_styles.html' %}
+{% endblock %}
+
+{% block content %}
+{% include 'analytics_app/_breadcrumbs.html' %}
+
+<!-- Header & Year filter -->
+<div class="page-header">
+    <div>
+        <h2><i class="ph ph-sitemap"></i> {{ department.name }}</h2>
+        <p>Department of <strong>{{ college.name }}</strong> — monthly performance for {{ selected_year }}.</p>
+    </div>
+    <form method="GET" action="{% url 'department_detail' department.id %}" class="filter-form">
+        <div class="filter-group">
+            <span class="filter-label">Year</span>
+            <select name="year" class="filter-select" onchange="this.form.submit()">
+                {% for y in years %}
+                <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+</div>
+
+<!-- Summary cards -->
+<div class="stat-grid">
+    <div class="stat-card">
+        <div class="lbl"><i class="ph ph-eye"></i> Total Views</div>
+        <div class="num">{{ views|intcomma }}</div>
+        <div class="sub">
+            {% include 'analytics_app/_change_badge.html' with value=change %}
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="lbl"><i class="ph ph-users-three"></i> Total Reach</div>
+        <div class="num">{{ reach|intcomma }}</div>
+        <div class="sub">department level, {{ selected_year }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="lbl"><i class="ph ph-graduation-cap"></i> Programmes</div>
+        <div class="num">{{ programmes|length }}</div>
+        <div class="sub">under this department</div>
+    </div>
+</div>
+
+<!-- Programmes table -->
+<div class="card">
+    <h3><i class="ph ph-graduation-cap"></i> Programmes — {{ selected_year }}</h3>
+    {% if programmes %}
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Programme</th>
+                <th>Code</th>
+                <th class="num">Views</th>
+                <th class="num">Months</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in programmes %}
+            <tr>
+                <td><strong>{{ p.obj.name }}</strong></td>
+                <td style="font-family:'DM Mono',monospace;color:var(--text-muted);">{{ p.obj.code|default:"—" }}</td>
+                <td class="num">{{ p.views|intcomma }}</td>
+                <td class="num">{{ p.records }}</td>
+                <td style="text-align:right;">
+                    <a href="{% url 'programme_detail' p.obj.id %}" style="color:var(--accent);text-decoration:none;font-weight:600;font-size:13px;">
+                        Open <i class="ph ph-arrow-right"></i>
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state" style="padding:32px;">
+        <i class="ph ph-graduation-cap"></i>
+        <p>No programmes are registered under this department yet. Add them from the Admin Panel to enable programme-level entry.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Monthly table -->
+<div class="card">
+    <h3><i class="ph ph-table"></i> Month-by-Month — {{ selected_year }}</h3>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Month</th>
+                <th>Status</th>
+                <th class="num">Total Views</th>
+                <th class="num">Total Reach</th>
+                <th class="num">Followers Gained</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in months %}
+            <tr {% if not m.record %}style="opacity:0.55;"{% endif %}>
+                <td>{{ m.label }}</td>
+                <td>
+                    {% if m.record %}
+                    <span class="status-badge {{ m.record.status }}">{{ m.record.status }}</span>
+                    {% else %}
+                    <span class="status-badge missing">missing</span>
+                    {% endif %}
+                </td>
+                <td class="num">{% if m.record %}{{ m.record.total_views|intcomma }}{% else %}—{% endif %}</td>
+                <td class="num">{% if m.record %}{{ m.record.total_reach|intcomma }}{% else %}—{% endif %}</td>
+                <td class="num">{% if m.record %}{{ m.record.followers_gained|intcomma }}{% else %}—{% endif %}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <p class="note-line">
+        <i class="ph ph-info"></i> Top posts, media coverage and press releases are recorded at the
+        institute level — see the
+        <a href="{% url 'college_detail' college.id %}" style="color:var(--accent);">institute page</a>.
+    </p>
+</div>
+{% endblock %}

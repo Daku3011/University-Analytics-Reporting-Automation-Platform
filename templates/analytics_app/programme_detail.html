@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}{{ programme.name }} — Programme{% endblock %}
+
+{% block extra_css %}
+{% include 'analytics_app/_hierarchy_styles.html' %}
+{% endblock %}
+
+{% block content %}
+{% include 'analytics_app/_breadcrumbs.html' %}
+
+<!-- Header & Year filter -->
+<div class="page-header">
+    <div>
+        <h2><i class="ph ph-graduation-cap"></i> {{ programme.name }}</h2>
+        <p>{{ department.name }} · {{ college.name }} — programme-level monthly figures for {{ selected_year }}.</p>
+    </div>
+    <form method="GET" action="{% url 'programme_detail' programme.id %}" class="filter-form">
+        <div class="filter-group">
+            <span class="filter-label">Year</span>
+            <select name="year" class="filter-select" onchange="this.form.submit()">
+                {% for y in years %}
+                <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+</div>
+
+<!-- Summary cards -->
+<div class="stat-grid">
+    <div class="stat-card">
+        <div class="lbl"><i class="ph ph-eye"></i> Total Views</div>
+        <div class="num">{{ views|intcomma }}</div>
+        <div class="sub">programme level, {{ selected_year }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="lbl"><i class="ph ph-users-three"></i> Total Reach</div>
+        <div class="num">{{ reach|intcomma }}</div>
+        <div class="sub">programme level, {{ selected_year }}</div>
+    </div>
+</div>
+
+<!-- Monthly table -->
+<div class="card">
+    <h3><i class="ph ph-table"></i> Month-by-Month — {{ selected_year }}</h3>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Month</th>
+                <th>Status</th>
+                <th class="num">Total Views</th>
+                <th class="num">Total Reach</th>
+                <th class="num">Followers Gained</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in months %}
+            <tr {% if not m.record %}style="opacity:0.55;"{% endif %}>
+                <td>{{ m.label }}</td>
+                <td>
+                    {% if m.record %}
+                    <span class="status-badge {{ m.record.status }}">{{ m.record.status }}</span>
+                    {% else %}
+                    <span class="status-badge missing">missing</span>
+                    {% endif %}
+                </td>
+                <td class="num">{% if m.record %}{{ m.record.total_views|intcomma }}{% else %}—{% endif %}</td>
+                <td class="num">{% if m.record %}{{ m.record.total_reach|intcomma }}{% else %}—{% endif %}</td>
+                <td class="num">{% if m.record %}{{ m.record.followers_gained|intcomma }}{% else %}—{% endif %}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px;">No months shown.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <p class="note-line">
+        <i class="ph ph-info"></i> Enter programme-level numbers from
+        <a href="{% url 'add_analytics' %}" style="color:var(--accent);">Add Analytics</a> by choosing
+        this institute, department and programme.
+    </p>
+</div>
+{% endblock %}

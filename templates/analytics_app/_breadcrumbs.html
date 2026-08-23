@@ -1,0 +1,26 @@
+{% comment %}
+Hierarchy breadcrumb trail (#4). Set whichever of college/department/programme
+is in context; the deepest set object is rendered as the current page.
+Requires _hierarchy_styles.html to be included for the .crumbs styles.
+{% endcomment %}
+<nav class="crumbs" aria-label="Breadcrumb">
+    <a href="{% url 'university_overview' %}"><i class="ph ph-buildings"></i> University</a>
+    {% if college %}
+        <i class="ph ph-caret-right sep"></i>
+        {% if department %}
+            <a href="{% url 'college_detail' college.id %}">{{ college.name }}</a>
+            <i class="ph ph-caret-right sep"></i>
+            {% if programme %}
+                <a href="{% url 'department_detail' department.id %}">{{ department.name }}</a>
+                <i class="ph ph-caret-right sep"></i>
+                <span class="current">{{ programme.name }}</span>
+            {% else %}
+                <span class="current">{{ department.name }}</span>
+            {% endif %}
+        {% else %}
+            <span class="current">{{ college.name }}</span>
+        {% endif %}
+    {% else %}
+        <span class="current">Overview</span>
+    {% endif %}
+</nav>

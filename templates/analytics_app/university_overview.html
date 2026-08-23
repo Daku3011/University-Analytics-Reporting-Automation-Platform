@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}University Explorer{% endblock %}
+
+{% block extra_css %}
+{% include 'analytics_app/_hierarchy_styles.html' %}
+{% endblock %}
+
+{% block content %}
+{% include 'analytics_app/_breadcrumbs.html' %}
+
+<!-- Header & Year filter -->
+<div class="page-header">
+    <div>
+        <h2><i class="ph ph-buildings"></i> University Overview</h2>
+        <p>Snapshot of every institute for <strong>{{ selected_year }}</strong> — click a card to drill into its departments and programmes.</p>
+    </div>
+    <form method="GET" action="{% url 'university_overview' %}" class="filter-form">
+        <div class="filter-group">
+            <span class="filter-label">Year</span>
+            <select name="year" class="filter-select" onchange="this.form.submit()">
+                {% for y in years %}
+                <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+</div>
+
+<!-- University summary -->
+<div class="stat-grid">
+    <div class="stat-card">
+        <div class="lbl"><i class="ph ph-eye"></i> University Views</div>
+        <div class="num">{{ university_total|intcomma }}</div>
+        <div class="sub">all institutes, {{ selected_year }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="lbl"><i class="ph ph-users-three"></i> University Reach</div>
+        <div class="num">{{ university_reach|intcomma }}</div>
+        <div class="sub">all institutes, {{ selected_year }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="lbl"><i class="ph ph-calendar-star"></i> Events</div>
+        <div class="num">{{ total_events|intcomma }}</div>
+        <div class="sub">recorded in {{ selected_year }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="lbl"><i class="ph ph-hourglass"></i> Elapsed Months</div>
+        <div class="num">{{ elapsed_months }}</div>
+        <div class="sub">expected months of data so far</div>
+    </div>
+</div>
+
+<!-- Institute cards -->
+<div class="college-grid">
+    {% for c in cards %}
+    <div class="college-card">
+        <div class="college-card-head">
+            <div class="college-avatar">
+                {% if c.college.logo %}<img src="{{ c.college.logo.url }}" alt="">{% else %}{{ c.college.code|default:c.college.name|slice:":3" }}{% endif %}
+            </div>
+            <div>
+                <div class="name">{{ c.college.name }}</div>
+                <div class="code">{{ c.college.code }}</div>
+            </div>
+        </div>
+
+        <div class="mini-stats">
+            <div class="mini-stat"><div class="v">{{ c.views|intcomma }}</div><div class="k">Views</div></div>
+            <div class="mini-stat"><div class="v">{{ c.reach|intcomma }}</div><div class="k">Reach</div></div>
+            <div class="mini-stat"><div class="v">{{ c.events|intcomma }}</div><div class="k">Events</div></div>
+        </div>
+
+        <div>
+            <div class="completeness-row">
+                <span><i class="ph ph-database"></i> Data completeness</span>
+                <span><strong>{{ c.completeness }}%</strong> · {{ c.records }}/{{ elapsed_months }} months</span>
+            </div>
+            <div class="completeness-bar" style="margin-top:6px;">
+                <span style="width: {% if c.completeness > 100 %}100{% else %}{{ c.completeness }}{% endif %}%;"></span>
+            </div>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+            {% include 'analytics_app/_change_badge.html' with value=c.change %}
+            <span class="note-line" style="margin:0;">
+                <i class="ph ph-sitemap"></i> {{ c.departments }} dept{{ c.departments|pluralize }} · {{ c.programmes }} prog{{ c.programmes|pluralize }}
+            </span>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+            <span class="note-line" style="margin:0;"><i class="ph ph-chart-pie-slice"></i> {{ c.share_pct }}% of university views</span>
+            {% if c.critical_alerts %}
+            <span class="alert-chip"><i class="ph ph-warning-octagon"></i> {{ c.critical_alerts }} critical</span>
+            {% endif %}
+        </div>
+
+        <a class="card-link" href="{% url 'college_detail' c.college.id %}">
+            Open institute <i class="ph ph-arrow-right"></i>
+        </a>
+    </div>
+    {% empty %}
+    <div class="empty-state" style="grid-column:1/-1;">
+        <i class="ph ph-buildings"></i>
+        <p>No institutes are visible to your account.</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

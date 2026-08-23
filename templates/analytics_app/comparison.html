@@ -1,0 +1,568 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Compare & Trends{% endblock %}
+
+{% block extra_css %}
+.cmp-header {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+.cmp-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 6px 0;
+}
+.cmp-header p {
+    font-size: 13.5px;
+    color: var(--text-muted);
+    margin: 0;
+}
+.filter-form {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.filter-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+}
+.filter-select {
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text-primary);
+    outline: none;
+    cursor: pointer;
+    min-width: 150px;
+    transition: border-color 0.2s;
+}
+.filter-select:focus { border-color: var(--accent); }
+html[data-theme="dark"] .filter-select {
+    background: #201e1b;
+    color: white;
+    border-color: #3e3b37;
+}
+
+/* Mode switch (segmented control) */
+.mode-switch {
+    display: inline-flex;
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    background: var(--surface);
+}
+.mode-switch a {
+    padding: 9px 18px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: background 0.15s, color 0.15s;
+}
+.mode-switch a.active {
+    background: var(--accent);
+    color: #fff;
+}
+.mode-switch a:not(.active):hover {
+    background: var(--surface-alt);
+    color: var(--text-primary);
+}
+
+/* Summary stat cards */
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 20px;
+}
+.stat-card .lbl {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.stat-card .num {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.2;
+    margin-top: 8px;
+    font-variant-numeric: tabular-nums;
+}
+.stat-card .sub {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+/* % change badges */
+.chg {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+.chg.up   { background: #dcfce7; color: #166534; }
+.chg.down { background: #fee2e2; color: #b91c1c; }
+.chg.flat { background: var(--surface-alt); color: var(--text-muted); }
+html[data-theme="dark"] .chg.up   { background: #052e16; color: #86efac; }
+html[data-theme="dark"] .chg.down { background: #450a0a; color: #fca5a5; }
+
+/* Chart + table cards */
+.card {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+    overflow-x: auto;
+}
+.card h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 14px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.chart-box { position: relative; height: 320px; }
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.data-table th {
+    text-align: left;
+    padding: 14px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.4px;
+    border-bottom: 1px solid var(--border-light);
+    white-space: nowrap;
+}
+.data-table td {
+    padding: 12px;
+    font-size: 13.5px;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-light);
+}
+.data-table tbody tr:last-child td { border-bottom: none; }
+.data-table td.num, .data-table th.num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+.rank-cell {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 999px;
+    background: var(--surface-alt);
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--text-primary);
+}
+.rank-cell.r1 { background: #fef9c3; color: #854d0e; }
+html[data-theme="dark"] .rank-cell.r1 { background: #422006; color: #fde047; }
+.college-cell { display: flex; align-items: center; gap: 10px; }
+.college-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--surface-alt);
+    border: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+}
+.college-avatar img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+.empty-state {
+    padding: 48px;
+    text-align: center;
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    color: var(--text-muted);
+}
+.empty-state i { font-size: 40px; color: var(--accent-light); margin-bottom: 12px; }
+.empty-state p { margin: 0; font-size: 14.5px; }
+
+@media (max-width: 768px) {
+    .cmp-header { flex-direction: column; align-items: stretch; gap: 16px; padding: 16px; }
+    .filter-form { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .filter-select { width: 100%; min-width: unset; }
+    .chart-box { height: 240px; }
+}
+@media (max-width: 600px) {
+    .filter-form { grid-template-columns: 1fr; }
+    .stat-grid { grid-template-columns: 1fr 1fr; }
+}
+{% endblock %}
+
+{% block content %}
+<!-- Header & Filters -->
+<div class="cmp-header">
+    <div>
+        <h2><i class="ph ph-arrows-left-right"></i> Compare &amp; Trends</h2>
+        <p>
+            {% if mode == 'yoy' %}
+                Month-by-month performance of
+                {% if selected_college %}<strong>{{ selected_college.name }}</strong>{% endif %}
+                against {{ yoy.prev_year }}.
+            {% else %}
+                All institutes ranked on <strong>{{ ranking.metric_label }}</strong> for {{ selected_year }},
+                with year-on-year change and share of the university total.
+            {% endif %}
+        </p>
+    </div>
+
+    <form method="GET" action="{% url 'comparison_view' %}" class="filter-form">
+        <input type="hidden" name="mode" value="{{ mode }}">
+        {% if mode == 'yoy' and can_select_college and colleges %}
+        <div class="filter-group">
+            <span class="filter-label">College</span>
+            <select name="college" class="filter-select" onchange="this.form.submit()">
+                {% for c in colleges %}
+                <option value="{{ c.id }}" {% if selected_college and c.id == selected_college.id %}selected{% endif %}>{{ c.code }} — {{ c.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+        <div class="filter-group">
+            <span class="filter-label">Year</span>
+            <select name="year" class="filter-select" onchange="this.form.submit()">
+                {% for y in years %}
+                <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }} vs {{ y|add:"-1" }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <span class="filter-label">Metric</span>
+            <select name="metric" class="filter-select" onchange="this.form.submit()">
+                {% for key, label in metric_choices %}
+                <option value="{{ key }}" {% if key == selected_metric %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+</div>
+
+<!-- Mode switch -->
+<div class="mode-switch">
+    <a href="?mode=yoy&year={{ selected_year }}&metric={{ selected_metric }}" class="{% if mode == 'yoy' %}active{% endif %}">
+        <i class="ph ph-calendar-blank"></i> Year-on-Year
+    </a>
+    <a href="?mode=institute&year={{ selected_year }}&metric={{ selected_metric }}" class="{% if mode == 'institute' %}active{% endif %}">
+        <i class="ph ph-buildings"></i> Institute-wise
+    </a>
+</div>
+
+{% if mode == 'yoy' %}
+    {% if yoy %}
+    <!-- Summary cards -->
+    <div class="stat-grid">
+        <div class="stat-card">
+            <div class="lbl"><i class="ph ph-eye"></i> Total Views — {{ selected_year }}</div>
+            <div class="num">{{ yoy.selected_summary.current|intcomma }}</div>
+            <div class="sub">
+                {% include 'analytics_app/_change_badge.html' with value=yoy.selected_summary.change prev_label=yoy.prev_year %}
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="lbl"><i class="ph ph-users-three"></i> Avg / Month — {{ selected_year }}</div>
+            <div class="num">{{ yoy.monthly_average|intcomma }}</div>
+            <div class="sub">{{ yoy.months_with_data }} month{{ yoy.months_with_data|pluralize }} of data</div>
+        </div>
+        <div class="stat-card">
+            <div class="lbl"><i class="ph ph-calendar-star"></i> Best Month — {{ yoy.selected_metric_label }}</div>
+            {% if yoy.best_month %}
+            <div class="num" style="font-size:20px;">{{ yoy.best_month.label }}</div>
+            <div class="sub">{{ yoy.best_month.value|intcomma }}</div>
+            {% else %}
+            <div class="num">—</div>
+            <div class="sub">no data yet for {{ selected_year }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Trend chart -->
+    <div class="card">
+        <h3><i class="ph ph-chart-line"></i> {{ yoy.selected_metric_label }} — {{ selected_year }} vs {{ yoy.prev_year }}</h3>
+        {% if chart_json %}
+        <div class="chart-box"><canvas id="yoyChart"></canvas></div>
+        {% endif %}
+    </div>
+
+    <!-- Monthly table -->
+    <div class="card">
+        <h3><i class="ph ph-table"></i> Month-by-Month — {{ yoy.selected_metric_label }}</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Month</th>
+                    <th class="num">{{ selected_year }}</th>
+                    <th class="num">{{ yoy.prev_year }}</th>
+                    <th class="num">Change</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in yoy.months %}
+                <tr {% if m.current == 0 and m.previous == 0 %}style="opacity:0.55;"{% endif %}>
+                    <td>{{ m.label }}</td>
+                    <td class="num">{{ m.current|intcomma }}</td>
+                    <td class="num">{{ m.previous|intcomma }}</td>
+                    <td class="num">{% include 'analytics_app/_change_badge.html' with value=m.change %}</td>
+                </tr>
+                {% endfor %}
+                <tr style="font-weight:700;">
+                    <td>Total</td>
+                    <td class="num">{{ yoy.selected_summary.current|intcomma }}</td>
+                    <td class="num">{{ yoy.selected_summary.previous|intcomma }}</td>
+                    <td class="num">{% include 'analytics_app/_change_badge.html' with value=yoy.selected_summary.change %}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- All-metrics summary -->
+    <div class="card">
+        <h3><i class="ph ph-list-checks"></i> All Metrics — Full-Year Totals</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Metric</th>
+                    <th class="num">{{ selected_year }}</th>
+                    <th class="num">{{ yoy.prev_year }}</th>
+                    <th class="num">Change</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in yoy.metrics_summary %}
+                <tr>
+                    <td>{{ s.label }}</td>
+                    <td class="num">{{ s.current|intcomma }}</td>
+                    <td class="num">{{ s.previous|intcomma }}</td>
+                    <td class="num">{% include 'analytics_app/_change_badge.html' with value=s.change %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="ph ph-chart-line"></i>
+        <p>No college available to compare.</p>
+    </div>
+    {% endif %}
+
+{% elif mode == 'institute' %}
+    <!-- Summary cards -->
+    <div class="stat-grid">
+        <div class="stat-card">
+            <div class="lbl"><i class="ph ph-buildings"></i> University Total — {{ ranking.metric_label }}</div>
+            <div class="num">{{ ranking.university_total|intcomma }}</div>
+            <div class="sub">
+                {% include 'analytics_app/_change_badge.html' with value=ranking.university_change prev_label=ranking.prev_year %}
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="lbl"><i class="ph ph-divide"></i> Average per Institute</div>
+            <div class="num">{{ ranking.average|intcomma }}</div>
+            <div class="sub">{{ ranking.rows|length }} institute{{ ranking.rows|length|pluralize }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="lbl"><i class="ph ph-trophy"></i> Top Performer</div>
+            {% if ranking.top_performer %}
+            <div class="num" style="font-size:20px;">{{ ranking.top_performer.college_code }}</div>
+            <div class="sub">{{ ranking.top_performer.total|intcomma }} — rank 1 of {{ ranking.rows|length }}</div>
+            {% else %}
+            <div class="num">—</div>
+            <div class="sub">no data yet</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Ranking chart -->
+    {% if chart_json %}
+    <div class="card">
+        <h3><i class="ph ph-chart-bar"></i> {{ ranking.metric_label }} by Institute — {{ selected_year }}</h3>
+        <div class="chart-box"><canvas id="instituteChart"></canvas></div>
+    </div>
+    {% endif %}
+
+    <!-- Ranking table -->
+    <div class="card">
+        <h3><i class="ph ph-list-numbers"></i> Ranking — {{ ranking.metric_label }} ({{ selected_year }})</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Institute</th>
+                    <th class="num">{{ selected_year }}</th>
+                    <th class="num">{{ ranking.prev_year }}</th>
+                    <th class="num">Change</th>
+                    {% if can_view_all_institutes %}<th class="num">Share</th>{% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in ranking.rows %}
+                <tr>
+                    <td><span class="rank-cell {% if r.rank == 1 %}r1{% endif %}">{{ r.rank }}</span></td>
+                    <td>
+                        <div class="college-cell">
+                            <div class="college-avatar">
+                                {% if r.college.logo %}<img src="{{ r.college.logo.url }}" alt="">{% else %}{{ r.college_code }}{% endif %}
+                            </div>
+                            <div>
+                                <strong>{{ r.college_name }}</strong>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="num">{{ r.total|intcomma }}</td>
+                    <td class="num">{{ r.previous|intcomma }}</td>
+                    <td class="num">{% include 'analytics_app/_change_badge.html' with value=r.change %}</td>
+                    {% if can_view_all_institutes %}<td class="num">{{ r.share_pct }}%</td>{% endif %}
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" style="text-align:center;color:var(--text-muted);">No institute data for {{ selected_year }}.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% if not can_view_all_institutes %}
+        <p style="font-size:12.5px;color:var(--text-muted);margin:12px 0 0 0;">
+            <i class="ph ph-lock-simple"></i> You are viewing your own institute's standing.
+            University totals and your rank are shown; other institutes remain private.
+        </p>
+        {% endif %}
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{{ chart_json|json_script:"cmp-chart-data" }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+    const el = document.getElementById('cmp-chart-data');
+    const canvas = document.getElementById('yoyChart') || document.getElementById('instituteChart');
+    if (!el || !canvas) return;
+    let data;
+    try { data = JSON.parse(el.textContent); } catch (e) { return; }
+    if (!data) return;
+
+    const styles = getComputedStyle(document.documentElement);
+    const css = (v) => styles.getPropertyValue(v).trim();
+    const accent = css('--accent') || '#2563eb';
+
+    if (document.getElementById('yoyChart')) {
+        new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels: data.labels,
+                datasets: [
+                    {
+                        label: data.currentLabel,
+                        data: data.current,
+                        borderColor: accent,
+                        backgroundColor: accent + '22',
+                        tension: 0.35,
+                        fill: true,
+                        pointRadius: 3,
+                    },
+                    {
+                        label: data.previousLabel,
+                        data: data.previous,
+                        borderColor: '#94a3b8',
+                        borderDash: [5, 4],
+                        tension: 0.35,
+                        fill: false,
+                        pointRadius: 3,
+                    },
+                ],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: { legend: { position: 'bottom', labels: { usePointStyle: true } } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { callback: (v) => Intl.NumberFormat('en', { notation: 'compact' }).format(v) } },
+                },
+            },
+        });
+    } else if (document.getElementById('instituteChart')) {
+        new Chart(canvas, {
+            type: 'bar',
+            data: {
+                labels: data.labels,
+                datasets: [{
+                    label: '{{ ranking.metric_label|escapejs }}',
+                    data: data.values,
+                    backgroundColor: accent + 'cc',
+                    borderRadius: 6,
+                    maxBarThickness: 56,
+                }],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { callback: (v) => Intl.NumberFormat('en', { notation: 'compact' }).format(v) } },
+                },
+            },
+        });
+    }
+})();
+</script>
+{% endblock %}

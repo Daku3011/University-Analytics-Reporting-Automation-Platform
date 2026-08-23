@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}{{ college.name }} — Institute{% endblock %}
+
+{% block extra_css %}
+{% include 'analytics_app/_hierarchy_styles.html' %}
+{% endblock %}
+
+{% block content %}
+{% include 'analytics_app/_breadcrumbs.html' %}
+
+<!-- Header & Year filter -->
+<div class="page-header">
+    <div>
+        <h2>
+            <span class="college-avatar" style="width:36px;height:36px;font-size:12px;">
+                {% if college.logo %}<img src="{{ college.logo.url }}" alt="">{% else %}{{ college.code|default:college.name|slice:":3" }}{% endif %}
+            </span>
+            {{ college.name }}
+        </h2>
+        <p>Institute snapshot for <strong>{{ selected_year }}</strong> with its department-level breakdown.</p>
+    </div>
+    <form method="GET" action="{% url 'college_detail' college.id %}" class="filter-form">
+        <div class="filter-group">
+            <span class="filter-label">Year</span>
+            <select name="year" class="filter-select" onchange="this.form.submit()">
+                {% for y in years %}
+                <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+</div>
+
+<!-- Summary cards -->
+<div class="stat-grid">
+    <div class="stat-card">
+        <div class="lbl"><i class="ph ph-eye"></i> Total Views</div>
+        <div class="num">{{ views|intcomma }}</div>
+        <div class="sub">
+            {% include 'analytics_app/_change_badge.html' with value=change %}
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="lbl"><i class="ph ph-users-three"></i> Total Reach</div>
+        <div class="num">{{ reach|intcomma }}</div>
+        <div class="sub">institute level, {{ selected_year }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="lbl"><i class="ph ph-calendar-star"></i> Events</div>
+        <div class="num">{{ events_count|intcomma }}</div>
+        <div class="sub">held in {{ selected_year }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="lbl"><i class="ph ph-sitemap"></i> Departments</div>
+        <div class="num">{{ departments|length }}</div>
+        <div class="sub">with analytics breakdown</div>
+    </div>
+</div>
+
+<!-- Departments table -->
+<div class="card">
+    <h3><i class="ph ph-sitemap"></i> Departments — {{ selected_year }}</h3>
+    {% if departments %}
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Department</th>
+                <th>Code</th>
+                <th class="num">Programmes</th>
+                <th class="num">Views</th>
+                <th class="num">Reach</th>
+                <th class="num">Months</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for d in departments %}
+            <tr>
+                <td><strong>{{ d.obj.name }}</strong></td>
+                <td style="font-family:'DM Mono',monospace;color:var(--text-muted);">{{ d.obj.code|default:"—" }}</td>
+                <td class="num">{{ d.programme_count }}</td>
+                <td class="num">{{ d.views|intcomma }}</td>
+                <td class="num">{{ d.reach|intcomma }}</td>
+                <td class="num">{{ d.records }}</td>
+                <td style="text-align:right;">
+                    <a href="{% url 'department_detail' d.obj.id %}" style="color:var(--accent);text-decoration:none;font-weight:600;font-size:13px;">
+                        Open <i class="ph ph-arrow-right"></i>
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state" style="padding:32px;">
+        <i class="ph ph-sitemap"></i>
+        <p>No departments are registered for this institute yet. Add them from the Admin Panel to enable department-level entry and analysis.</p>
+    </div>
+    {% endif %}
+    <p class="note-line">
+        <i class="ph ph-info"></i> Institute-wide figures above count only institute-level records;
+        department and programme breakdowns are tracked separately so nothing is double-counted.
+        Full-year detail lives in <a href="{% url 'yearly_overview' %}" style="color:var(--accent);">Yearly Overview</a>.
+    </p>
+</div>
+{% endblock %}

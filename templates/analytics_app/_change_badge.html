@@ -1,0 +1,14 @@
+{% comment %}
+Reusable % change badge. Params:
+  value      — percentage change (float) or None
+  prev_label — optional label for the baseline, e.g. "2025" → "vs 2025"
+{% endcomment %}
+{% if value is None %}
+    <span class="chg flat"><i class="ph ph-minus"></i> —</span>
+{% else %}
+    <span class="chg {% if value > 0 %}up{% elif value < 0 %}down{% else %}flat{% endif %}">
+        <i class="ph ph-trend-{% if value > 0 %}up{% elif value < 0 %}down{% else %}right{% endif %}"></i>
+        {% if value > 0 %}+{% endif %}{{ value|floatformat:1 }}%
+        {% if prev_label %}<span style="font-weight:400;opacity:.75;">vs {{ prev_label }}</span>{% endif %}
+    </span>
+{% endif %}
