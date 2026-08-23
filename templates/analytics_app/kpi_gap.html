@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load humanize %}
-{% block title %}KPI Gap Analysis — {{ selected_college.name }} ({{ selected_year }}){% endblock %}
+{% block title %}KPI Gap Analysis — {% if all_mode %}All Colleges{% else %}{{ selected_college.name }}{% endif %} ({{ selected_year }}){% endblock %}
 
 {% block extra_css %}
 .kpi-header {
@@ -244,6 +244,17 @@ html[data-theme="dark"] .on-track-badge.no { background: #450a0a; color: #fca5a5
 <!-- Header & Selector -->
 <div class="kpi-header">
     <div class="kpi-info">
+        {% if all_mode %}
+        <div class="kpi-logo-container">
+            <div class="kpi-logo-placeholder"><i class="ph ph-buildings" style="font-size:26px;"></i></div>
+        </div>
+        <div class="kpi-details">
+            <h2>All Colleges — University Roll-up</h2>
+            <p>
+                <i class="ph ph-target"></i> Every institute's KPI targets for {{ selected_year }}
+            </p>
+        </div>
+        {% else %}
         <div class="kpi-logo-container">
             {% if selected_college.logo %}
                 <img src="{{ selected_college.logo.url }}" alt="{{ selected_college.name }} logo">
@@ -259,6 +270,7 @@ html[data-theme="dark"] .on-track-badge.no { background: #450a0a; color: #fca5a5
                 <i class="ph ph-calendar-blank"></i> Year: {{ selected_year }}
             </p>
         </div>
+        {% endif %}
     </div>
 
     <form method="GET" action="{% url 'kpi_gap_view' %}" class="filter-form">
@@ -266,8 +278,9 @@ html[data-theme="dark"] .on-track-badge.no { background: #450a0a; color: #fca5a5
         <div class="filter-group">
             <span class="filter-label">College</span>
             <select name="college" class="filter-select" onchange="this.form.submit()">
+                <option value="all" {% if all_mode %}selected{% endif %}>All Colleges</option>
                 {% for c in colleges %}
-                <option value="{{ c.id }}" {% if c.id == selected_college.id %}selected{% endif %}>{{ c.code }} — {{ c.name }}</option>
+                <option value="{{ c.id }}" {% if selected_college and c.id == selected_college.id %}selected{% endif %}>{{ c.code }} — {{ c.name }}</option>
                 {% endfor %}
             </select>
         </div>
@@ -305,6 +318,7 @@ html[data-theme="dark"] .on-track-badge.no { background: #450a0a; color: #fca5a5
     <table class="gap-table">
         <thead>
             <tr>
+                {% if all_mode %}<th>College</th>{% endif %}
                 <th>Scope</th>
                 <th>Level</th>
                 <th>Metric</th>
@@ -318,6 +332,7 @@ html[data-theme="dark"] .on-track-badge.no { background: #450a0a; color: #fca5a5
         <tbody>
             {% for r in rows %}
             <tr>
+                {% if all_mode %}<td><strong>{{ r.college_code }}</strong></td>{% endif %}
                 <td>{{ r.scope }}</td>
                 <td><span class="scope-badge">{{ r.scope_type }}</span></td>
                 <td>{{ r.metric }}</td>
@@ -345,7 +360,7 @@ html[data-theme="dark"] .on-track-badge.no { background: #450a0a; color: #fca5a5
     {% else %}
     <div class="empty-state">
         <i class="ph ph-target"></i>
-        <p>No KPI targets defined for {{ selected_college.code }} in {{ selected_year }}.</p>
+        <p>{% if all_mode %}No KPI targets defined for any college in {{ selected_year }}.{% else %}No KPI targets defined for {{ selected_college.code }} in {{ selected_year }}.{% endif %}</p>
     </div>
     {% endif %}
 </div>

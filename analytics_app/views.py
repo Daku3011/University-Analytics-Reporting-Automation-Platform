@@ -10,8 +10,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.conf import settings
 from accounts.decorators import role_required
-from .models import KpiTarget, MonthlyAnalytics, TopPost, STATUS_CHOICES
-from colleges.models import College
+from .models import KpiTarget, MonthlyAnalytics, TopPost, STATUS_CHOICES, ANALYSIS_METRIC_CHOICES
+from colleges.models import College, Department, Programme
 from events.models import Event
 from su_analytics.constants import MONTH_CHOICES
 
@@ -63,6 +63,36 @@ def add_analytics(request):
             except (ValueError, TypeError):
                 return 0
 
+        # ── Optional Department / Programme scoping (#4) ──────────────
+        # The three unique constraints on MonthlyAnalytics key rows by scope,
+        # so the lookup must carry exactly the right department/programme.
+        from colleges.models import Department, Programme
+
+        department = programme = None
+        dept_id = request.POST.get('department', '')
+        prog_id = request.POST.get('programme', '')
+        if dept_id:
+            try:
+                department = Department.objects.get(id=int(dept_id))
+            except (Department.DoesNotExist, ValueError):
+                messages.error(request, 'Selected department does not exist.')
+                return redirect('add_analytics')
+            if department.college_id != college.id:
+                messages.error(request, 'Selected department does not belong to the selected college.')
+                return redirect('add_analytics')
+        if prog_id:
+            if not department:
+                messages.error(request, 'Select a department before choosing a programme.')
+                return redirect('add_analytics')
+            try:
+                programme = Programme.objects.get(id=int(prog_id))
+            except (Programme.DoesNotExist, ValueError):
+                messages.error(request, 'Selected programme does not exist.')
+                return redirect('add_analytics')
+            if programme.department_id != department.id:
+                messages.error(request, 'Selected programme does not belong to the selected department.')
+                return redirect('add_analytics')
+
         data = {
             'instagram_views': safe_int(request.POST.get('instagram_views')),
             'facebook_views': safe_int(request.POST.get('facebook_views')),
@@ -79,6 +109,7 @@ def add_analytics(request):
         }
         MonthlyAnalytics.objects.update_or_create(
             college=college, month=month, year=year,
+            department=department, programme=programme,
             defaults=data
         )
 
@@ -104,13 +135,30 @@ def add_analytics(request):
 
     # GET: show form, scoped by RBAC
     from accounts.decorators import get_user_college
+    from colleges.models import Department, Programme
     user_college = get_user_college(request.user)
     if user_college:
         colleges = College.objects.filter(id=user_college.id)
     else:
         colleges = College.objects.all()
     months = MONTH_CHOICES
-    return render(request, 'analytics_app/add_analytics.html', {'colleges': colleges, 'months': months})
+
+    # Hierarchy maps for cascading Department/Programme selects (#4)
+    dept_map = {}
+    for d in Department.objects.order_by('name').only('id', 'name', 'college_id'):
+        dept_map.setdefault(str(d.college_id), []).append({'id': d.id, 'name': d.name})
+    prog_map = {}
+    for p in Programme.objects.order_by('name').select_related('department').only(
+            'id', 'name', 'department_id'):
+        prog_map.setdefault(str(p.department_id), []).append({'id': p.id, 'name': p.name})
+
+    return render(request, 'analytics_app/add_analytics.html', {
+        'colleges': colleges,
+        'months': months,
+        'departments_json': json.dumps(dept_map),
+        'programmes_json': json.dumps(prog_map),
+        'has_hierarchy': bool(dept_map),
+    })
 
 
 
@@ -307,6 +355,23 @@ def preview_extracted_data(request):
         year = int(request.POST.get('year', 0))
         college = get_object_or_404(College, id=college_id)
 
+        # Optional Department/Programme scope (#4) — validated against the college
+        from colleges.models import Department, Programme
+        department = None
+        programme = None
+        dept_id = request.POST.get('department')
+        prog_id = request.POST.get('programme')
+        if dept_id:
+            department = get_object_or_404(Department, id=dept_id)
+            if department.college_id != college.id:
+                messages.error(request, 'Selected department does not belong to that institute.')
+                return redirect('preview_extracted_data')
+        if prog_id:
+            programme = get_object_or_404(Programme, id=prog_id)
+            if not department or programme.department_id != department.id:
+                messages.error(request, 'Selected programme does not match the chosen department.')
+                return redirect('preview_extracted_data')
+
         for ev in data.get('events', []):
             Event.objects.create(
                 college=college,
@@ -319,7 +384,8 @@ def preview_extracted_data(request):
         analytics_data = data.get('analytics', {})
         if analytics_data and month and year:
             MonthlyAnalytics.objects.update_or_create(
-                college=college, month=month, year=year,
+                college=college, department=department, programme=programme,
+                month=month, year=year,
                 defaults={
                     'instagram_views': int(analytics_data.get('instagram_views', 0)),
                     'facebook_views': int(analytics_data.get('facebook_views', 0)),
@@ -354,12 +420,25 @@ def preview_extracted_data(request):
         messages.success(request, 'Data extracted from PDF has been saved successfully!')
         return redirect('dashboard')
 
+    # Hierarchy maps for cascading Department/Programme selects (#4)
+    from colleges.models import Department, Programme
+    dept_map = {}
+    for d in Department.objects.order_by('name').only('id', 'name', 'college_id'):
+        dept_map.setdefault(str(d.college_id), []).append({'id': d.id, 'name': d.name})
+    prog_map = {}
+    for p in Programme.objects.order_by('name').select_related('department').only(
+            'id', 'name', 'department_id'):
+        prog_map.setdefault(str(p.department_id), []).append({'id': p.id, 'name': p.name})
+
     return render(request, 'analytics_app/preview_extracted_data.html', {
         'data': data,
         'college': college,
         'colleges': colleges,
         'months': months,
         'current_year': current_year,
+        'departments_json': json.dumps(dept_map),
+        'programmes_json': json.dumps(prog_map),
+        'has_hierarchy': bool(dept_map),
     })
 
 
@@ -502,13 +581,18 @@ def update_status(request, pk):
 
 @login_required
 def kpi_gap_view(request):
-    """Consolidated KPI/targets gap view: actual vs target per KPI (#1)."""
+    """Consolidated KPI/targets gap view: actual vs target per KPI (#1).
+
+    Super admins may pass ?college=all for a university-wide roll-up across
+    every institute; other roles stay scoped to their own college.
+    """
     from accounts.decorators import get_user_college, college_queryset_filter
-    from django.db.models import Sum
     from django.utils import timezone
 
+    from .services.kpi import get_kpi_rows
+
     colleges = college_queryset_filter(College.objects.all(), request.user, college_field='pk')
-    current_year = timezone.now().year
+    current_year = timezone.localtime(timezone.now()).year
 
     user_college = get_user_college(request.user)
 
@@ -520,15 +604,19 @@ def kpi_gap_view(request):
     years_set.add(current_year)
     years = sorted(list(years_set), reverse=True)
 
-    # Selected college (college_admin locked to own college)
+    # Selected college (college_admin locked to own college; super admin may pick all)
+    all_mode = False
     if user_college:
         selected_college = user_college
     else:
-        college_id = request.GET.get('college')
-        selected_college = (
-            get_object_or_404(colleges, id=college_id) if college_id
-            else colleges.first()
-        )
+        college_param = request.GET.get('college')
+        if college_param == 'all':
+            all_mode = True
+            selected_college = None
+        elif college_param:
+            selected_college = get_object_or_404(colleges, id=college_param)
+        else:
+            selected_college = colleges.first()
 
     # Selected year
     year_str = request.GET.get('year')
@@ -538,37 +626,10 @@ def kpi_gap_view(request):
         selected_year = current_year
 
     rows = []
-    if selected_college:
-        targets = KpiTarget.objects.filter(
-            college=selected_college, year=selected_year
-        ).select_related('department', 'programme', 'college')
-
-        for t in targets:
-            # Aggregate the actual metric value across the matching scope
-            filters = {'college': selected_college, 'year': selected_year}
-            if t.department_id:
-                filters['department'] = t.department
-            if t.programme_id:
-                filters['programme'] = t.programme
-            agg = MonthlyAnalytics.objects.filter(**filters).aggregate(
-                total=Sum(t.metric)
-            )
-            actual = agg['total'] or 0
-            target_value = t.target_value
-            gap = target_value - actual
-            achievement = round((actual / target_value * 100), 1) if target_value else 0.0
-            rows.append({
-                'scope': t.programme or t.department or t.college,
-                'scope_type': 'Programme' if t.programme_id else (
-                    'Department' if t.department_id else 'College'),
-                'metric': t.get_metric_display(),
-                'metric_key': t.metric,
-                'target': target_value,
-                'actual': actual,
-                'gap': gap,
-                'achievement': achievement,
-                'on_track': achievement >= 100,
-            })
+    if all_mode:
+        rows = get_kpi_rows(college=None, year=selected_year)
+    elif selected_college:
+        rows = get_kpi_rows(college=selected_college, year=selected_year)
 
     total = len(rows)
     on_track = sum(1 for r in rows if r['on_track'])
@@ -578,6 +639,7 @@ def kpi_gap_view(request):
         'colleges': colleges,
         'selected_college': selected_college,
         'can_select_college': not bool(user_college),
+        'all_mode': all_mode,
         'years': years,
         'selected_year': selected_year,
         'rows': rows,
@@ -674,3 +736,412 @@ def submission_status(request):
         'status_order': status_order,
     }
     return render(request, 'analytics_app/submission_status.html', context)
+
+
+@login_required
+def comparison_view(request):
+    """Year-on-year and institute-wise comparisons with trends (#3).
+
+    Two modes via ?mode=:
+      yoy       — one college, month-by-month vs previous year (+ % change)
+      institute — all institutes ranked on one metric for a year, with YoY
+                  delta and share of university total
+
+    College-scoped users (college_admin / analytics_team with a college) get
+    YoY for their own college; in institute mode they see only their own row
+    alongside university totals, never other institutes' names.
+    """
+    from accounts.decorators import get_user_college, college_queryset_filter
+    from django.utils import timezone
+
+    from .services.comparisons import (
+        METRIC_KEYS, DEFAULT_METRIC, build_institute_ranking, build_yoy_comparison,
+    )
+
+    colleges = college_queryset_filter(College.objects.all(), request.user, college_field='pk')
+    user_college = get_user_college(request.user)
+    current_year = timezone.localtime(timezone.now()).year
+
+    # Years: everything present in the data plus the current year
+    years_set = set(MonthlyAnalytics.objects.values_list('year', flat=True).distinct())
+    years_set.update([current_year, current_year - 1])
+    years = sorted(years_set, reverse=True)
+
+    # Mode
+    mode = request.GET.get('mode', 'yoy')
+    if mode not in ('yoy', 'institute'):
+        mode = 'yoy'
+
+    # Selected metric (validated against known KPI metrics)
+    metric = request.GET.get('metric', DEFAULT_METRIC)
+    if metric not in METRIC_KEYS:
+        metric = DEFAULT_METRIC
+
+    # Selected year
+    year_str = request.GET.get('year')
+    try:
+        selected_year = int(year_str) if year_str else current_year
+    except ValueError:
+        selected_year = current_year
+
+    context = {
+        'mode': mode,
+        'years': years,
+        'selected_year': selected_year,
+        'metric_choices': ANALYSIS_METRIC_CHOICES,
+        'selected_metric': metric,
+    }
+
+    if mode == 'institute':
+        # Ranking always computed across all colleges so locked users still
+        # learn their own rank and the university totals. Their own row keeps
+        # its true rank; every other institute is stripped from the response.
+        ranking = build_institute_ranking(College.objects.all(), selected_year, metric)
+        if user_college:
+            own = next(
+                (r for r in ranking['rows'] if r['college'].id == user_college.id), None,
+            )
+            ranking['rows'] = [own] if own else []
+            ranking['top_performer'] = None  # never leak another institute's name
+            ranking['chart_json'] = None     # the chart would expose the full ranking
+        context.update({
+            'ranking': ranking,
+            'can_view_all_institutes': not bool(user_college),
+        })
+        chart_json = ranking.get('chart_json')
+    else:
+        # YoY needs a concrete college
+        if user_college:
+            selected_college = user_college
+        else:
+            college_id = request.GET.get('college')
+            selected_college = (
+                get_object_or_404(colleges, id=college_id) if college_id
+                else colleges.first()
+            )
+        yoy = build_yoy_comparison(selected_college, selected_year, metric) \
+            if selected_college else None
+        context.update({
+            'colleges': colleges,
+            'selected_college': selected_college,
+            'can_select_college': not bool(user_college),
+            'yoy': yoy,
+        })
+        chart_json = yoy.get('chart_json') if yoy else None
+
+    context['chart_json'] = chart_json
+    return render(request, 'analytics_app/comparison.html', context)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Hierarchy drill-down: University → College → Department → Programme (#4)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _parse_year(request):
+    """Shared ?year= handling for the hierarchy views."""
+    from django.utils import timezone
+
+    current_year = timezone.localtime(timezone.now()).year
+    try:
+        return int(request.GET.get('year')), current_year
+    except (TypeError, ValueError):
+        return None, current_year
+
+
+def _scoped_to_other_college(user_college, college):
+    """True when a college-scoped user tries to view another college."""
+    return bool(user_college and college and user_college.id != college.id)
+
+
+@login_required
+def university_overview(request):
+    """Hierarchy root (#4): one health-snapshot card per institute.
+
+    Every figure is computed with a single grouped aggregation across all
+    colleges — never a per-college query loop — so the page stays fast as
+    institutes are added.
+    """
+    from accounts.decorators import college_queryset_filter
+    from django.db.models import Count, Sum
+    from django.utils import timezone
+
+    from colleges.models import Department, Programme
+
+    from .models import Alert
+    from .services.comparisons import COLLEGE_SCOPE_FILTERS, pct_change
+
+    colleges = list(
+        college_queryset_filter(College.objects.all(), request.user, college_field='pk')
+    )
+    selected_year, current_year = _parse_year(request)
+    if selected_year is None:
+        selected_year = current_year
+    # Months that should already have data for the selected year
+    if selected_year == current_year:
+        elapsed_months = timezone.localtime(timezone.now()).month
+    elif selected_year < current_year:
+        elapsed_months = 12
+    else:
+        elapsed_months = 0
+
+    def totals_for(year):
+        qs = MonthlyAnalytics.objects.filter(
+            year=year, college__in=colleges, **COLLEGE_SCOPE_FILTERS)
+        return {
+            row['college']: row
+            for row in qs.values('college').annotate(
+                views=Sum('total_views'), reach=Sum('total_reach'),
+                records=Count('id'),
+            )
+        }
+
+    cur_totals = totals_for(selected_year)
+    prev_totals = totals_for(selected_year - 1)
+    events_counts = {
+        row['college']: row['c']
+        for row in Event.objects.filter(date__year=selected_year, college__in=colleges)
+        .values('college').annotate(c=Count('id'))
+    }
+    critical_alerts = {
+        row['college']: row['c']
+        for row in Alert.objects.filter(resolved=False, level='critical', college__in=colleges)
+        .values('college').annotate(c=Count('id'))
+    }
+    dept_counts = {
+        row['college']: row['c']
+        for row in Department.objects.filter(college__in=colleges)
+        .values('college').annotate(c=Count('id'))
+    }
+    prog_counts = {
+        row['department__college']: row['c']
+        for row in Programme.objects.filter(department__college__in=colleges)
+        .values('department__college').annotate(c=Count('id'))
+    }
+
+    university_total = sum(t['views'] or 0 for t in cur_totals.values())
+    cards = []
+    for c in colleges:
+        t = cur_totals.get(c.id, {})
+        prev = prev_totals.get(c.id, {})
+        cur_views = t.get('views') or 0
+        prev_views = prev.get('views') or 0
+        records = t.get('records') or 0
+        completeness = (
+            round(min(records, elapsed_months) / elapsed_months * 100)
+            if elapsed_months else 100
+        )
+        cards.append({
+            'college': c,
+            'views': cur_views,
+            'reach': t.get('reach') or 0,
+            'events': events_counts.get(c.id, 0),
+            'records': records,
+            'completeness': completeness,
+            'change': pct_change(cur_views, prev_views),
+            'critical_alerts': critical_alerts.get(c.id, 0),
+            'departments': dept_counts.get(c.id, 0),
+            'programmes': prog_counts.get(c.id, 0),
+            'share_pct': round(cur_views / university_total * 100, 1) if university_total else 0.0,
+        })
+
+    total_events = sum(c_['events'] for c_ in cards)
+    return render(request, 'analytics_app/university_overview.html', {
+        'cards': cards,
+        'years': sorted({selected_year, selected_year - 1, current_year} |
+                        set(MonthlyAnalytics.objects.values_list('year', flat=True).distinct()),
+                        reverse=True),
+        'selected_year': selected_year,
+        'university_total': university_total,
+        'university_reach': sum(t.get('reach') or 0 for t in cur_totals.values()),
+        'total_events': total_events,
+        'elapsed_months': elapsed_months,
+    })
+
+
+@login_required
+def college_detail(request, college_id):
+    """College level of the hierarchy (#4): departments + year snapshot."""
+    from accounts.decorators import get_user_college
+    from django.db.models import Count, Sum
+
+    from .services.comparisons import COLLEGE_SCOPE_FILTERS, pct_change
+
+    college = get_object_or_404(College, id=college_id)
+    user_college = get_user_college(request.user)
+    if _scoped_to_other_college(user_college, college):
+        return HttpResponseForbidden(
+            '<h2>403 Forbidden</h2><p>You can only view your own college.</p>'
+        )
+
+    selected_year, current_year = _parse_year(request)
+    if selected_year is None:
+        selected_year = current_year
+
+    college_totals = MonthlyAnalytics.objects.filter(
+        college=college, year=selected_year, **COLLEGE_SCOPE_FILTERS,
+    ).aggregate(views=Sum('total_views'), reach=Sum('total_reach'))
+    prev_totals = MonthlyAnalytics.objects.filter(
+        college=college, year=selected_year - 1, **COLLEGE_SCOPE_FILTERS,
+    ).aggregate(views=Sum('total_views'), reach=Sum('total_reach'))
+    events_count = Event.objects.filter(college=college, date__year=selected_year).count()
+
+    # Department breakdown: dept-scope analytics rows grouped by department
+    dept_rows = MonthlyAnalytics.objects.filter(
+        college=college, year=selected_year,
+        department__isnull=False, programme__isnull=True,
+    ).values('department').annotate(
+        views=Sum('total_views'), reach=Sum('total_reach'), records=Count('id'),
+    )
+    dept_data = {row['department']: row for row in dept_rows}
+    departments = []
+    for d in college.departments.all():
+        row = dept_data.get(d.id, {})
+        departments.append({
+            'obj': d,
+            'views': row.get('views') or 0,
+            'reach': row.get('reach') or 0,
+            'records': row.get('records') or 0,
+            'programme_count': d.programmes.count(),
+        })
+    departments.sort(key=lambda d_: -d_['views'])
+
+    return render(request, 'analytics_app/college_detail.html', {
+        'college': college,
+        'departments': departments,
+        'years': sorted(
+            set(MonthlyAnalytics.objects.filter(college=college)
+                .values_list('year', flat=True).distinct()) | {current_year},
+            reverse=True),
+        'selected_year': selected_year,
+        'views': college_totals['views'] or 0,
+        'reach': college_totals['reach'] or 0,
+        'events_count': events_count,
+        'change': pct_change(college_totals['views'] or 0,
+                             prev_totals['views'] or 0),
+    })
+
+
+@login_required
+def department_detail(request, department_id):
+    """Department level of the hierarchy (#4): programmes + monthly table."""
+    from accounts.decorators import get_user_college
+    from django.db.models import Count, Sum
+
+    from .services.comparisons import pct_change
+
+    department = get_object_or_404(
+        Department.objects.select_related('college'), id=department_id,
+    )
+    user_college = get_user_college(request.user)
+    if _scoped_to_other_college(user_college, department.college):
+        return HttpResponseForbidden(
+            '<h2>403 Forbidden</h2><p>You can only view your own college.</p>'
+        )
+
+    selected_year, current_year = _parse_year(request)
+    if selected_year is None:
+        selected_year = current_year
+
+    scope_filters = {'department': department, 'programme__isnull': True}
+    totals = MonthlyAnalytics.objects.filter(
+        college=department.college, year=selected_year, **scope_filters,
+    ).aggregate(views=Sum('total_views'), reach=Sum('total_reach'))
+    prev_totals = MonthlyAnalytics.objects.filter(
+        college=department.college, year=selected_year - 1, **scope_filters,
+    ).aggregate(views=Sum('total_views'), reach=Sum('total_reach'))
+
+    # Month-by-month rows for the department
+    by_month = {
+        rec.month: rec
+        for rec in MonthlyAnalytics.objects.filter(
+            college=department.college, year=selected_year,
+            department=department, programme__isnull=True,
+        )
+    }
+    months = [
+        {'num': num, 'label': label,
+         'record': by_month.get(num), 'views': getattr(by_month.get(num), 'total_views', 0) or 0}
+        for num, label in MONTH_CHOICES
+    ]
+
+    prog_rows = MonthlyAnalytics.objects.filter(
+        college=department.college, year=selected_year,
+        department=department, programme__isnull=False,
+    ).values('programme').annotate(views=Sum('total_views'), records=Count('id'))
+    prog_data = {row['programme']: row for row in prog_rows}
+    programmes = []
+    for p in department.programmes.all():
+        row = prog_data.get(p.id, {})
+        programmes.append({
+            'obj': p,
+            'views': row.get('views') or 0,
+            'records': row.get('records') or 0,
+        })
+    programmes.sort(key=lambda p_: -p_['views'])
+
+    return render(request, 'analytics_app/department_detail.html', {
+        'department': department,
+        'college': department.college,
+        'programmes': programmes,
+        'months': months,
+        'years': sorted(
+            set(MonthlyAnalytics.objects.filter(department=department)
+                .values_list('year', flat=True).distinct()) | {current_year},
+            reverse=True),
+        'selected_year': selected_year,
+        'views': totals['views'] or 0,
+        'reach': totals['reach'] or 0,
+        'change': pct_change(totals['views'] or 0, prev_totals['views'] or 0),
+    })
+
+
+@login_required
+def programme_detail(request, programme_id):
+    """Programme level of the hierarchy (#4): monthly table + KPI note."""
+    from accounts.decorators import get_user_college
+    from django.db.models import Sum
+
+    programme = get_object_or_404(
+        Programme.objects.select_related('department', 'department__college'),
+        id=programme_id,
+    )
+    department = programme.department
+    college = department.college
+    user_college = get_user_college(request.user)
+    if _scoped_to_other_college(user_college, college):
+        return HttpResponseForbidden(
+            '<h2>403 Forbidden</h2><p>You can only view your own college.</p>'
+        )
+
+    selected_year, current_year = _parse_year(request)
+    if selected_year is None:
+        selected_year = current_year
+
+    by_month = {
+        rec.month: rec
+        for rec in MonthlyAnalytics.objects.filter(
+            college=college, year=selected_year,
+            department=department, programme=programme,
+        )
+    }
+    months = [
+        {'num': num, 'label': label, 'record': by_month.get(num)}
+        for num, label in MONTH_CHOICES
+    ]
+    totals = MonthlyAnalytics.objects.filter(
+        college=college, year=selected_year, department=department, programme=programme,
+    ).aggregate(views_sum=Sum('total_views'), reach_sum=Sum('total_reach'))
+
+    return render(request, 'analytics_app/programme_detail.html', {
+        'programme': programme,
+        'department': department,
+        'college': college,
+        'months': months,
+        'years': sorted(
+            set(MonthlyAnalytics.objects.filter(programme=programme)
+                .values_list('year', flat=True).distinct()) | {current_year},
+            reverse=True),
+        'selected_year': selected_year,
+        'views': totals['views_sum'] or 0,
+        'reach': totals['reach_sum'] or 0,
+    })
