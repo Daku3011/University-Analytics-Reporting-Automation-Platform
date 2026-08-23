@@ -72,6 +72,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'analytics_app.context_processors.alert_counts',   # sidebar badge (#6)
             ],
         },
     },
@@ -197,16 +198,28 @@ CACHES = {
 }
 
 # ── Email Configuration (email-systems skill) ─────────────────────────────────
-# Development: print emails to console
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-# Production (uncomment and fill in .env):
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
-# EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
-# EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
-# DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'SU Analytics <no-reply@su-analytics.in>')
+# Development (no EMAIL_HOST set): print emails to console.
+# Production: fill EMAIL_* vars in .env to switch to real SMTP delivery.
+if os.environ.get('EMAIL_HOST'):
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = os.environ['EMAIL_HOST']
+    EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
+    EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
+    EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+    EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = os.environ.get(
+    'DEFAULT_FROM_EMAIL', 'SU Analytics <no-reply@su-analytics.in>')
+
+# ── Automated Alerts (#6) ─────────────────────────────────────────────────────
+# Thresholds for analytics_app/services/alert_engine.py. Missing keys fall
+# back to the engine's DEFAULT_ALERT_CONFIG, so override only what differs.
+ALERT_CONFIG = {
+    'missing_months_critical': 3,   # ≥3 missing months → critical missing_data alert
+    'big_change_pct': 50,           # |MoM %| swing threshold (2x → critical)
+    'stale_pending_days': 30,       # pending/incomplete older than this past month-end
+}
 
 # ── Gemini AI Configuration (gemini-api-dev skill) ───────────────────────────
 GEMINI_CONFIG = {
@@ -226,6 +239,16 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
+
+# Nightly automated alert scan + email digest (#6). Off-round minute so the
+# fleet doesn't hammer Redis/SMTP exactly on the hour.
+from celery.schedules import crontab
+CELERY_BEAT_SCHEDULE = {
+    'daily-alert-scan': {
+        'task': 'analytics_app.tasks.run_daily_alert_scan',
+        'schedule': crontab(hour=8, minute=17),
+    },
+}
 
 # ── Logging ───────────────────────────────────────────────────────────────────
 LOGGING = {
