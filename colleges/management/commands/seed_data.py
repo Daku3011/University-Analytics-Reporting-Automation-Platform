@@ -1,8 +1,8 @@
 from datetime import date
 from django.core.management.base import BaseCommand
-from colleges.models import College
+from colleges.models import College, Department, Programme, University
 from events.models import Event
-from analytics_app.models import MonthlyAnalytics, TopPost
+from analytics_app.models import MonthlyAnalytics, TopPost, KpiTarget
 from reports.models import NewspaperCoverage, PressRelease
 
 COLLEGES = [
@@ -148,18 +148,146 @@ class Command(BaseCommand):
 
         college = College.objects.get(code="SCET")
 
+        # ── University + hierarchy (#4) ─────────────────────────────
+        university, _ = University.objects.get_or_create(
+            code='SU',
+            defaults={'name': 'Sarvajanik University', 'short_name': 'SU'},
+        )
+        College.objects.exclude(university=university).update(university=university)
+
+        DEPARTMENTS = [
+            {"name": "Computer Engineering", "code": "CE"},
+            {"name": "Mechanical Engineering", "code": "ME"},
+            {"name": "Civil Engineering", "code": "CL"},
+            {"name": "Information Technology", "code": "IT"},
+        ]
+        departments = {}
+        for d in DEPARTMENTS:
+            obj, _ = Department.objects.get_or_create(
+                college=college, name=d["name"], defaults={"code": d["code"]})
+            departments[d["name"]] = obj
+
+        PROGRAMMES = [
+            ("Computer Engineering", "B.Tech Computer Engineering", "BTCE"),
+            ("Computer Engineering", "M.Tech Computer Engineering", "MTCE"),
+        ]
+        programmes = {}
+        for dept_name, prog_name, prog_code in PROGRAMMES:
+            p, _ = Programme.objects.get_or_create(
+                department=departments[dept_name], name=prog_name,
+                defaults={"code": prog_code})
+            programmes[prog_name] = p
+        self.stdout.write(
+            f"University '{university}' linked; {len(departments)} departments, "
+            f"{len(programmes)} programmes seeded for SCET")
+
+        # ── Institute-level analytics for ALL 8 colleges ───────────
+        # Deterministic multipliers keep the demo realistic (SCET is the
+        # largest institute) while staying reproducible across reseeds.
+        MULTIPLIERS = {
+            "SCET": 1.00, "SRKI": 0.60, "SRLIM": 0.45, "SCCCA": 0.35,
+            "BRCM": 0.30, "SCOPA": 0.22, "SCL": 0.18, "SCLA": 0.15,
+        }
+        MARCH_STATUS_CYCLE = ['submitted', 'pending', 'incomplete']
+        colleges_by_code = {c.code: c for c in College.objects.filter(code__in=MULTIPLIERS)}
+        for idx, (code, mult) in enumerate(MULTIPLIERS.items()):
+            c_obj = colleges_by_code[code]
+            for a in ANALYTICS_DATA:
+                if a["year"] <= 2025:
+                    status = 'verified'
+                else:
+                    status = {1: 'verified', 2: 'submitted'}.get(
+                        a['month'], MARCH_STATUS_CYCLE[idx % len(MARCH_STATUS_CYCLE)])
+                MonthlyAnalytics.objects.update_or_create(
+                    college=c_obj, month=a["month"], year=a["year"],
+                    defaults={
+                        "instagram_views": int(a["ig_views"] * mult),
+                        "facebook_views": int(a["fb_views"] * mult),
+                        "total_views": int((a["ig_views"] + a["fb_views"]) * mult),
+                        "instagram_reach": int(a["ig_reach"] * mult),
+                        "facebook_reach": int(a["fb_reach"] * mult),
+                        "total_reach": int((a["ig_reach"] + a["fb_reach"]) * mult),
+                        "instagram_followers": int(a["ig_followers"] * mult) + 40,
+                        "youtube_subscribers": int(a["yt_subs"] * mult),
+                        "followers_gained": max(1, int(a["gained"] * mult)),
+                        "reels_count": int(a["reels"] * mult),
+                        "graphics_count": int(a["graphics"] * mult),
+                        "status": status,
+                    }
+                )
+
+        # ── Department & programme breakdowns for SCET (#4) ────────
+        # Stored as separate scope buckets (dept/prog FKs set) so they never
+        # inflate institute-level totals — the drill-down pages read them.
+        DEPT_SPLITS = [
+            ("Computer Engineering", 0.55),
+            ("Mechanical Engineering", 0.25),
+            ("Civil Engineering", 0.20),
+        ]
+        # Programme rows sit under Computer Engineering (fractions of the dept)
+        PROG_SPLITS = [("B.Tech Computer Engineering", 0.70),
+                       ("M.Tech Computer Engineering", 0.30)]
+        ce_dept = departments["Computer Engineering"]
         for a in ANALYTICS_DATA:
-            MonthlyAnalytics.objects.update_or_create(
-                college=college, month=a["month"], year=a["year"],
-                defaults={
-                    "instagram_views": a["ig_views"], "facebook_views": a["fb_views"],
-                    "total_views": a["total_views"], "instagram_reach": a["ig_reach"],
-                    "facebook_reach": a["fb_reach"], "total_reach": a["total_reach"],
-                    "instagram_followers": a["ig_followers"], "youtube_subscribers": a["yt_subs"],
-                    "followers_gained": a["gained"], "reels_count": a["reels"],
-                    "graphics_count": a["graphics"],
-                }
+            dept_status = 'verified' if a["year"] <= 2025 else (
+                'submitted' if a["month"] < 3 else 'pending')
+            for dept_name, share in DEPT_SPLITS:
+                d_obj = departments[dept_name]
+                ig, fb = int(a["ig_views"] * share), int(a["fb_views"] * share)
+                ig_r, fb_r = int(a["ig_reach"] * share), int(a["fb_reach"] * share)
+                MonthlyAnalytics.objects.update_or_create(
+                    college=college, department=d_obj, programme=None,
+                    month=a["month"], year=a["year"],
+                    defaults={
+                        "instagram_views": ig, "facebook_views": fb,
+                        "total_views": ig + fb,
+                        "instagram_reach": ig_r, "facebook_reach": fb_r,
+                        "total_reach": ig_r + fb_r,
+                        "instagram_followers": max(1, int(a["ig_followers"] * share)),
+                        "youtube_subscribers": int(a["yt_subs"] * share),
+                        "followers_gained": max(1, int(a["gained"] * share)),
+                        "reels_count": int(a["reels"] * share),
+                        "graphics_count": int(a["graphics"] * share),
+                        "status": dept_status,
+                    }
+                )
+            for prog_name, share in PROG_SPLITS:
+                p_obj = programmes[prog_name]
+                ig, fb = int(a["ig_views"] * 0.55 * share), int(a["fb_views"] * 0.55 * share)
+                ig_r, fb_r = int(a["ig_reach"] * 0.55 * share), int(a["fb_reach"] * 0.55 * share)
+                MonthlyAnalytics.objects.update_or_create(
+                    college=college, department=ce_dept, programme=p_obj,
+                    month=a["month"], year=a["year"],
+                    defaults={
+                        "instagram_views": ig, "facebook_views": fb,
+                        "total_views": ig + fb,
+                        "instagram_reach": ig_r, "facebook_reach": fb_r,
+                        "total_reach": ig_r + fb_r,
+                        "instagram_followers": max(1, int(a["ig_followers"] * 0.55 * share)),
+                        "youtube_subscribers": int(a["yt_subs"] * 0.55 * share),
+                        "followers_gained": max(1, int(a["gained"] * 0.55 * share)),
+                        "reels_count": int(a["reels"] * 0.55 * share),
+                        "graphics_count": int(a["graphics"] * 0.55 * share),
+                        "status": dept_status,
+                    }
+                )
+
+        # ── KPI targets for the roll-up (#1) ───────────────────────
+        TARGETS_2026 = [
+            ("SCET", None, 'total_views', 1_400_000),
+            ("SCET", None, 'total_reach', 160_000),
+            ("SRLIM", None, 'total_views', 350_000),
+            ("SRKI", None, 'total_views', 450_000),
+            ("SCET", "Computer Engineering", 'total_views', 800_000),
+        ]
+        for code, dept_name, metric, value in TARGETS_2026:
+            KpiTarget.objects.update_or_create(
+                college=colleges_by_code[code],
+                department=departments.get(dept_name) if dept_name else None,
+                programme=None, year=2026, metric=metric,
+                defaults={'target_value': value},
             )
+        self.stdout.write(f"{len(TARGETS_2026)} KPI targets seeded for 2026")
 
         for ev in EVENTS:
             Event.objects.get_or_create(
@@ -177,7 +305,9 @@ class Command(BaseCommand):
                 defaults={"category": ev["category"]}
             )
 
-        TopPost.objects.all().delete()
+        # Scoped to SCET: once other institutes carry their own data, a global
+        # wipe here would destroy it on every reseed.
+        TopPost.objects.filter(college=college).delete()
         for year, posts_data in [(2026, TOP_POSTS), (2025, TOP_POSTS_2025)]:
             for month_num, posts in posts_data.items():
                 for platform_key in ["instagram", "facebook"]:
@@ -188,7 +318,7 @@ class Command(BaseCommand):
                             likes=p["likes"], shares=p.get("shares", 0),
                         )
 
-        NewspaperCoverage.objects.all().delete()
+        NewspaperCoverage.objects.filter(college=college).delete()
         for n in NEWSPAPER_DATA:
             NewspaperCoverage.objects.create(
                 college=college,
@@ -199,7 +329,7 @@ class Command(BaseCommand):
                 headline=n["headline"],
             )
 
-        PressRelease.objects.all().delete()
+        PressRelease.objects.filter(college=college).delete()
         for p in PRESS_RELEASE_DATA:
             PressRelease.objects.create(
                 college=college,
@@ -214,7 +344,8 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS(
             f"Seed data loaded: {len(COLLEGES)} colleges, "
-            f"{len(ANALYTICS_DATA)} months, "
+            f"{len(departments)} departments, {len(programmes)} programmes, "
+            f"{len(ANALYTICS_DATA)} months x {len(MULTIPLIERS)} institutes, "
             f"{len(EVENTS) + len(EVENTS_2025)} events, "
             f"{sum(len(v['instagram'])+len(v['facebook']) for v in TOP_POSTS.values()) + sum(len(v['instagram'])+len(v['facebook']) for v in TOP_POSTS_2025.values())} top posts, "
             f"{len(NEWSPAPER_DATA)} newspaper clippings, "
