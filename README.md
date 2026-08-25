@@ -57,9 +57,11 @@ Phase 5 ░░░░░░░░░░ Planned    📋  Charts, exports & notifi
 - Newspaper coverage entries (publication, headline, edition, clipping image)
 - Press release tracking (title, content, placements, potential reach)
 
-### 🌱 Demo Data Seeding
-- One-command seed with real Sarvajanik University data (Jan–Mar 2026)
-- Includes 33 events, 3 months of analytics, and 30 top posts
+### 🌱 Data Seeding
+- `python manage.py seed_data` creates the 8 Sarvajanik University institutes
+  and links them under the university — no demo analytics are fabricated
+- All metrics, events, KPI targets, and reports start empty and are entered
+  by users via forms, PDF extraction, or the admin panel
 
 ---
 
@@ -148,9 +150,9 @@ python manage.py migrate
 python manage.py createsuperuser
 ```
 
-### 7. (Optional) Load Demo Data
+### 7. (Optional) Seed College Structure
 
-Seed the database with real Sarvajanik University data from Jan–Mar 2026:
+Create the 8 Sarvajanik University institutes and link them under the university:
 
 ```bash
 python manage.py seed_data
