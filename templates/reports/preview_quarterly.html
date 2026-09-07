@@ -101,6 +101,9 @@
         <a href="{{ report.pdf_file.url }}" class="btn-hero btn-download" target="_blank" rel="noopener">
             <i class="ph ph-file-arrow-down"></i> Download PDF
         </a>
+        <a href="{% url 'preview_quarterly_word' report.id %}" class="btn-hero btn-download" style="background: var(--accent-3); color: #fff;">
+            <i class="ph ph-file-doc"></i> Download Word
+        </a>
     </div>
 </div>
 

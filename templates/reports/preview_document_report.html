@@ -117,6 +117,11 @@
             <i class="ph ph-file-arrow-down"></i> Download PDF
         </a>
         {% endif %}
+        {% if report.output_pdf %}
+        <a href="{% url 'preview_document_report_word' report.id %}" class="btn-hero btn-download" style="background: var(--accent-3); color: #fff;">
+            <i class="ph ph-file-doc"></i> Download Word
+        </a>
+        {% endif %}
         {% if report.source_file_1 %}
         <a href="{{ report.source_file_1.url }}" class="btn-hero btn-source" target="_blank" rel="noopener">
             <i class="ph ph-file"></i> Source 1
