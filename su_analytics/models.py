@@ -1,5 +1,7 @@
 from django.db import models
 from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.utils import timezone
 
 
 class TaskTemplate(models.Model):
@@ -16,10 +18,10 @@ class TaskTemplate(models.Model):
 
 
 class Task(models.Model):
-    STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('completed', 'Completed'),
-    ]
+
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'Pending'
+        COMPLETED = 'completed', 'Completed'
 
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True)
@@ -35,8 +37,13 @@ class Task(models.Model):
         null=True, blank=True, related_name='tasks'
     )
     points = models.IntegerField(default=10)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    due_date = models.DateField(null=True, blank=True)
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING,
+        db_index=True,
+    )
+    due_date = models.DateField(null=True, blank=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
 
@@ -46,30 +53,56 @@ class Task(models.Model):
     def __str__(self):
         return f"{self.name} ({self.college})"
 
+    def clean(self):
+        """Enforce consistency between status and completed_at."""
+        if self.completed_at and self.status != self.Status.COMPLETED:
+            raise ValidationError(
+                "completed_at can only be set when status is 'completed'."
+            )
+        if self.status == self.Status.COMPLETED and not self.completed_at:
+            raise ValidationError(
+                "completed_at is required when status is 'completed'."
+            )
+
+    def complete(self):
+        """Atomically mark this task as completed."""
+        self.status = self.Status.COMPLETED
+        self.completed_at = timezone.now()
+        self.save(update_fields=['status', 'completed_at'])
+
 
 class AuditLog(models.Model):
-    ACTION_CHOICES = [
-        ('CREATE', 'Create'),
-        ('UPDATE', 'Update'),
-        ('DELETE', 'Delete'),
-        ('LOGIN', 'Login'),
-        ('LOGOUT', 'Logout'),
-        ('EXPORT', 'Export'),
-    ]
+
+    class Action(models.TextChoices):
+        CREATE = 'CREATE', 'Create'
+        UPDATE = 'UPDATE', 'Update'
+        DELETE = 'DELETE', 'Delete'
+        LOGIN  = 'LOGIN',  'Login'
+        LOGOUT = 'LOGOUT', 'Logout'
+        EXPORT = 'EXPORT', 'Export'
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
         null=True, blank=True, related_name='audit_logs'
     )
-    action = models.CharField(max_length=20, choices=ACTION_CHOICES)
-    entity_type = models.CharField(max_length=100)
-    entity_id = models.IntegerField(null=True, blank=True)
+    action = models.CharField(max_length=20, choices=Action.choices)
+    entity_type = models.CharField(max_length=100, db_index=True)
+    # PositiveBigIntegerField matches Django's default BigAutoField PKs
+    entity_id = models.PositiveBigIntegerField(null=True, blank=True)
     details = models.JSONField(default=dict, blank=True)
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     timestamp = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['-timestamp']
+
+    def save(self, *args, **kwargs):
+        """AuditLog entries are immutable — updates are forbidden."""
+        if self.pk:
+            raise ValueError(
+                "AuditLog entries cannot be modified after creation."
+            )
+        super().save(*args, **kwargs)
 
     def __str__(self):
         user_str = self.user.username if self.user else "System"
@@ -85,10 +118,23 @@ class LoginSession(models.Model):
     logout_time = models.DateTimeField(null=True, blank=True)
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     user_agent = models.TextField(blank=True)
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True, db_index=True)
 
     class Meta:
         ordering = ['-login_time']
+
+    def save(self, *args, **kwargs):
+        """Keep is_active in sync with logout_time automatically."""
+        if self.logout_time:
+            self.is_active = False
+        super().save(*args, **kwargs)
+
+    @property
+    def duration(self):
+        """Returns timedelta of the session, or None if still active."""
+        if self.logout_time:
+            return self.logout_time - self.login_time
+        return None
 
     def __str__(self):
         return f"{self.user.username} - {self.login_time}"
