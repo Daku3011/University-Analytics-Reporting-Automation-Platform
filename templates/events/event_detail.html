@@ -3,6 +3,7 @@
 {% block title %}{{ event.title }}{% endblock %}
 {% block topbar_title %}Event Details{% endblock %}
 
+
 {% block extra_css %}
 .event-hero {
     background: var(--surface);
@@ -100,11 +101,49 @@
     </div>
 </div>
 
+{# ── Approval status banner ──────────────────────────────────────── #}
+{% if event.approval_status == 'pending' %}
+<div class="alert alert-warning" style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:14px 18px;border-radius:var(--radius);background:#fff8e1;border:1px solid #f9a825;color:#7a5c00;">
+    <i class="ph ph-hourglass" style="font-size:20px;"></i>
+    <div>
+        <strong>Awaiting Approval</strong> — This event was submitted by
+        <strong>{{ event.created_by.get_full_name|default:event.created_by.username }}</strong>
+        and is pending review by a super admin.
+    </div>
+</div>
+{% elif event.approval_status == 'confirmed' %}
+<div class="alert alert-success" style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:14px 18px;border-radius:var(--radius);background:#e8f5e9;border:1px solid #43a047;color:#1b5e20;">
+    <i class="ph ph-check-circle" style="font-size:20px;"></i>
+    <div>
+        <strong>Confirmed</strong> — Approved by
+        <strong>{{ event.reviewed_by.get_full_name|default:event.reviewed_by.username }}</strong>
+        on {{ event.reviewed_at|date:"d M Y, H:i" }}.
+    </div>
+</div>
+{% elif event.approval_status == 'rejected' %}
+<div class="alert alert-danger" style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:14px 18px;border-radius:var(--radius);background:#ffebee;border:1px solid #e53935;color:#7f0000;">
+    <i class="ph ph-x-circle" style="font-size:20px;"></i>
+    <div>
+        <strong>Rejected</strong> — Reviewed by
+        <strong>{{ event.reviewed_by.get_full_name|default:event.reviewed_by.username }}</strong>
+        on {{ event.reviewed_at|date:"d M Y, H:i" }}.
+        {% if event.rejection_reason %}<br><em>Reason: {{ event.rejection_reason }}</em>{% endif %}
+    </div>
+</div>
+{% endif %}
+
 <div class="event-hero">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;">
         <div style="flex:1;min-width:280px;">
-            <div style="margin-bottom:8px;">
+            <div style="margin-bottom:8px;display:flex;gap:8px;flex-wrap:wrap;">
                 <span class="badge badge-purple">{{ event.get_category_display|default:"Event" }}</span>
+                {% if event.approval_status == 'pending' %}
+                    <span class="badge" style="background:#fff3cd;color:#856404;border:1px solid #ffc107;">⏳ Pending</span>
+                {% elif event.approval_status == 'confirmed' %}
+                    <span class="badge" style="background:#d4edda;color:#155724;border:1px solid #28a745;">✓ Confirmed</span>
+                {% elif event.approval_status == 'rejected' %}
+                    <span class="badge" style="background:#f8d7da;color:#721c24;border:1px solid #dc3545;">✗ Rejected</span>
+                {% endif %}
             </div>
             <h1 class="event-hero-title">{{ event.title }}</h1>
 
@@ -132,6 +171,25 @@
             </a>
             {% endif %}
         </div>
+
+        {# ── Super-admin action buttons ─────────────────────────── #}
+        {% if request.user.profile.role == 'super_admin' or request.user.is_superuser %}
+        {% if event.approval_status == 'pending' %}
+        <div style="display:flex;flex-direction:column;gap:8px;min-width:160px;">
+            <form method="post" action="{% url 'confirm_event' event.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-success" style="width:100%;">
+                    <i class="ph ph-check"></i> Confirm Event
+                </button>
+            </form>
+
+            <button type="button" class="btn btn-danger" style="width:100%;"
+                    onclick="document.getElementById('reject-modal').style.display='flex'">
+                <i class="ph ph-x"></i> Reject Event
+            </button>
+        </div>
+        {% endif %}
+        {% endif %}
     </div>
 
     {% if event.description %}
@@ -140,6 +198,32 @@
     </div>
     {% endif %}
 </div>
+
+{# ── Reject modal ────────────────────────────────────────────────── #}
+{% if request.user.profile.role == 'super_admin' or request.user.is_superuser %}
+{% if event.approval_status == 'pending' %}
+<div id="reject-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:center;justify-content:center;">
+    <div style="background:var(--surface);border-radius:var(--radius-lg);padding:28px;width:100%;max-width:440px;box-shadow:var(--shadow-lg);">
+        <h3 style="margin:0 0 12px;font-size:16px;font-weight:700;">Reject Event</h3>
+        <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">
+            Optionally provide a reason so the submitter knows what to fix.
+        </p>
+        <form method="post" action="{% url 'reject_event' event.id %}">
+            {% csrf_token %}
+            <textarea name="reason" rows="3" placeholder="Reason for rejection (optional)"
+                style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;resize:vertical;box-sizing:border-box;"></textarea>
+            <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end;">
+                <button type="button" class="btn btn-secondary"
+                        onclick="document.getElementById('reject-modal').style.display='none'">
+                    Cancel
+                </button>
+                <button type="submit" class="btn btn-danger">Confirm Rejection</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+{% endif %}
 
 {% if event.media.exists %}
 <div class="card">

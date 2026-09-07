@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Pending Events{% endblock %}
+{% block topbar_title %}Pending Events{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+    <div>
+        <h2 style="margin:0;font-size:18px;font-weight:700;">Events Awaiting Approval</h2>
+        <p style="margin:4px 0 0;font-size:13px;color:var(--text-secondary);">
+            {{ events.count }} event{{ events.count|pluralize }} pending review
+        </p>
+    </div>
+    <a href="{% url 'add_event' %}" class="btn btn-primary btn-sm">
+        <i class="ph ph-plus"></i> Add Event
+    </a>
+</div>
+
+{% if events %}
+<div class="card">
+    <div class="card-body" style="padding:0;">
+        <table class="table" style="margin:0;">
+            <thead>
+                <tr>
+                    <th>Event</th>
+                    <th>College</th>
+                    <th>Category</th>
+                    <th>Date</th>
+                    <th>Submitted By</th>
+                    <th>Submitted</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in events %}
+                <tr>
+                    <td>
+                        <a href="{% url 'event_detail' event.id %}" style="font-weight:600;color:var(--accent);">
+                            {{ event.title|truncatechars:50 }}
+                        </a>
+                    </td>
+                    <td>{{ event.college.code }}</td>
+                    <td>
+                        <span class="badge badge-purple">{{ event.get_category_display }}</span>
+                    </td>
+                    <td>{{ event.date }}</td>
+                    <td>{{ event.created_by.get_full_name|default:event.created_by.username|default:"—" }}</td>
+                    <td>{{ event.created_at|naturaltime }}</td>
+                    <td>
+                        <div style="display:flex;gap:6px;">
+                            {# Confirm #}
+                            <form method="post" action="{% url 'confirm_event' event.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-success btn-sm"
+                                        title="Confirm this event">
+                                    <i class="ph ph-check"></i> Confirm
+                                </button>
+                            </form>
+
+                            {# Reject — opens inline reason input #}
+                            <button type="button" class="btn btn-danger btn-sm"
+                                    onclick="toggleRejectForm({{ event.id }})"
+                                    title="Reject this event">
+                                <i class="ph ph-x"></i> Reject
+                            </button>
+                        </div>
+
+                        {# Inline reject form (hidden by default) #}
+                        <div id="reject-form-{{ event.id }}" style="display:none;margin-top:8px;">
+                            <form method="post" action="{% url 'reject_event' event.id %}">
+                                {% csrf_token %}
+                                <input type="text" name="reason" placeholder="Reason (optional)"
+                                    style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;margin-bottom:6px;">
+                                <div style="display:flex;gap:6px;">
+                                    <button type="submit" class="btn btn-danger btn-sm">Confirm Reject</button>
+                                    <button type="button" class="btn btn-secondary btn-sm"
+                                            onclick="toggleRejectForm({{ event.id }})">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+function toggleRejectForm(eventId) {
+    const el = document.getElementById('reject-form-' + eventId);
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+</script>
+
+{% else %}
+<div class="card">
+    <div class="card-body" style="text-align:center;padding:48px 24px;">
+        <i class="ph ph-check-circle" style="font-size:48px;color:var(--success);display:block;margin-bottom:12px;"></i>
+        <h3 style="margin:0 0 8px;font-size:16px;font-weight:600;">All caught up!</h3>
+        <p style="margin:0;font-size:13px;color:var(--text-secondary);">No events are currently pending approval.</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
