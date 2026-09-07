@@ -11,22 +11,35 @@ python manage.py migrate --noinput
 echo "Seeding colleges..."
 python manage.py seed_data
 
-# Create a default superuser if none exists
-# Credentials MUST be set via environment variables — no hardcoded defaults
-echo "Checking for superuser..."
+# Create the HuggingFace live superuser (admin / suanalytics2026)
+# This is the account used on the public HF Space deployment.
+echo "Ensuring HuggingFace superuser (admin)..."
 python manage.py shell -c "
 from django.contrib.auth import get_user_model
+from accounts.models import Profile
 import os
 User = get_user_model()
 username = os.environ.get('DJANGO_SUPERUSER_USERNAME', 'admin')
 password = os.environ.get('DJANGO_SUPERUSER_PASSWORD', 'suanalytics2026')
-email = os.environ.get('DJANGO_SUPERUSER_EMAIL', 'admin@su-analytics.in')
-if not User.objects.filter(username=username).exists():
-    User.objects.create_superuser(username=username, email=email, password=password)
-    print(f'Superuser created: {username}')
-else:
-    print(f'Superuser already exists: {username}')
+email    = os.environ.get('DJANGO_SUPERUSER_EMAIL', 'admin@su-analytics.in')
+user, created = User.objects.get_or_create(username=username, defaults={'email': email})
+user.set_password(password)
+user.is_staff     = True
+user.is_superuser = True
+user.save()
+profile, _ = Profile.objects.get_or_create(user=user)
+if profile.role != 'super_admin':
+    profile.role = 'super_admin'
+    profile.save()
+print(f\"{'Created' if created else 'Updated'} superuser: {username}\")
 "
+
+# Seed all three role-based demo users (idempotent)
+# super_admin   / SuperAdmin@123
+# college_admin / CollegeAdmin@123
+# analytics_team / Analytics@123
+echo "Seeding role-based demo users..."
+python manage.py seed_users
 
 # ── Start Redis (required by Celery for async tasks) ────────────
 echo "Starting Redis server..."
