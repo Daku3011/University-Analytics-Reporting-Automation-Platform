@@ -275,7 +275,7 @@ Output ONLY valid HTML. Use <strong> for emphasis."""
 def preview_quarterly_word(request, report_id):
     """Serve the DOCX download for a quarterly report."""
     report = get_object_or_404(QuarterlyReport, id=report_id)
-    docx_path = Path(report.pdf_file.name).with_suffix('.docx')
+    docx_path = settings.MEDIA_ROOT / Path(report.pdf_file.name).with_suffix('.docx')
     if docx_path.exists():
         docx_bytes = docx_path.read_bytes()
         response = HttpResponse(docx_bytes, content_type=

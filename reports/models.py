@@ -12,6 +12,15 @@ class MonthlyReport(models.Model):
     year = models.IntegerField(default=get_current_year)
     pdf_file = models.FileField(upload_to='reports/monthly/', blank=True, null=True)
     generated_text = models.TextField(blank=True)
+    # Cover page metadata — shown on first page of PDF and DOCX
+    report_title = models.CharField(
+        max_length=300, blank=True,
+        help_text="Custom title shown on the report cover page"
+    )
+    prepared_by = models.CharField(
+        max_length=200, blank=True,
+        help_text="Name of the person who prepared this report"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

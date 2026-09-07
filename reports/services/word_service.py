@@ -188,21 +188,41 @@ def build_portfolio_docx(context):
 
 
 def build_monthly_docx(college, month, year, analytics, events, top_ig, top_fb,
-                       newspapers, press_releases):
+                       newspapers, press_releases,
+                       report_title='', prepared_by=''):
     """Render monthly report data into a .docx document, returned as bytes."""
-    from datetime import date
-    month_name = date(year, month, 1).strftime('%B')
+    from datetime import date as _date
+    month_name = _date(year, month, 1).strftime('%B')
+
+    # Sensible defaults if caller didn't pass values
+    if not report_title:
+        report_title = f"{college.name} — {month_name} {year} Monthly Report"
+    if not prepared_by:
+        prepared_by = college.name
+
     doc = Document()
 
-    # ── Title block ─────────────────────────────────────────────────
-    title = doc.add_heading(f"{college.code} — {month_name} {year} Monthly Report", level=0)
-    for run in title.runs:
+    # ── Cover page ──────────────────────────────────────────────────
+    title_para = doc.add_heading(report_title, level=0)
+    title_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    for run in title_para.runs:
         run.font.color.rgb = BRAND
-    subtitle = doc.add_paragraph(f"College: {college.name}")
-    subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    for run in subtitle.runs:
+
+    sub = doc.add_paragraph(f"Sarvajanik University  ·  {college.name}")
+    sub.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    for run in sub.runs:
         run.font.color.rgb = MUTED
         run.font.size = Pt(11)
+
+    meta = doc.add_paragraph(
+        f"Reporting Period: {month_name} {year}     |     Prepared by: {prepared_by}"
+    )
+    meta.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    for run in meta.runs:
+        run.font.color.rgb = MUTED
+        run.font.size = Pt(10)
+
+    doc.add_page_break()
 
     # ── Summary section ─────────────────────────────────────────────
     doc.add_paragraph(f"Reporting period: {month_name} {year}")

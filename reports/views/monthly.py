@@ -3,6 +3,7 @@ from pathlib import Path
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.http import HttpResponse
 from django.template.loader import render_to_string
 from django.conf import settings
 
@@ -19,6 +20,8 @@ def generate_monthly(request):
         college_id = request.POST.get('college')
         month_str = request.POST.get('month')
         year_str = request.POST.get('year')
+        report_title = request.POST.get('report_title', '').strip()
+        prepared_by = request.POST.get('prepared_by', '').strip()
 
         if not college_id or not month_str or not year_str:
             messages.error(request, "Missing required parameters: College, Month, or Year.")
@@ -61,6 +64,12 @@ def generate_monthly(request):
         if analytics:
             max_views = max(1, analytics.instagram_views, analytics.facebook_views, analytics.total_views)
 
+        # Fall back to sensible defaults if user left fields blank
+        if not report_title:
+            report_title = f"{college.name} — {month_name} {year} Monthly Report"
+        if not prepared_by:
+            prepared_by = request.user.get_full_name() or request.user.username
+
         context = {
             'college': college,
             'month_name': month_name,
@@ -73,6 +82,8 @@ def generate_monthly(request):
             'top_fb': top_fb,
             'newspapers': newspapers,
             'press_releases': press_releases,
+            'report_title': report_title,
+            'prepared_by': prepared_by,
         }
         html_string = render_to_string('reports/monthly_report_template.html', context)
         
@@ -88,13 +99,18 @@ def generate_monthly(request):
             defaults={
                 'pdf_file': f'reports/monthly/{college.code}_{month}_{year}.pdf',
                 'generated_text': html_string,
+                'report_title': report_title,
+                'prepared_by': prepared_by,
             }
         )
         # Also generate DOCX
         try:
             docx_path = settings.MEDIA_ROOT / 'reports' / 'monthly' / f'{college.code}_{month}_{year}.docx'
-            docx_bytes = build_monthly_docx(college, month, year, analytics, events, top_ig, top_fb,
-                                            newspapers, press_releases)
+            docx_bytes = build_monthly_docx(
+                college, month, year, analytics, events, top_ig, top_fb,
+                newspapers, press_releases,
+                report_title=report_title, prepared_by=prepared_by,
+            )
             with open(docx_path, 'wb') as f:
                 f.write(docx_bytes)
         except Exception as e:
@@ -107,7 +123,9 @@ def generate_monthly(request):
 def preview_monthly_word(request, report_id):
     """Serve the DOCX download for a monthly report."""
     report = get_object_or_404(MonthlyReport, id=report_id)
-    docx_path = Path(report.pdf_file.name).with_suffix('.docx')
+    # pdf_file.name is a relative path like 'reports/monthly/SCET_1_2026.pdf'
+    # We must prepend MEDIA_ROOT to get the absolute filesystem path
+    docx_path = settings.MEDIA_ROOT / Path(report.pdf_file.name).with_suffix('.docx')
     if docx_path.exists():
         docx_bytes = docx_path.read_bytes()
         response = HttpResponse(docx_bytes, content_type=

@@ -68,10 +68,13 @@
 {% block content %}
 <div class="preview-hero">
     <div>
-        <h1>{{ report.college.name }} — {{ report.get_month_display }} {{ report.year }}</h1>
+        <h1>{{ report.report_title|default:report.college.name }} — {{ report.get_month_display }} {{ report.year }}</h1>
         <div class="meta">
             <i class="ph ph-calendar-blank"></i>
             Generated {{ report.created_at|date:"d M Y, H:i" }}
+            {% if report.prepared_by %}
+            &nbsp;·&nbsp;<i class="ph ph-user"></i> {{ report.prepared_by }}
+            {% endif %}
         </div>
     </div>
     <div class="actions">
