@@ -246,7 +246,7 @@ IMPORTANT RULES:
     finally:
         pass
 
-    self.update_state(state='PROGRESS', meta={'message': 'Compiling PDF...'})
+self.update_state(state='PROGRESS', meta={'message': 'Compiling PDF...'})
     # ── Generate output PDF ───────────────────────────────────────────────────
     # We must fetch user name since we only have user id
     from django.contrib.auth.models import User
@@ -279,6 +279,29 @@ IMPORTANT RULES:
     except Exception as e:
         print(f"WeasyPrint failed: {e}")
         pdf_relative = None
+
+    # ── Also generate DOCX ────────────────────────────────────────────────────
+    from reports.services.word_service import build_document_docx
+    # Sanitize title for use in filename (replace spaces with underscores, remove special chars)
+    safe_title = ''.join(c if c.isalnum() or c in '_-' else '_' for c in title).strip('_')
+    if safe_title:
+        pdf_filename = f"DocQ{quarter}_{year}_{safe_title}_u{uploaded_by_id}.pdf"
+        docx_filename = f"DocQ{quarter}_{year}_{safe_title}_u{uploaded_by_id}.docx"
+    else:
+        pdf_filename = f"DocQ{quarter}_{year}_u{uploaded_by_id}.pdf"
+        docx_filename = f"DocQ{quarter}_{year}_u{uploaded_by_id}.docx"
+    pdf_path     = out_dir / pdf_filename
+    docx_path    = out_dir / docx_filename
+    try:
+        docx_bytes = build_document_docx(title, quarter, year, ai_summary)
+        with open(docx_path, 'wb') as f:
+            f.write(docx_bytes)
+        pdf_relative = f'reports/doc_quarterly/{pdf_filename}'
+        docx_relative = f'reports/doc_quarterly/{docx_filename}'
+    except Exception as e:
+        print(f"DOCX generation warning: {e}")
+        pdf_relative = f'reports/doc_quarterly/{pdf_filename}'
+        docx_relative = f'reports/doc_quarterly/{docx_filename}'
 
     # ── Save to DB ────────────────────────────────────────────────────────────
     self.update_state(state='PROGRESS', meta={'message': 'Saving report...'})

@@ -5,11 +5,12 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.conf import settings
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.utils.text import get_valid_filename
 from celery.result import AsyncResult
 
 from reports.models import UploadedDocumentReport
+from pathlib import Path
 
 ALLOWED_EXTENSIONS = {'pdf'}
 
@@ -148,3 +149,19 @@ def check_task_status(request, task_id):
 def preview_document_report(request, report_id):
     report = get_object_or_404(UploadedDocumentReport, id=report_id)
     return render(request, 'reports/preview_document_report.html', {'report': report})
+
+
+@login_required
+def preview_document_report_word(request, report_id):
+    """Serve the DOCX download for a document report."""
+    report = get_object_or_404(UploadedDocumentReport, id=report_id)
+    if report.output_pdf:
+        docx_path = Path(report.output_pdf.path).with_suffix('.docx')
+        if docx_path.exists():
+            docx_bytes = docx_path.read_bytes()
+            response = HttpResponse(docx_bytes, content_type=
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+            response['Content-Disposition'] = f'attachment; filename="Document_Report_{report.quarter}_{report.year}.docx"'
+            return response
+        messages.error(request, 'DOCX file not found. Generate the report first or check file availability.')
+    return redirect('preview_document_report', report_id=report.id)

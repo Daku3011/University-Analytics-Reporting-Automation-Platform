@@ -1,4 +1,5 @@
 from datetime import date
+from pathlib import Path
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -10,6 +11,7 @@ from events.models import Event
 from analytics_app.models import MonthlyAnalytics, TopPost
 from reports.models import MonthlyReport, NewspaperCoverage, PressRelease
 from reports.services.pdf_service import PDFService
+from reports.services.word_service import build_portfolio_docx, build_monthly_docx
 
 @login_required
 def generate_monthly(request):
@@ -88,8 +90,32 @@ def generate_monthly(request):
                 'generated_text': html_string,
             }
         )
+        # Also generate DOCX
+        try:
+            docx_path = settings.MEDIA_ROOT / 'reports' / 'monthly' / f'{college.code}_{month}_{year}.docx'
+            docx_bytes = build_monthly_docx(college, month, year, analytics, events, top_ig, top_fb,
+                                            newspapers, press_releases)
+            with open(docx_path, 'wb') as f:
+                f.write(docx_bytes)
+        except Exception as e:
+            messages.warning(request, f"DOCX generation warning: {str(e)}")
         return redirect('preview_monthly', report_id=report.id)
     return redirect('report_dashboard')
+
+
+@login_required
+def preview_monthly_word(request, report_id):
+    """Serve the DOCX download for a monthly report."""
+    report = get_object_or_404(MonthlyReport, id=report_id)
+    docx_path = Path(report.pdf_file).with_suffix('.docx')
+    if docx_path.exists():
+        docx_bytes = docx_path.read_bytes()
+        response = HttpResponse(docx_bytes, content_type=
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+        response['Content-Disposition'] = f'attachment; filename=" Monthly_Report_{report.college.code}_{report.month}_{report.year}.docx"'
+        return response
+    messages.error(request, 'DOCX file not found.')
+    return redirect('preview_monthly', report_id=report.id)
 
 
 @login_required

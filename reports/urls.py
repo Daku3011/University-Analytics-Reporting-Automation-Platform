@@ -6,10 +6,13 @@ urlpatterns = [
     path('generate-monthly/', views.generate_monthly, name='generate_monthly'),
     path('generate-quarterly/', views.generate_quarterly, name='generate_quarterly'),
     path('preview/<int:report_id>/', views.preview_monthly, name='preview_monthly'),
+    path('preview/<int:report_id>/word/', views.preview_monthly_word, name='preview_monthly_word'),
     path('preview-quarterly/<int:report_id>/', views.preview_quarterly, name='preview_quarterly'),
+    path('preview-quarterly/<int:report_id>/word/', views.preview_quarterly_word, name='preview_quarterly_word'),
     # New: Upload large document → Gemini condenses → quarterly summary PDF
     path('upload-document/', views.upload_document_report, name='upload_document_report'),
     path('preview-document/<int:report_id>/', views.preview_document_report, name='preview_document_report'),
+    path('preview-document/<int:report_id>/word/', views.preview_document_report_word, name='preview_document_report_word'),
     path('processing/<str:task_id>/', views.document_report_processing, name='document_report_processing'),
     path('processing/status/<str:task_id>/', views.check_task_status, name='check_task_status'),
     path('compare/', views.compare_reports, name='compare_reports'),

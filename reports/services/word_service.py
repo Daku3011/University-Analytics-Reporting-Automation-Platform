@@ -1,4 +1,5 @@
-"""Word (DOCX) export of the Annual Portfolio Report (#5)."""
+"""Word (DOCX) export for reports."""
+
 from io import BytesIO
 
 from docx import Document
@@ -179,6 +180,177 @@ def build_portfolio_docx(context):
         )
     else:
         doc.add_paragraph('No KPI targets were defined for this year.')
+
+    buffer = BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+    return buffer.getvalue()
+
+
+def build_monthly_docx(college, month, year, analytics, events, top_ig, top_fb,
+                       newspapers, press_releases):
+    """Render monthly report data into a .docx document, returned as bytes."""
+    from datetime import date
+    month_name = date(year, month, 1).strftime('%B')
+    doc = Document()
+
+    # ── Title block ─────────────────────────────────────────────────
+    title = doc.add_heading(f"{college.code} — {month_name} {year} Monthly Report", level=0)
+    for run in title.runs:
+        run.font.color.rgb = BRAND
+    subtitle = doc.add_paragraph(f"College: {college.name}")
+    subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    for run in subtitle.runs:
+        run.font.color.rgb = MUTED
+        run.font.size = Pt(11)
+
+    # ── Summary section ─────────────────────────────────────────────
+    doc.add_paragraph(f"Reporting period: {month_name} {year}")
+    doc.add_paragraph(f"Events: {events.count()}")
+    doc.add_paragraph(f"Press releases: {press_releases.count()}")
+
+    # ── Analytics table ─────────────────────────────────────────────
+    doc.add_heading('Analytics', level=2)
+    if analytics:
+        _table(doc, ['Metric', 'Value'],
+               [['Instagram Views', analytics.instagram_views],
+                ['Facebook Views', analytics.facebook_views],
+                ['Total Views', analytics.total_views],
+                ['Instagram Reach', analytics.instagram_reach],
+                ['Facebook Reach', analytics.facebook_reach],
+                ['Followers Gained', analytics.followers_gained],
+                ['Reels Count', analytics.reels_count],
+                ['Graphics Count', analytics.graphics_count],
+                ['YouTube Subscribers', analytics.youtube_subscribers],
+                ['Instagram Followers', analytics.instagram_followers],
+                ['Facebook Followers', analytics.facebook_followers]],
+               number_cols=(1,))
+    else:
+        doc.add_paragraph('No analytics data available.')
+
+    # ── Events ─────────────────────────────────────────────────────
+    doc.add_heading('Events', level=2)
+    if events:
+        for e in events:
+            doc.add_paragraph(f"{e.date.strftime('%d %b %Y') if e.date else '—':} — {e.title}")
+    else:
+        doc.add_paragraph('No events recorded.')
+
+    # ── Press Releases ─────────────────────────────────────────────
+    doc.add_heading('Press Releases', level=2)
+    if press_releases:
+        for p in press_releases:
+            doc.add_paragraph(f"{p.date_submitted.strftime('%d %b %Y') if p.date_submitted else '—':} — {p.title}")
+    else:
+        doc.add_paragraph('No press releases issued.')
+
+    # ── Top Posts ──────────────────────────────────────────────────
+    doc.add_heading('Top Posts', level=2)
+    if top_ig:
+        doc.add_paragraph(f"Instagram:")
+        for p in top_ig[:3]:
+            doc.add_paragraph(f"{p.get_month_display()} — {p.views} views, {p.likes} likes")
+    if top_fb:
+        doc.add_paragraph(f"Facebook:")
+        for p in top_fb[:3]:
+            doc.add_paragraph(f"{p.get_month_display()} — {p.views} views, {p.likes} likes")
+
+    buffer = BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+    return buffer.getvalue()
+
+
+def build_quarterly_docx(college, quarter, year, analytics_by_month,
+                         comparison, all_events_count, all_prev_events_count,
+                         newspapers_count, prev_newspapers_count,
+                         press_releases_count, prev_press_releases_count,
+                         all_top_ig, all_top_fb, prev_top_ig, prev_top_fb,
+                         month_names):
+    """Render quarterly report data into a .docx document, returned as bytes."""
+    doc = Document()
+
+    # ── Title block ─────────────────────────────────────────────────
+    title = doc.add_heading(f"{college.code} — Q{quarter} {year} Quarterly Report", level=0)
+    for run in title.runs:
+        run.font.color.rgb = BRAND
+    subtitle = doc.add_paragraph(f"College: {college.name}")
+    subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    for run in subtitle.runs:
+        run.font.color.rgb = MUTED
+        run.font.size = Pt(11)
+
+    # ── Quarter overview ────────────────────────────────────────────
+    doc.add_heading('1. Quarter Overview', level=2)
+    start_month = {1: 1, 2: 4, 3: 7, 4: 10}[quarter]
+    m_names = [date(year, m, 1).strftime('%B') for m in range(start_month, start_month + 3)]
+    doc.add_paragraph(f"Months covered: {', '.join(m_names)}")
+
+    # ── Comparison ──────────────────────────────────────────────────
+    doc.add_heading('2. Year-over-Year Comparison', level=2)
+    for key, data in comparison.items():
+        pct_str = f"{data['pct']:.1f}%" if data['pct'] is not None else 'N/A'
+        doc.add_paragraph(f"{key}: Current {data['current']} vs Previous {data['previous']} (diff: {data['diff']}, {pct_str} change)")
+
+    # ── Best/Worst month ───────────────────────────────────────────
+    doc.add_heading('3. Best vs Worst Month', level=2)
+    # Find month with highest/lowest values
+    for key in ['instagram_views', 'facebook_views', 'total_views']:
+        month_data = analytics_by_month.get(key, {})
+        if month_data:
+            best_month = max(month_data, key=lambda m: month_data[m]['current'])
+            worst_month = min(month_data, key=lambda m: month_data[m]['current'])
+            doc.add_paragraph(f"{key}: Best {best_month} ({month_data[best_month]['current']}), Worst {worst_month} ({month_data[worst_month]['current']})")
+
+    # ── Platform comparison ─────────────────────────────────────────
+    doc.add_heading('4. Platform Comparison — Instagram vs Facebook', level=2)
+    doc.add_paragraph(f"Instagram total views: {sum(m.get('instagram_views', {}).get('current', 0) for m in analytics_by_month.values())}")
+    doc.add_paragraph(f"Facebook total views: {sum(m.get('facebook_views', {}).get('current', 0) for m in analytics_by_month.values())}")
+
+    # ── Events, Media & Press ───────────────────────────────────────
+    doc.add_heading('5. Events, Media & Press Activity', level=2)
+    doc.add_paragraph(f"Events — {year}: {all_events_count}, {year-1}: {all_prev_events_count}")
+    doc.add_paragraph(f"Newspaper coverage — {year}: {newspapers_count}, {year-1}: {prev_newspapers_count}")
+    doc.add_paragraph(f"Press releases — {year}: {press_releases_count}, {year-1}: {prev_press_releases_count}")
+
+    # ── Engagement & Content Trends ─────────────────────────────────
+    doc.add_heading('6. Engagement & Content Trends', level=2)
+    for key in ['instagram_views', 'facebook_views']:
+        month_data = analytics_by_month.get(key, {})
+        if month_data:
+            total = sum(m.get('current', 0) for m in month_data.values())
+            doc.add_paragraph(f"{key.title()}: {total} total across {len(month_data)} months")
+
+    buffer = BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+    return buffer.getvalue()
+
+
+def build_document_docx(title, quarter, year, ai_summary):
+    """Render document report data into a .docx document, returned as bytes."""
+    from docx import Document
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+    from docx.shared import Pt, RGBColor
+
+    BRAND = RGBColor(0x1F, 0x3A, 0x5F)
+    MUTED = RGBColor(0x66, 0x66, 0x66)
+
+    doc = Document()
+
+    # ── Title block ─────────────────────────────────────────────────
+    title_heading = doc.add_heading(title, level=0)
+    for run in title_heading.runs:
+        run.font.color.rgb = BRAND
+    meta = doc.add_paragraph(f"Quarter {quarter} {year}")
+    meta.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    for run in meta.runs:
+        run.font.color.rgb = MUTED
+        run.font.size = Pt(11)
+
+    # ── AI Summary ──────────────────────────────────────────────────
+    doc.add_heading('AI-Generated Summary', level=2)
+    doc.add_paragraph(ai_summary)
 
     buffer = BytesIO()
     doc.save(buffer)

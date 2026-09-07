@@ -11,6 +11,7 @@ from events.models import Event
 from analytics_app.models import MonthlyAnalytics, TopPost
 from reports.models import QuarterlyReport, NewspaperCoverage, PressRelease
 from reports.services.pdf_service import PDFService
+from reports.services.word_service import build_portfolio_docx, build_quarterly_docx
 from reports.services.gemini_service import GeminiService
 from reports.services.rate_limit_service import RateLimitService
 from su_analytics.constants import ANALYTICS_KEYS
@@ -253,8 +254,36 @@ Output ONLY valid HTML. Use <strong> for emphasis."""
                 'ai_summary': ai_summary,
             }
         )
+        # Also generate DOCX
+        try:
+            docx_path = settings.MEDIA_ROOT / 'reports' / 'quarterly' / f'Q{quarter}_{year}.docx'
+            docx_bytes = build_quarterly_docx(college, quarter, year, analytics_by_month,
+                                              comparison, all_events_count, all_prev_events_count,
+                                              newspapers_count, prev_newspapers_count,
+                                              press_releases_count, prev_press_releases_count,
+                                              all_top_ig, all_top_fb, prev_top_ig, prev_top_fb,
+                                              month_names)
+            with open(docx_path, 'wb') as f:
+                f.write(docx_bytes)
+        except Exception as e:
+            messages.warning(request, f"DOCX generation warning: {str(e)}")
         return redirect('preview_quarterly', report_id=report.id)
     return redirect('report_dashboard')
+
+
+@login_required
+def preview_quarterly_word(request, report_id):
+    """Serve the DOCX download for a quarterly report."""
+    report = get_object_or_404(QuarterlyReport, id=report_id)
+    docx_path = Path(report.pdf_file).with_suffix('.docx')
+    if docx_path.exists():
+        docx_bytes = docx_path.read_bytes()
+        response = HttpResponse(docx_bytes, content_type=
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+        response['Content-Disposition'] = f'attachment; filename="Quarterly_Report_Q{report.quarter}_{report.year}.docx"'
+        return response
+    messages.error(request, 'DOCX file not found.')
+    return redirect('preview_quarterly', report_id=report.id)
 
 
 @login_required
