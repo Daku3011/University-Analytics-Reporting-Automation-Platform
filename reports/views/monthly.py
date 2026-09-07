@@ -107,7 +107,7 @@ def generate_monthly(request):
 def preview_monthly_word(request, report_id):
     """Serve the DOCX download for a monthly report."""
     report = get_object_or_404(MonthlyReport, id=report_id)
-    docx_path = Path(report.pdf_file).with_suffix('.docx')
+    docx_path = Path(report.pdf_file.name).with_suffix('.docx')
     if docx_path.exists():
         docx_bytes = docx_path.read_bytes()
         response = HttpResponse(docx_bytes, content_type=
