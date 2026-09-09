@@ -122,21 +122,28 @@ def generate_monthly(request):
 @login_required
 def preview_monthly_word(request, report_id):
     """Serve the DOCX download for a monthly report."""
-    report = get_object_or_404(MonthlyReport, id=report_id)
-    # pdf_file.name is a relative path like 'reports/monthly/SCET_1_2026.pdf'
-    # We must prepend MEDIA_ROOT to get the absolute filesystem path
+    report = MonthlyReport.objects.filter(id=report_id).first()
+    if not report:
+        messages.error(request, 'Report not found. It may have been reset — please regenerate it.')
+        return redirect('report_dashboard')
+    if not report.pdf_file:
+        messages.error(request, 'No PDF on record for this report.')
+        return redirect('report_dashboard')
     docx_path = settings.MEDIA_ROOT / Path(report.pdf_file.name).with_suffix('.docx')
     if docx_path.exists():
         docx_bytes = docx_path.read_bytes()
         response = HttpResponse(docx_bytes, content_type=
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
-        response['Content-Disposition'] = f'attachment; filename=" Monthly_Report_{report.college.code}_{report.month}_{report.year}.docx"'
+        response['Content-Disposition'] = f'attachment; filename="Monthly_Report_{report.college.code}_{report.month}_{report.year}.docx"'
         return response
-    messages.error(request, 'DOCX file not found.')
-    return redirect('preview_monthly', report_id=report.id)
+    messages.error(request, 'DOCX file not found. Please regenerate the report.')
+    return redirect('report_dashboard')
 
 
 @login_required
 def preview_monthly(request, report_id):
-    report = get_object_or_404(MonthlyReport, id=report_id)
+    report = MonthlyReport.objects.filter(id=report_id).first()
+    if not report:
+        messages.error(request, 'Report not found. It may have been reset — please regenerate it.')
+        return redirect('report_dashboard')
     return render(request, 'reports/preview_monthly.html', {'report': report})

@@ -291,7 +291,8 @@ def build_quarterly_docx(college, quarter, year, analytics_by_month,
     doc = Document()
 
     # ── Title block ─────────────────────────────────────────────────
-    title = doc.add_heading(f"{college.code} — Q{quarter} {year} Quarterly Report", level=0)
+    college_label = college.name if college else 'Sarvajanik University'
+    title = doc.add_heading(f"{college_label} — Q{quarter} {year} Quarterly Report", level=0)
     for run in title.runs:
         run.font.color.rgb = BRAND
     subtitle = doc.add_paragraph(f"College: {college.name}")

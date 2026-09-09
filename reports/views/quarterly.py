@@ -259,12 +259,15 @@ Output ONLY valid HTML. Use <strong> for emphasis."""
         # Also generate DOCX
         try:
             docx_path = settings.MEDIA_ROOT / 'reports' / 'quarterly' / f'Q{quarter}_{year}.docx'
-            docx_bytes = build_quarterly_docx(college, quarter, year, analytics_by_month,
-                                              comparison, all_events_count, all_prev_events_count,
-                                              newspapers_count, prev_newspapers_count,
-                                              press_releases_count, prev_press_releases_count,
-                                              all_top_ig, all_top_fb, prev_top_ig, prev_top_fb,
-                                              month_names)
+            docx_bytes = build_quarterly_docx(
+                None, quarter, year, analytics_by_month,
+                comparison,
+                all_events.count(), prev_all_events.count(),
+                all_newspapers.count(), prev_all_newspapers.count(),
+                all_press_releases.count(), prev_all_press_releases.count(),
+                all_top_ig, all_top_fb, prev_top_ig, prev_top_fb,
+                month_names,
+            )
             with open(docx_path, 'wb') as f:
                 f.write(docx_bytes)
         except Exception as e:
@@ -276,7 +279,13 @@ Output ONLY valid HTML. Use <strong> for emphasis."""
 @login_required
 def preview_quarterly_word(request, report_id):
     """Serve the DOCX download for a quarterly report."""
-    report = get_object_or_404(QuarterlyReport, id=report_id)
+    report = QuarterlyReport.objects.filter(id=report_id).first()
+    if not report:
+        messages.error(request, 'Report not found. It may have been reset — please regenerate it.')
+        return redirect('report_dashboard')
+    if not report.pdf_file:
+        messages.error(request, 'No PDF on record for this report.')
+        return redirect('report_dashboard')
     docx_path = settings.MEDIA_ROOT / Path(report.pdf_file.name).with_suffix('.docx')
     if docx_path.exists():
         docx_bytes = docx_path.read_bytes()
@@ -284,11 +293,14 @@ def preview_quarterly_word(request, report_id):
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
         response['Content-Disposition'] = f'attachment; filename="Quarterly_Report_Q{report.quarter}_{report.year}.docx"'
         return response
-    messages.error(request, 'DOCX file not found.')
-    return redirect('preview_quarterly', report_id=report.id)
+    messages.error(request, 'DOCX file not found. Please regenerate the report.')
+    return redirect('report_dashboard')
 
 
 @login_required
 def preview_quarterly(request, report_id):
-    report = get_object_or_404(QuarterlyReport, id=report_id)
+    report = QuarterlyReport.objects.filter(id=report_id).first()
+    if not report:
+        messages.error(request, 'Report not found. It may have been reset — please regenerate it.')
+        return redirect('report_dashboard')
     return render(request, 'reports/preview_quarterly.html', {'report': report})
