@@ -246,9 +246,8 @@ IMPORTANT RULES:
     finally:
         pass
 
-self.update_state(state='PROGRESS', meta={'message': 'Compiling PDF...'})
+    self.update_state(state='PROGRESS', meta={'message': 'Compiling PDF...'})
     # ── Generate output PDF ───────────────────────────────────────────────────
-    # We must fetch user name since we only have user id
     from django.contrib.auth.models import User
     try:
         user = User.objects.get(id=uploaded_by_id)
