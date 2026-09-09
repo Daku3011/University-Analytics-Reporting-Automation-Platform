@@ -914,6 +914,9 @@ def comparison_view(request):
             'can_view_all_institutes': not bool(user_college),
         })
         chart_json = ranking.get('chart_json')
+        if chart_json and isinstance(chart_json, str):
+            import json as _json
+            chart_json = _json.loads(chart_json)
     else:
         # YoY needs a concrete college
         if user_college:
@@ -933,6 +936,9 @@ def comparison_view(request):
             'yoy': yoy,
         })
         chart_json = yoy.get('chart_json') if yoy else None
+        if chart_json and isinstance(chart_json, str):
+            import json as _json
+            chart_json = _json.loads(chart_json)
 
     context['chart_json'] = chart_json
     return render(request, 'analytics_app/comparison.html', context)
