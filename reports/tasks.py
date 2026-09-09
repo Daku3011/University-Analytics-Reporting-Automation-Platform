@@ -268,39 +268,29 @@ IMPORTANT RULES:
 
     out_dir = settings.MEDIA_ROOT / 'reports' / 'doc_quarterly'
     out_dir.mkdir(parents=True, exist_ok=True)
-    out_filename = f"DocQ{quarter}_{year}_u{uploaded_by_id}.pdf"
-    out_path     = out_dir / out_filename
+    # Single consistent stem used for both PDF and DOCX
+    safe_title = ''.join(c if c.isalnum() or c in '_-' else '_' for c in title).strip('_')
+    stem = f"DocQ{quarter}_{year}_{safe_title}_u{uploaded_by_id}" if safe_title else f"DocQ{quarter}_{year}_u{uploaded_by_id}"
+    pdf_path  = out_dir / f"{stem}.pdf"
+    docx_path = out_dir / f"{stem}.docx"
+    pdf_relative  = f'reports/doc_quarterly/{stem}.pdf'
+    docx_relative = f'reports/doc_quarterly/{stem}.docx'
 
     try:
         from reports.services.pdf_service import PDFService
-        PDFService.compile_html_to_pdf(html_string, out_path)
-        pdf_relative = f'reports/doc_quarterly/{out_filename}'
+        PDFService.compile_html_to_pdf(html_string, pdf_path)
     except Exception as e:
         print(f"WeasyPrint failed: {e}")
         pdf_relative = None
 
     # ── Also generate DOCX ────────────────────────────────────────────────────
     from reports.services.word_service import build_document_docx
-    # Sanitize title for use in filename (replace spaces with underscores, remove special chars)
-    safe_title = ''.join(c if c.isalnum() or c in '_-' else '_' for c in title).strip('_')
-    if safe_title:
-        pdf_filename = f"DocQ{quarter}_{year}_{safe_title}_u{uploaded_by_id}.pdf"
-        docx_filename = f"DocQ{quarter}_{year}_{safe_title}_u{uploaded_by_id}.docx"
-    else:
-        pdf_filename = f"DocQ{quarter}_{year}_u{uploaded_by_id}.pdf"
-        docx_filename = f"DocQ{quarter}_{year}_u{uploaded_by_id}.docx"
-    pdf_path     = out_dir / pdf_filename
-    docx_path    = out_dir / docx_filename
     try:
         docx_bytes = build_document_docx(title, quarter, year, ai_summary)
         with open(docx_path, 'wb') as f:
             f.write(docx_bytes)
-        pdf_relative = f'reports/doc_quarterly/{pdf_filename}'
-        docx_relative = f'reports/doc_quarterly/{docx_filename}'
     except Exception as e:
         print(f"DOCX generation warning: {e}")
-        pdf_relative = f'reports/doc_quarterly/{pdf_filename}'
-        docx_relative = f'reports/doc_quarterly/{docx_filename}'
 
     # ── Save to DB ────────────────────────────────────────────────────────────
     self.update_state(state='PROGRESS', meta={'message': 'Saving report...'})

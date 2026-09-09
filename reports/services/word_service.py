@@ -295,7 +295,7 @@ def build_quarterly_docx(college, quarter, year, analytics_by_month,
     title = doc.add_heading(f"{college_label} — Q{quarter} {year} Quarterly Report", level=0)
     for run in title.runs:
         run.font.color.rgb = BRAND
-    subtitle = doc.add_paragraph(f"College: {college.name}")
+    subtitle = doc.add_paragraph(f"Sarvajanik University")
     subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
     for run in subtitle.runs:
         run.font.color.rgb = MUTED
@@ -348,30 +348,115 @@ def build_quarterly_docx(college, quarter, year, analytics_by_month,
     return buffer.getvalue()
 
 
+def _html_to_docx(doc, html):
+    """Parse AI-generated HTML and write proper docx headings/paragraphs/tables."""
+    import re
+    from html.parser import HTMLParser
+
+    # Strip non-renderable blocks
+    html = re.sub(r'<svg[^>]*>.*?</svg>', '', html, flags=re.DOTALL | re.IGNORECASE)
+    html = re.sub(r'<script[^>]*>.*?</script>', '', html, flags=re.DOTALL | re.IGNORECASE)
+    html = re.sub(r'<style[^>]*>.*?</style>', '', html, flags=re.DOTALL | re.IGNORECASE)
+
+    class _P(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.stack = []
+            self.buf = ''
+            self.in_table = False
+            self.rows = []
+            self.cur_row = []
+            self.cur_cell = ''
+
+        def handle_starttag(self, tag, attrs):
+            self.stack.append(tag)
+            if tag in ('h1','h2','h3','h4','p','li'):
+                self.buf = ''
+            elif tag == 'table':
+                self.in_table = True
+                self.rows = []
+            elif tag == 'tr':
+                self.cur_row = []
+            elif tag in ('td','th'):
+                self.cur_cell = ''
+
+        def handle_endtag(self, tag):
+            if self.stack and self.stack[-1] == tag:
+                self.stack.pop()
+            text = self.buf.strip()
+            self.buf = ''
+            if tag in ('h1','h2'):
+                h = doc.add_heading(text, level=1)
+                for r in h.runs: r.font.color.rgb = BRAND
+            elif tag in ('h3','h4'):
+                h = doc.add_heading(text, level=2)
+                for r in h.runs: r.font.color.rgb = BRAND
+            elif tag == 'p':
+                if text:
+                    doc.add_paragraph(text)
+            elif tag == 'li':
+                if text:
+                    doc.add_paragraph(text, style='List Bullet')
+            elif tag in ('td','th'):
+                self.cur_cell += text
+            elif tag == 'tr':
+                if self.cur_cell:
+                    self.cur_row.append(self.cur_cell)
+                    self.cur_cell = ''
+                if self.cur_row:
+                    self.rows.append(self.cur_row)
+                    self.cur_row = []
+            elif tag == 'table':
+                self.in_table = False
+                if self.rows:
+                    cols = max(len(r) for r in self.rows)
+                    tbl = doc.add_table(rows=1, cols=cols)
+                    tbl.style = 'Light Grid Accent 1'
+                    for i, ct in enumerate(self.rows[0]):
+                        c = tbl.rows[0].cells[i]
+                        c.text = ct
+                        for para in c.paragraphs:
+                            for run in para.runs:
+                                run.font.bold = True
+                                run.font.size = Pt(9)
+                    for rd in self.rows[1:]:
+                        row = tbl.add_row()
+                        for i, ct in enumerate(rd[:cols]):
+                            row.cells[i].text = ct
+                            for para in row.cells[i].paragraphs:
+                                for run in para.runs:
+                                    run.font.size = Pt(9)
+                    doc.add_paragraph()
+
+        def handle_data(self, data):
+            top = self.stack[-1] if self.stack else ''
+            if top in ('script','style','svg','path','rect','circle'):
+                return
+            if self.in_table and top in ('td','th'):
+                self.cur_cell += data
+            else:
+                self.buf += data
+
+    _P().feed(html)
+
+
 def build_document_docx(title, quarter, year, ai_summary):
-    """Render document report data into a .docx document, returned as bytes."""
-    from docx import Document
-    from docx.enum.text import WD_ALIGN_PARAGRAPH
-    from docx.shared import Pt, RGBColor
-
-    BRAND = RGBColor(0x1F, 0x3A, 0x5F)
-    MUTED = RGBColor(0x66, 0x66, 0x66)
-
+    """Render upload-condense document report into a proper .docx, returned as bytes."""
     doc = Document()
 
-    # ── Title block ─────────────────────────────────────────────────
+    # ── Cover page ──────────────────────────────────────────────────
     title_heading = doc.add_heading(title, level=0)
     for run in title_heading.runs:
         run.font.color.rgb = BRAND
-    meta = doc.add_paragraph(f"Quarter {quarter} {year}")
+    meta = doc.add_paragraph(f"Q{quarter} {year}  ·  Sarvajanik University  ·  AI-Generated Summary")
     meta.alignment = WD_ALIGN_PARAGRAPH.CENTER
     for run in meta.runs:
         run.font.color.rgb = MUTED
         run.font.size = Pt(11)
+    doc.add_page_break()
 
-    # ── AI Summary ──────────────────────────────────────────────────
-    doc.add_heading('AI-Generated Summary', level=2)
-    doc.add_paragraph(ai_summary)
+    # ── AI summary parsed from HTML ──────────────────────────────────
+    _html_to_docx(doc, ai_summary)
 
     buffer = BytesIO()
     doc.save(buffer)
